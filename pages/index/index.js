@@ -9,45 +9,40 @@ const CAT_TITLE_MAP = {
 
 Page({
   data: {
-    searchVal: '',
-    fosterList: [],
-    fosterLoading: true,
+    agencyList: [],
+    agencyLoading: true,
     svcList: [],
     svcLoading: true,
   },
 
   onShow() {
-    this.loadFosters();
+    this.loadAgencies();
     this.loadServices();
   },
 
-  async loadFosters() {
-    this.setData({ fosterLoading: true });
+  async loadAgencies() {
+    this.setData({ agencyLoading: true });
     const db = wx.cloud.database();
-    const _ = db.command;
-    let list = [];
     try {
-      const fRes = await db.collection('fosters').where({ status: 'open' }).orderBy('createTime', 'desc').limit(4).get();
-      list = list.concat((fRes.data || []).map(d => ({ ...d, type: 'foster' })));
-    } catch (e) { /* ignore */ }
-    try {
-      const aRes = await db.collection('adoptions').where({ status: 'open' }).orderBy('createTime', 'desc').limit(4).get();
-      list = list.concat((aRes.data || []).map(d => ({ ...d, type: 'adopt' })));
-    } catch (e) { /* ignore */ }
-    // 混合后按时间排序，取前4
-    list.sort((a, b) => {
-      const ta = a.createTime ? new Date(a.createTime).getTime() : 0;
-      const tb = b.createTime ? new Date(b.createTime).getTime() : 0;
-      return tb - ta;
-    });
-    this.setData({ fosterList: list.slice(0, 4), fosterLoading: false });
+      const res = await db.collection('agency_profiles')
+        .where({ auditStatus: 'approved' })
+        .orderBy('createTime', 'desc')
+        .limit(4)
+        .get();
+      this.setData({ agencyList: res.data || [], agencyLoading: false });
+    } catch (e) {
+      this.setData({ agencyList: [], agencyLoading: false });
+    }
   },
 
   async loadServices() {
     this.setData({ svcLoading: true });
     const db = wx.cloud.database();
     try {
-      const res = await db.collection('agency_services').orderBy('createTime', 'desc').limit(4).get();
+      const res = await db.collection('agency_services')
+        .orderBy('createTime', 'desc')
+        .limit(4)
+        .get();
       const svcList = (res.data || []).map(s => ({
         ...s,
         catTitle: CAT_TITLE_MAP[s.category] || '服务',
@@ -58,27 +53,26 @@ Page({
     }
   },
 
-  onSearchChange(e) {
-    this.setData({ searchVal: e.detail });
+  onSearchTap() {
+    wx.navigateTo({ url: '/pages/browse-agencies/browse-agencies' });
   },
 
   // 功能入口
-  toMatch() { wx.navigateTo({ url: '/pages/match/match' }); },
-  toHealth() { wx.navigateTo({ url: '/pages/health/health' }); },
-  toAI() { wx.navigateTo({ url: '/pages/ai/ai' }); },
-
-  // 查看更多
-  toFosterList() {
-    wx.showToast({ title: '寄养送养列表开发中', icon: 'none' });
+  toBrowseAgencies() {
+    wx.navigateTo({ url: '/pages/browse-agencies/browse-agencies' });
   },
 
-  toAgencyServiceList() {
-    wx.showToast({ title: '机构服务列表开发中', icon: 'none' });
+  toAI() {
+    wx.showToast({ title: 'AI 创作即将上线', icon: 'none' });
   },
 
-  onFosterTap(e) {
-    const { id, type } = e.currentTarget.dataset;
-    wx.navigateTo({ url: `/pages/foster-detail/foster-detail?id=${id}&type=${type}` });
+  toHealth() {
+    wx.showToast({ title: '健康管理即将上线', icon: 'none' });
+  },
+
+  onAgencyTap(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({ url: `/pages/agency-detail/agency-detail?id=${id}` });
   },
 
   onSvcTap(e) {
@@ -87,7 +81,7 @@ Page({
   },
 
   onPullDownRefresh() {
-    this.loadFosters();
+    this.loadAgencies();
     this.loadServices();
     wx.stopPullDownRefresh();
   },

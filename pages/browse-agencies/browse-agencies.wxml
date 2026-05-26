@@ -1,0 +1,58 @@
+<!-- pages/browse-agencies/browse-agencies.wxml -->
+<view class="browse-page">
+
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <van-search
+      value="{{searchVal}}"
+      placeholder="搜索机构名称、地址"
+      shape="round"
+      background="transparent"
+      bind:change="onSearchChange"
+      bind:search="onSearch"
+    />
+  </view>
+
+  <!-- 分类筛选 -->
+  <scroll-view class="cat-scroll" scroll-x enable-flex>
+    <view
+      class="cat-pill {{activeType === item.key ? 'cat-pill--active' : ''}}"
+      wx:for="{{typeList}}"
+      wx:key="key"
+      bindtap="onTypeTap"
+      data-key="{{item.key}}"
+    >
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#FF9800" size="48rpx" />
+  </view>
+
+  <!-- 机构列表 -->
+  <view class="agency-list" wx:if="{{!loading && agencyList.length > 0}}">
+    <view class="agency-card" wx:for="{{agencyList}}" wx:key="_id" bindtap="onAgencyTap" data-id="{{item._id}}">
+      <image class="agency-card__img" src="{{item.storefrontImage || item.envImages[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
+      <view class="agency-card__body">
+        <text class="agency-card__name">{{item.orgName}}</text>
+        <view class="agency-card__type">
+          <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.businessType}}</van-tag>
+        </view>
+        <view class="agency-card__loc">
+          <van-icon name="location-o" size="22rpx" color="#8C7A6B" />
+          <text class="agency-card__loc-text">{{item.detailAddress || item.region || '暂无地址'}}</text>
+        </view>
+        <text class="agency-card__intro" wx:if="{{item.orgIntro}}">{{item.orgIntro}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-wrap" wx:if="{{!loading && agencyList.length === 0}}">
+    <van-icon name="shop-o" size="80rpx" color="#F0E6D8" />
+    <text class="empty-wrap__text">暂无相关机构</text>
+  </view>
+
+</view>

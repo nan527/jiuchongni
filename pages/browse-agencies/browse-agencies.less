@@ -1,0 +1,133 @@
+/* pages/browse-agencies/browse-agencies.wxss */
+
+.browse-page {
+  min-height: 100vh;
+  background: #FFF8F0;
+}
+
+/* ===== 搜索栏 ===== */
+.search-bar {
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  padding: 16rpx 16rpx 20rpx;
+}
+
+/* ===== 分类筛选 ===== */
+.cat-scroll {
+  white-space: nowrap;
+  padding: 20rpx 32rpx;
+  background: #FFFAF5;
+  border-bottom: 1rpx solid #F0E6D8;
+}
+
+.cat-pill {
+  display: inline-block;
+  padding: 12rpx 32rpx;
+  margin-right: 16rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #8C7A6B;
+  background: #FFF8F0;
+  transition: all 0.2s ease;
+}
+
+.cat-pill--active {
+  background: #FF9800;
+  color: #fff;
+  font-weight: 600;
+}
+
+/* ===== 加载状态 ===== */
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 80rpx 0;
+}
+
+/* ===== 机构列表 ===== */
+.agency-list {
+  padding: 20rpx 32rpx;
+}
+
+.agency-card {
+  display: flex;
+  background: #FFFAF5;
+  border-radius: 24rpx;
+  overflow: hidden;
+  margin-bottom: 20rpx;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  transition: transform 0.15s ease;
+}
+
+.agency-card:active {
+  transform: scale(0.98);
+}
+
+.agency-card__img {
+  width: 240rpx;
+  height: 240rpx;
+  flex-shrink: 0;
+  background: #F0E6D8;
+}
+
+.agency-card__body {
+  flex: 1;
+  padding: 20rpx 24rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-width: 0;
+}
+
+.agency-card__name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #3D2C1E;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.agency-card__type {
+  margin-top: 10rpx;
+}
+
+.agency-card__loc {
+  display: flex;
+  align-items: center;
+  margin-top: 10rpx;
+}
+
+.agency-card__loc-text {
+  font-size: 22rpx;
+  color: #8C7A6B;
+  margin-left: 6rpx;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.agency-card__intro {
+  font-size: 22rpx;
+  color: #8C7A6B;
+  margin-top: 8rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  line-height: 1.5;
+}
+
+/* ===== 空状态 ===== */
+.empty-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 0;
+}
+
+.empty-wrap__text {
+  font-size: 28rpx;
+  color: #8C7A6B;
+  margin-top: 20rpx;
+}

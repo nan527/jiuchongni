@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(mkdir -p /f/wechat_devtools/mycode/jcn/docs)",
+      "Bash(mkdir -p /f/wechat_devtools/mycode/jcn/docs/superpowers/specs)"
+    ],
+    "additionalDirectories": [
+      "F:\\wechat_devtools\\mycode\\jcn",
+      "F:\\wechat_devtools\\mycode\\jcn\\docs\\superpowers"
+    ]
+  }
+}

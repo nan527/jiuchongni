@@ -1,13 +1,100 @@
 /* pages/index/index.wxss */
+
 .index-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #FFF8F0;
   padding-bottom: 20rpx;
 }
 
-/* 功能入口 */
-.func-grid {
-  margin: 16rpx 0;
+/* ===== 渐变头部 ===== */
+.hero-header {
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  padding: 0 32rpx 48rpx;
+  border-radius: 0 0 40rpx 40rpx;
+  position: relative;
+}
+
+.hero-header__inner {
+  padding-top: 20rpx;
+}
+
+.hero-greeting {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: 28rpx;
+}
+
+.hero-greeting__title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2rpx;
+}
+
+.hero-greeting__sub {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 8rpx;
+}
+
+.hero-search {
+  display: flex;
+  align-items: center;
+  background: rgba(255, 255, 255, 0.92);
+  border-radius: 40rpx;
+  padding: 20rpx 28rpx;
+  box-shadow: 0 4rpx 20rpx rgba(255, 152, 0, 0.12);
+}
+
+.hero-search__placeholder {
+  font-size: 26rpx;
+  color: #8C7A6B;
+  margin-left: 16rpx;
+}
+
+/* ===== 功能入口 ===== */
+.func-entry {
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  padding: 40rpx 32rpx 24rpx;
+  margin: -20rpx 24rpx 0;
+  background: #FFFAF5;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  position: relative;
+  z-index: 1;
+}
+
+.func-entry__item {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  transition: transform 0.15s ease;
+}
+
+.func-entry__item:active {
+  transform: scale(0.95);
+}
+
+.func-entry__icon {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 14rpx;
+}
+
+.func-entry__icon--orange { background: #FFF3E0; }
+.func-entry__icon--purple { background: #F3E5F5; }
+.func-entry__icon--green  { background: #E8F5E9; }
+
+.func-entry__label {
+  font-size: 24rpx;
+  color: #3D2C1E;
+  font-weight: 500;
 }
 
 /* ===== 板块标题栏 ===== */
@@ -15,110 +102,120 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 28rpx 32rpx 16rpx;
+  padding: 32rpx 32rpx 16rpx;
 }
 
 .section-bar__title {
   font-size: 34rpx;
   font-weight: 700;
-  color: #333;
+  color: #3D2C1E;
 }
 
 .section-bar__more {
   display: flex;
   align-items: center;
   font-size: 24rpx;
-  color: #999;
+  color: #8C7A6B;
 }
 
 .section-bar__more text {
   margin-right: 4rpx;
 }
 
+/* ===== 加载状态 ===== */
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 40rpx 0;
+}
+
 /* ===== 两列卡片网格 ===== */
 .card-grid {
   display: flex;
   flex-wrap: wrap;
-  padding: 0 24rpx;
-  gap: 16rpx;
+  padding: 0 32rpx;
+  gap: 20rpx;
 }
 
-/* ===== 寄养/送养宠物卡片 ===== */
-.pet-card {
-  width: calc(50% - 8rpx);
-  background: #fff;
-  border-radius: 20rpx;
+/* ===== 机构卡片 ===== */
+.agency-card {
+  width: calc(50% - 10rpx);
+  background: #FFFAF5;
+  border-radius: 24rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  transition: transform 0.15s ease;
 }
 
-.pet-card__img {
+.agency-card:active { transform: scale(0.98); }
+
+.agency-card__img {
   width: 100%;
-  height: 300rpx;
+  height: 200rpx;
   display: block;
-  background: #eee;
+  background: #F0E6D8;
 }
 
-.pet-card__body {
+.agency-card__body {
   padding: 16rpx 20rpx 20rpx;
 }
 
-.pet-card__name {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #333;
+.agency-card__tag-row { margin-bottom: 10rpx; }
+
+.agency-card__name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #3D2C1E;
   display: block;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-.pet-card__tags {
-  display: flex;
-  gap: 8rpx;
-  margin-top: 12rpx;
-  flex-wrap: wrap;
-}
-
-.pet-card__loc {
+.agency-card__loc {
   display: flex;
   align-items: center;
-  margin-top: 12rpx;
+  margin-top: 10rpx;
 }
 
-.pet-card__loc-text {
+.agency-card__loc-text {
   font-size: 22rpx;
-  color: #bbb;
+  color: #8C7A6B;
   margin-left: 6rpx;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 }
 
-/* ===== 机构服务卡片 ===== */
+/* ===== 服务卡片 ===== */
 .svc-card {
-  width: calc(50% - 8rpx);
-  background: #fff;
-  border-radius: 20rpx;
+  width: calc(50% - 10rpx);
+  background: #FFFAF5;
+  border-radius: 24rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.05);
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  transition: transform 0.15s ease;
 }
+
+.svc-card:active { transform: scale(0.98); }
 
 .svc-card__img {
   width: 100%;
-  height: 260rpx;
+  height: 200rpx;
   display: block;
-  background: #eee;
+  background: #F0E6D8;
 }
 
 .svc-card__body {
   padding: 16rpx 20rpx 20rpx;
 }
 
+.svc-card__tag-row { margin-bottom: 10rpx; }
+
 .svc-card__name {
   font-size: 28rpx;
   font-weight: 600;
-  color: #333;
+  color: #3D2C1E;
   display: block;
   white-space: nowrap;
   overflow: hidden;
@@ -132,28 +229,27 @@
 }
 
 .svc-card__price {
-  font-size: 32rpx;
-  font-weight: 800;
+  font-size: 30rpx;
+  font-weight: 700;
   color: #FF9800;
 }
 
 .svc-card__unit {
   font-size: 22rpx;
-  color: #999;
+  color: #8C7A6B;
   margin-left: 4rpx;
 }
 
-.svc-card__cat {
-  margin-top: 10rpx;
-}
-
 /* ===== 空状态 ===== */
-.pet-empty {
-  text-align: center;
+.empty-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
   padding: 40rpx 0;
 }
 
-.pet-empty-text {
+.empty-wrap__text {
   font-size: 26rpx;
-  color: #ccc;
+  color: #8C7A6B;
+  margin-top: 12rpx;
 }

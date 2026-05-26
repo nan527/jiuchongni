@@ -1,0 +1,91 @@
+<!-- pages/agency-detail/agency-detail.wxml -->
+<view class="detail-page" wx:if="{{agency}}">
+
+  <!-- 机构头图 -->
+  <view class="agency-hero">
+    <image
+      class="agency-hero__img"
+      src="{{agency.storefrontImage || agency.envImages[0] || '/static/pet/logo.png'}}"
+      mode="aspectFill"
+      bindtap="onPreviewImage"
+      data-url="{{agency.storefrontImage}}"
+      data-list="{{agency.envImages}}"
+    />
+    <view class="agency-hero__overlay">
+      <text class="agency-hero__name">{{agency.orgName}}</text>
+      <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{agency.businessType}}</van-tag>
+    </view>
+  </view>
+
+  <!-- 机构信息 -->
+  <view class="info-section">
+    <view class="info-row" wx:if="{{agency.detailAddress || agency.region}}">
+      <van-icon name="location-o" size="32rpx" color="#FF9800" />
+      <text class="info-row__text">{{agency.detailAddress || agency.region}}</text>
+    </view>
+    <view class="info-row" wx:if="{{agency.businessHours}}">
+      <van-icon name="clock-o" size="32rpx" color="#FF9800" />
+      <text class="info-row__text">{{agency.businessHours}}</text>
+    </view>
+    <view class="info-row" wx:if="{{agency.totalCages}}">
+      <van-icon name="home-o" size="32rpx" color="#FF9800" />
+      <text class="info-row__text">共 {{agency.totalCages}} 个笼位</text>
+    </view>
+  </view>
+
+  <!-- 机构简介 -->
+  <view class="intro-section" wx:if="{{agency.orgIntro}}">
+    <text class="section-title">机构简介</text>
+    <text class="intro-text">{{agency.orgIntro}}</text>
+  </view>
+
+  <!-- 环境照片 -->
+  <view class="env-section" wx:if="{{agency.envImages.length > 0}}">
+    <text class="section-title">环境展示</text>
+    <scroll-view class="env-scroll" scroll-x enable-flex>
+      <image
+        class="env-img"
+        wx:for="{{agency.envImages}}"
+        wx:key="*this"
+        src="{{item}}"
+        mode="aspectFill"
+        bindtap="onPreviewImage"
+        data-url="{{item}}"
+        data-list="{{agency.envImages}}"
+      />
+    </scroll-view>
+  </view>
+
+  <!-- 服务列表 -->
+  <view class="svc-section">
+    <text class="section-title">服务项目</text>
+
+    <view class="loading-wrap" wx:if="{{svcLoading}}">
+      <van-loading type="spinner" color="#FF9800" size="40rpx" />
+    </view>
+
+    <view class="svc-list" wx:if="{{!svcLoading && svcList.length > 0}}">
+      <view class="svc-item" wx:for="{{svcList}}" wx:key="_id" bindtap="onSvcTap" data-id="{{item._id}}">
+        <image class="svc-item__img" src="{{item.images[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
+        <view class="svc-item__info">
+          <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="small">{{item.catTitle}}</van-tag>
+          <text class="svc-item__name">{{item.name}}</text>
+          <view class="svc-item__price-row">
+            <text class="svc-item__price">¥{{item.price}}</text>
+            <text class="svc-item__unit">/{{item.priceUnit || '次'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <view class="empty-svc" wx:if="{{!svcLoading && svcList.length === 0}}">
+      <text class="empty-svc__text">暂无服务项目</text>
+    </view>
+  </view>
+
+</view>
+
+<!-- 加载中 -->
+<view class="loading-wrap" wx:if="{{loading}}">
+  <van-loading type="spinner" color="#FF9800" size="48rpx" />
+</view>

@@ -1,10 +1,15 @@
 /**app.wxss**/
 page {
-  --primary-color: #FF9800; /* 宠物主题橙色 */
-  --bg-color: #f7f8fa;
-  --text-main: #323233;
-  --text-gray: #969799;
-  
+  --primary-color: #FF9800;
+  --primary-light: #FFB74D;
+  --primary-bg: #FFF3E0;
+  --bg-color: #FFF8F0;
+  --card-bg: #FFFAF5;
+  --text-main: #3D2C1E;
+  --text-gray: #8C7A6B;
+  --divider-color: #F0E6D8;
+  --shadow-warm: 0 4rpx 16rpx rgba(61,44,30,0.06);
+
   background-color: var(--bg-color);
   font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
     Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei',

@@ -1,6 +1,8 @@
 {
   "pages": [
     "pages/index/index",
+    "pages/browse-agencies/browse-agencies",
+    "pages/agency-detail/agency-detail",
     "pages/login/login",
     "pages/pet/pet",
     "pages/match/match",

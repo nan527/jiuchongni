@@ -184,17 +184,6 @@ foster_applications  // 寄养领养申请
 - [ ] 实时视频看宠（待接入）
 - [ ] 智能喂食提醒（待接入）
 
----
-
-## 🤝 参与贡献
-
-欢迎提交 Issue 和 Pull Request！
-
-<a href="https://github.com/nan527/jcn/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=nan527/jcn" />
-</a>
-
----
 
 ## 📄 开源协议
 
