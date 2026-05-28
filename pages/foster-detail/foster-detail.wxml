@@ -129,9 +129,35 @@
   </view>
 
   <!-- 底部操作：发布者 -->
-  <view class="bottom-bar owner-bar" wx:if="{{ isOwner && !editing }}">
-    <van-button round plain size="small" icon="edit" type="primary" bindtap="startEdit" custom-style="flex:1;margin-right:12rpx;">编辑</van-button>
-    <van-button round plain size="small" icon="delete-o" type="danger" bindtap="deletePost" custom-style="flex:1;">删除</van-button>
+  <view class="bottom-bar" wx:if="{{ isOwner && !editing }}">
+    <van-button round type="primary" color="#FF9800" block icon="friends-o" bindtap="viewApplications">
+      申请管理
+      <van-tag wx:if="{{applicationCount > 0 && detail.status === 'open'}}" type="danger" size="mini" round style="margin-left:8rpx;">{{applicationCount}}</van-tag>
+    </van-button>
+    <view class="owner-sub-actions">
+      <view class="owner-sub-actions__item" bindtap="startEdit">
+        <van-icon name="edit" size="40rpx" color="#666" />
+        <text class="owner-sub-actions__text">编辑</text>
+      </view>
+      <view class="owner-sub-actions__item" bindtap="deletePost">
+        <van-icon name="delete-o" size="40rpx" color="#ee0a24" />
+        <text class="owner-sub-actions__text" style="color:#ee0a24;">删除</text>
+      </view>
+    </view>
   </view>
+
+  <!-- 申请表单弹窗 -->
+  <van-popup show="{{ showApplyForm }}" position="bottom" round bind:close="closeApplyForm" custom-style="padding:32rpx 0;">
+    <view class="apply-form">
+      <view class="apply-form__title">{{ detail._type === 'adopt' ? '申请领养' : '接受寄养' }}</view>
+      <van-field label="申请说明" type="textarea" placeholder="请说明您想领养的原因、养宠经验等" value="{{ applyMessage }}" bind:change="onApplyMessageChange" autosize="{{ { minHeight: 120 } }}" required />
+      <van-field label="联系人" placeholder="您的称呼" value="{{ applyContactName }}" bind:change="onApplyContactNameChange" required />
+      <van-field label="手机号" placeholder="联系手机号" value="{{ applyContactPhone }}" bind:change="onApplyContactPhoneChange" type="number" />
+      <van-field label="养宠经验" type="textarea" placeholder="可选，如：养过3年金毛" value="{{ applyExperience }}" bind:change="onApplyExperienceChange" autosize="{{ { minHeight: 80 } }}" />
+      <view class="apply-form__btn">
+        <van-button round type="primary" color="#FF9800" block loading="{{ applying }}" loading-text="提交中..." bindtap="submitApply">提交申请</van-button>
+      </view>
+    </view>
+  </van-popup>
 
 </view>

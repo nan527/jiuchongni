@@ -1,0 +1,47 @@
+<!-- pages/admin/agencies.wxml -->
+<view class="agencies-page">
+
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <van-search value="{{ searchVal }}" placeholder="搜索机构名称或地址" shape="round" background="#f5f5f5"
+      bind:change="onSearchChange" bind:search="onSearch" bind:clear="onSearchClear" />
+  </view>
+
+  <van-loading wx:if="{{ loading }}" vertical style="padding: 80rpx 0; text-align: center;">加载中...</van-loading>
+
+  <view wx:if="{{ !loading && agencyList.length === 0 }}" class="empty-wrap">
+    <van-icon name="shop-o" size="80rpx" color="#ddd" />
+    <text class="empty-text">暂无机构数据</text>
+  </view>
+
+  <view wx:for="{{ agencyList }}" wx:key="_id" class="agency-card">
+    <view class="agency-card__header">
+      <text class="agency-card__name">{{ item.orgName || '未命名机构' }}</text>
+      <van-tag wx:if="{{ item.businessType }}" plain round size="medium" color="#FF9800">{{ item.businessType }}</van-tag>
+    </view>
+
+    <view class="agency-card__body">
+      <view class="info-row">
+        <van-icon name="location-o" size="26rpx" color="#999" style="margin-right:8rpx;" />
+        <text class="info-text">{{ item.region || '' }} {{ item.detailAddress || '-' }}</text>
+      </view>
+      <view class="info-row" wx:if="{{ item.legalName }}">
+        <van-icon name="contact" size="26rpx" color="#999" style="margin-right:8rpx;" />
+        <text class="info-text">{{ item.legalName }} {{ item.legalPhone || '' }}</text>
+      </view>
+      <view class="info-row" wx:if="{{ item.businessHours }}">
+        <van-icon name="clock-o" size="26rpx" color="#999" style="margin-right:8rpx;" />
+        <text class="info-text">{{ item.businessHours }}</text>
+      </view>
+    </view>
+
+    <view class="agency-card__footer">
+      <view class="footer-btn footer-btn--detail" data-id="{{ item._id }}" bindtap="viewDetail">
+        <van-icon name="eye-o" size="28rpx" />查看
+      </view>
+      <view class="footer-btn footer-btn--delete" data-profile-id="{{ item._id }}" bindtap="deleteAgency">
+        <van-icon name="delete" size="28rpx" />删除
+      </view>
+    </view>
+  </view>
+</view>

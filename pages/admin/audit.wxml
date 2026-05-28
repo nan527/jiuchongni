@@ -1,35 +1,73 @@
 <!-- pages/admin/audit.wxml -->
 <view class="audit-page">
-  <view class="page-title">机构入驻审核</view>
+  <van-tabs active="{{ activeTab }}" color="#FF9800" line-width="60rpx" bind:change="onTabChange">
+    <van-tab title="待审核">
+      <van-loading wx:if="{{ loading }}" vertical style="padding: 80rpx 0; text-align: center;">加载中...</van-loading>
 
-  <van-loading wx:if="{{ loading }}" vertical style="padding: 100rpx 0; text-align: center;">加载中...</van-loading>
+      <view wx:if="{{ !loading && pendingList.length === 0 }}" class="empty-wrap">
+        <van-icon name="passed" size="80rpx" color="#ddd" />
+        <text class="empty-text">暂无待审核机构</text>
+      </view>
 
-  <view wx:if="{{ !loading && list.length === 0 }}" class="empty">暂无待审核/驳回机构</view>
+      <view wx:for="{{ pendingList }}" wx:key="userId" class="audit-card">
+        <view class="audit-card__header">
+          <text class="audit-card__name">{{ item.profile.orgName || '未命名机构' }}</text>
+          <van-tag wx:if="{{ item.auditStatus === 'pending' }}" type="warning" round size="medium">待审核</van-tag>
+          <van-tag wx:if="{{ item.auditStatus === 'rejected' }}" type="danger" round size="medium">已驳回</van-tag>
+        </view>
 
-  <view wx:for="{{ list }}" wx:key="userId" class="card">
-    <view class="card-title-row">
-      <text class="card-title">{{ item.profile.orgName || '未命名机构' }}</text>
-      <text class="status {{ item.auditStatus === 'approved' ? 'status-ok' : (item.auditStatus === 'rejected' ? 'status-reject' : 'status-pending') }}">
-        {{ item.auditStatus === 'pending' ? '待审核' : (item.auditStatus === 'approved' ? '已通过' : '已驳回') }}
-      </text>
-    </view>
+        <view class="audit-card__body">
+          <view class="info-row"><text class="info-key">信用代码</text><text class="info-val">{{ item.profile.creditCode || '-' }}</text></view>
+          <view class="info-row"><text class="info-key">法人</text><text class="info-val">{{ item.profile.legalName || '-' }} {{ item.profile.legalPhone || '' }}</text></view>
+          <view class="info-row"><text class="info-key">地址</text><text class="info-val">{{ item.profile.region || '' }} {{ item.profile.detailAddress || '' }}</text></view>
+          <view class="info-row"><text class="info-key">经营类型</text><text class="info-val">{{ item.profile.businessType || '-' }}</text></view>
+        </view>
 
-    <view class="line"><text class="k">登录账号：</text><text class="v">{{ item.account }}</text></view>
-    <view class="line"><text class="k">统一信用代码：</text><text class="v">{{ item.profile.creditCode || '-' }}</text></view>
-    <view class="line"><text class="k">法人：</text><text class="v">{{ item.profile.legalName || '-' }} {{ item.profile.legalPhone || '' }}</text></view>
-    <view class="line"><text class="k">地址：</text><text class="v">{{ item.profile.region || '' }} {{ item.profile.detailAddress || '' }}</text></view>
-    <view class="line"><text class="k">经营类型：</text><text class="v">{{ item.profile.businessType || '-' }}</text></view>
-    <view class="line"><text class="k">服务范围：</text><text class="v">{{ item.profile.serviceScope || '-' }}</text></view>
+        <view class="audit-card__images" wx:if="{{ item.profile.licenseImage || item.profile.storefrontImage }}">
+          <image wx:if="{{ item.profile.licenseImage }}" class="thumb" src="{{ item.profile.licenseImage }}" mode="aspectFill" />
+          <image wx:if="{{ item.profile.storefrontImage }}" class="thumb" src="{{ item.profile.storefrontImage }}" mode="aspectFill" />
+          <image wx:if="{{ item.profile.permitImage }}" class="thumb" src="{{ item.profile.permitImage }}" mode="aspectFill" />
+        </view>
 
-    <view class="image-row">
-      <image wx:if="{{ item.profile.licenseImage }}" class="thumb" src="{{ item.profile.licenseImage }}" mode="aspectFill"></image>
-      <image wx:if="{{ item.profile.storefrontImage }}" class="thumb" src="{{ item.profile.storefrontImage }}" mode="aspectFill"></image>
-      <image wx:if="{{ item.profile.permitImage }}" class="thumb" src="{{ item.profile.permitImage }}" mode="aspectFill"></image>
-    </view>
+        <view class="audit-card__actions">
+          <view class="action-btn action-btn--reject" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" bindtap="reject">
+            <van-icon name="close" size="28rpx" />驳回
+          </view>
+          <view class="action-btn action-btn--approve" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" bindtap="approve">
+            <van-icon name="passed" size="28rpx" />通过
+          </view>
+          <view class="action-btn action-btn--delete" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" bindtap="deleteAgency">
+            <van-icon name="delete" size="28rpx" />删除
+          </view>
+        </view>
+      </view>
+    </van-tab>
 
-    <view class="actions">
-      <van-button size="small" plain type="danger" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" bindtap="reject">驳回</van-button>
-      <van-button size="small" type="primary" color="#07c160" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" bindtap="approve">通过</van-button>
-    </view>
-  </view>
+    <van-tab title="审核记录">
+      <view wx:if="{{ historyList.length === 0 }}" class="empty-wrap">
+        <van-icon name="orders-o" size="80rpx" color="#ddd" />
+        <text class="empty-text">暂无审核记录</text>
+      </view>
+
+      <view wx:for="{{ historyList }}" wx:key="userId" class="history-card">
+        <view class="history-card__header">
+          <text class="history-card__name">{{ item.profile.orgName || '未命名机构' }}</text>
+          <van-tag wx:if="{{ item.auditStatus === 'approved' }}" type="success" round size="medium">已通过</van-tag>
+          <van-tag wx:elif="{{ item.auditStatus === 'pending' }}" type="warning" round size="medium">待审核</van-tag>
+          <van-tag wx:else type="danger" round size="medium">已驳回</van-tag>
+        </view>
+        <view class="history-card__info">
+          <text class="info-row"><text class="info-key">账号</text><text class="info-val">{{ item.account || '-' }}</text></text>
+          <text class="info-row"><text class="info-key">信用代码</text><text class="info-val">{{ item.profile.creditCode || '-' }}</text></text>
+          <text class="info-row"><text class="info-key">法人</text><text class="info-val">{{ item.profile.legalName || '-' }}</text></text>
+          <text class="info-row"><text class="info-key">地址</text><text class="info-val">{{ item.profile.region || '' }} {{ item.profile.detailAddress || '' }}</text></text>
+        </view>
+        <view class="history-card__actions">
+          <view class="action-btn action-btn--delete" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" bindtap="deleteAgency">
+            <van-icon name="delete" size="28rpx" />删除
+          </view>
+        </view>
+      </view>
+    </van-tab>
+  </van-tabs>
 </view>

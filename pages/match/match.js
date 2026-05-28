@@ -1,4 +1,5 @@
 // pages/match/match.js
+const authService = require('../../services/authService');
 const db = wx.cloud.database();
 
 // 预定义匹配逻辑
@@ -37,17 +38,25 @@ Page({
     loading: false
   },
 
-  onShow() {
+  async onShow() {
+    const userInfo = await authService.checkLogin();
+    if (!userInfo) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
+    this._userId = userInfo._id;
     this.loadPetService();
   },
 
-  // 1. 加载宠物列表
+  // 1. 加载当前用户的宠物列表
   async loadPetService() {
+    if (!this._userId) return;
     try {
-      const res = await db.collection('pets').get();
-      this.setData({ petList: res.data });
-      if (res.data.length > 0) {
-        this.selectPet(res.data[0]); 
+      const res = await db.collection('pets').where({ ownerId: this._userId }).get();
+      const petList = (res.data || []).filter(p => p.ownerId === this._userId);
+      this.setData({ petList });
+      if (petList.length > 0) {
+        this.selectPet(petList[0]);
       }
     } catch (err) {
       console.warn('初次加载宠物失败，请确认数据库已创建 pets 集合', err);
@@ -87,7 +96,8 @@ Page({
 
   selectPet(pet) {
     this.setData({ selectedPet: pet });
-    if (app.globalData.pet) {
+    const app = getApp();
+    if (app && app.globalData && app.globalData.pet) {
       app.globalData.pet.currentPet = pet;
     }
     this.calculateMatch();

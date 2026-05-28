@@ -1,130 +1,118 @@
 <!-- pages/orders/orders.wxml -->
-<!-- 订单状态标签模板 -->
-<template name="statusTag">
-  <van-tag wx:if="{{ status === 'pending' }}" type="warning" size="medium">{{ isFoster ? '待寄养' : '待接单' }}</van-tag>
-  <van-tag wx:if="{{ status === 'confirmed' }}" type="primary" size="medium">{{ isFoster ? '寄养中' : '已接单' }}</van-tag>
-  <van-tag wx:if="{{ status === 'in_progress' }}" color="#E8F5E9" text-color="#2E7D32" size="medium">{{ isFoster ? '寄养中' : '服务中' }}</van-tag>
-  <van-tag wx:if="{{ status === 'to_confirm' }}" color="#FFF3E0" text-color="#E65100" size="medium">{{ isFoster ? '待取回' : '待确认' }}</van-tag>
-  <van-tag wx:if="{{ status === 'completed' }}" type="success" size="medium">已完成</van-tag>
-  <van-tag wx:if="{{ status === 'cancelled' }}" type="danger" size="medium">已取消</van-tag>
-</template>
-
-<!-- 订单卡片模板 -->
-<template name="orderCard">
-  <view class="o-card">
-    <view class="o-card__header">
-      <view class="o-card__type-badge {{ orderType === 'agency' ? 'badge-agency' : 'badge-personal' }}">
-        {{ orderType === 'agency' ? '机构服务' : '个人交易' }}
-      </view>
-      <template is="statusTag" data="{{ status: orderStatus, isFoster: category === 'foster' }}" />
-    </view>
-    <view class="o-card__body">
-      <image class="o-card__img" src="{{ images[0] || '/static/pet/logo.png' }}" mode="aspectFill" />
-      <view class="o-card__info">
-        <text class="o-card__name">{{ serviceName || petName }}</text>
-        <text class="o-card__sub" wx:if="{{ orderType === 'agency' }}">宠物: {{ petName || '-' }}</text>
-        <text class="o-card__sub" wx:if="{{ orderType === 'agency' && petInfoText }}">信息: {{ petInfoText }}</text>
-        <text class="o-card__remain {{ isLeaveExpired ? 'o-card__remain--left' : '' }}" wx:if="{{ orderType === 'agency' && leaveRemainText }}">{{ leaveRemainText }}</text>
-        <text class="o-card__sub" wx:if="{{ orderType === 'personal' }}">
-          {{ sourceType === 'adopt' ? '领养' : '寄养' }} · {{ counterpart || '' }}
-        </text>
-        <text class="o-card__price" wx:if="{{ price }}">¥{{ price }} {{ unit || '' }}</text>
-        <text class="o-card__time">{{ createTimeStr }}</text>
-      </view>
-    </view>
-
-    <!-- 操作按钮区 -->
-    <view class="o-card__actions" wx:if="{{ orderStatus === 'to_confirm' || (orderStatus === 'completed' && !review) }}">
-      <van-button wx:if="{{ orderStatus === 'to_confirm' }}" size="small" round type="primary" color="#FF9800" data-id="{{ _id }}" data-category="{{ category }}" bindtap="onConfirmComplete">{{ category === 'foster' ? '确认取回' : '确认完成' }}</van-button>
-      <van-button wx:if="{{ orderStatus === 'completed' && !review }}" size="small" round plain type="warning" data-id="{{ _id }}" bindtap="openReview">评价服务</van-button>
-    </view>
-
-    <!-- 已有评价展示 -->
-    <view class="o-card__review" wx:if="{{ review }}">
-      <view class="review-header">
-        <van-icon name="comment-o" size="28rpx" color="#FF9800"></van-icon>
-        <text class="review-title">我的评价</text>
-        <view class="review-stars">
-          <van-icon wx:for="{{ review.ratingArr }}" wx:for-index="si" wx:key="si" name="star" size="24rpx" color="#FF9800"></van-icon>
-        </view>
-      </view>
-      <text class="review-content">{{ review.content }}</text>
-    </view>
-  </view>
-</template>
-
 <view class="orders-page">
 
-  <van-tabs active="{{ activeTab }}" bind:change="onTabChange" color="#FF9800" line-width="60rpx" swipeable>
+  <!-- 渐变头部 -->
+  <view class="page-header">
+    <text class="page-header__title">我的订单</text>
+  </view>
 
-    <!-- Tab1: 全部订单 -->
-    <van-tab title="全部">
-      <view class="tab-body">
-        <view class="empty-box" wx:if="{{ !loading && allOrders.length === 0 }}">
-          <van-icon name="orders-o" size="80rpx" color="#ddd"></van-icon>
-          <text class="empty-text">暂无订单记录</text>
-        </view>
-        <view class="order-list" wx:if="{{ allOrders.length > 0 }}">
-          <block wx:for="{{ allOrders }}" wx:key="_id">
-            <template is="orderCard" data="{{ ...item }}" />
-          </block>
-        </view>
-      </view>
-    </van-tab>
-
-    <!-- Tab2: 个人交易 -->
-    <van-tab title="个人交易">
-      <view class="tab-body">
-        <view class="empty-box" wx:if="{{ !loading && personalOrders.length === 0 }}">
-          <van-icon name="friends-o" size="80rpx" color="#ddd"></van-icon>
-          <text class="empty-text">暂无个人交易订单</text>
-        </view>
-        <view class="order-list" wx:if="{{ personalOrders.length > 0 }}">
-          <block wx:for="{{ personalOrders }}" wx:key="_id">
-            <template is="orderCard" data="{{ ...item }}" />
-          </block>
-        </view>
-      </view>
-    </van-tab>
-
-    <!-- Tab3: 机构订单 -->
-    <van-tab title="机构订单">
-      <view class="tab-body">
-        <view class="empty-box" wx:if="{{ !loading && agencyOrders.length === 0 }}">
-          <van-icon name="shop-o" size="80rpx" color="#ddd"></van-icon>
-          <text class="empty-text">暂无机构服务订单</text>
-        </view>
-        <view class="order-list" wx:if="{{ agencyOrders.length > 0 }}">
-          <block wx:for="{{ agencyOrders }}" wx:key="_id">
-            <template is="orderCard" data="{{ ...item }}" />
-          </block>
-        </view>
-      </view>
-    </van-tab>
-
+  <!-- Tab 切换 -->
+  <van-tabs active="{{activeTab}}" bind:change="onTabChange" color="#FF9800" line-width="60rpx" swipeable>
+    <van-tab title="全部" />
+    <van-tab title="个人交易" />
+    <van-tab title="机构订单" />
   </van-tabs>
 
-  <!-- 评价弹窗 -->
-  <view class="review-mask" wx:if="{{ showReview }}" bindtap="closeReview"></view>
-  <view class="review-popup" wx:if="{{ showReview }}">
-    <view class="review-popup__title">评价服务</view>
-    <view class="review-popup__rating">
-      <text class="review-popup__label">服务评分</text>
-      <van-rate value="{{ reviewRating }}" bind:change="onRatingChange" size="40rpx" color="#FF9800" void-color="#ddd" />
-    </view>
-    <van-field
-      value="{{ reviewContent }}"
-      type="textarea"
-      placeholder="请输入您的评价..."
-      autosize="{{ { minHeight: 120 } }}"
-      bind:change="onReviewContentChange"
-      border="{{ false }}"
-      custom-style="background:#f8f8f8;border-radius:12rpx;margin-top:20rpx;"
-    />
-    <view class="review-popup__actions">
-      <van-button size="small" round plain bindtap="closeReview" custom-style="flex:1;margin-right:16rpx;">取消</van-button>
-      <van-button size="small" round type="primary" color="#FF9800" loading="{{ submittingReview }}" bindtap="submitReview" custom-style="flex:1;">提交评价</van-button>
+  <!-- 状态筛选 -->
+  <scroll-view class="status-scroll" scroll-x enable-flex>
+    <view
+      class="status-pill {{activeStatus === item.key ? 'status-pill--active' : ''}}"
+      wx:for="{{statusFilter}}"
+      wx:key="key"
+      data-key="{{item.key}}"
+      bindtap="onStatusFilter"
+    >{{item.label}}</view>
+  </scroll-view>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#FF9800" size="48rpx" />
+  </view>
+
+  <!-- 订单列表 -->
+  <view class="order-list" wx:if="{{!loading && filteredOrders.length > 0}}">
+    <view class="o-card" wx:for="{{filteredOrders}}" wx:key="_id">
+
+      <!-- 卡片头部 -->
+      <view class="o-card__header">
+        <view class="o-card__type-badge {{item.orderType === 'agency' ? 'badge-agency' : 'badge-personal'}}">
+          {{item.orderType === 'agency' ? '机构服务' : '个人交易'}}
+        </view>
+        <view class="o-card__status" style="background:{{item.statusConfig.bg}};color:{{item.statusConfig.color}};">
+          {{item.statusConfig.label}}
+        </view>
+      </view>
+
+      <!-- 卡片内容 -->
+      <view class="o-card__body">
+        <image class="o-card__img" src="{{item.images[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
+        <view class="o-card__info">
+          <text class="o-card__name">{{item.serviceName || item.petName}}</text>
+          <text class="o-card__sub" wx:if="{{item.orderType === 'agency'}}">宠物：{{item.petName || '-'}}</text>
+          <text class="o-card__sub" wx:if="{{item.orderType === 'agency' && item.petInfoText}}">{{item.petInfoText}}</text>
+          <text class="o-card__remain {{item.isLeaveExpired ? 'o-card__remain--left' : ''}}" wx:if="{{item.orderType === 'agency' && item.leaveRemainText}}">{{item.leaveRemainText}}</text>
+          <text class="o-card__sub" wx:if="{{item.orderType === 'personal'}}">
+            {{item.sourceType === 'adopt' ? '领养' : '寄养'}}{{item.counterpart ? ' · ' + item.counterpart : ''}}
+          </text>
+          <view class="o-card__price-row" wx:if="{{item.price}}">
+            <text class="o-card__price">¥{{item.price}}</text>
+            <text class="o-card__unit">/{{item.unit || '次'}}</text>
+          </view>
+          <text class="o-card__time">{{item.createTimeStr}}</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="o-card__actions" wx:if="{{item.orderStatus === 'to_confirm' || (item.orderStatus === 'completed' && !item.review)}}">
+        <van-button wx:if="{{item.orderStatus === 'to_confirm'}}" size="small" round type="primary" color="#FF9800" data-id="{{item._id}}" data-category="{{item.category}}" bindtap="onConfirmComplete">
+          {{item.category === 'foster' ? '确认取回' : '确认完成'}}
+        </van-button>
+        <van-button wx:if="{{item.orderStatus === 'completed' && !item.review}}" size="small" round plain type="warning" data-id="{{item._id}}" bindtap="openReview">评价服务</van-button>
+      </view>
+
+      <!-- 已有评价 -->
+      <view class="o-card__review" wx:if="{{item.review}}">
+        <view class="review-header">
+          <van-icon name="comment-o" size="28rpx" color="#FF9800" />
+          <text class="review-title">我的评价</text>
+          <view class="review-stars">
+            <van-icon wx:for="{{item.review.ratingArr}}" wx:for-index="si" wx:key="si" name="star" size="24rpx" color="#FF9800" />
+          </view>
+        </view>
+        <text class="review-content">{{item.review.content}}</text>
+      </view>
     </view>
   </view>
+
+  <!-- 空状态 -->
+  <view class="empty-wrap" wx:if="{{!loading && filteredOrders.length === 0}}">
+    <van-icon name="orders-o" size="80rpx" color="#F0E6D8" />
+    <text class="empty-wrap__text">暂无订单</text>
+  </view>
+
+  <!-- 评价弹窗 -->
+  <van-popup show="{{showReview}}" position="bottom" round bind:close="closeReview">
+    <view class="review-popup">
+      <view class="review-popup__header">
+        <text class="review-popup__title">评价服务</text>
+        <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeReview" />
+      </view>
+      <view class="review-popup__rating">
+        <text class="review-popup__label">服务评分</text>
+        <van-rate value="{{reviewRating}}" bind:change="onRatingChange" size="40rpx" color="#FF9800" void-color="#F0E6D8" />
+      </view>
+      <view class="review-popup__field">
+        <textarea class="review-popup__textarea" placeholder="请输入您的评价..." value="{{reviewContent}}" bindinput="onReviewContentChange" />
+      </view>
+      <van-button
+        type="primary"
+        block
+        round
+        loading="{{submittingReview}}"
+        color="linear-gradient(135deg, #FF9800, #FFB74D)"
+        bindtap="submitReview"
+      >提交评价</van-button>
+    </view>
+  </van-popup>
 
 </view>

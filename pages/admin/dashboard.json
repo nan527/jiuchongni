@@ -1,0 +1,7 @@
+{
+  "navigationBarTitleText": "平台数据",
+  "usingComponents": {
+    "van-loading": "@vant/weapp/loading/index",
+    "van-button": "@vant/weapp/button/index"
+  }
+}

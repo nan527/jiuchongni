@@ -1,69 +1,190 @@
 <!-- pages/my/my.wxml -->
 <view class="my-page">
 
-  <!-- 顶部用户卡片（带背景图） -->
-  <view class="user-header" bindtap="handleHeaderTap">
-    <image class="user-header__bg" src="/static/user-bg.png" mode="aspectFill" />
-    <view class="user-header__content">
-      <view class="avatar-wrap">
-        <image
-          class="user-avatar"
-          src="{{ userInfo.avatar || '/static/missing-face.png' }}"
-          mode="aspectFill"
-        />
-        <view class="avatar-edit-badge" wx:if="{{ userInfo }}">
-          <van-icon name="edit" size="20rpx" color="#fff"></van-icon>
+  <!-- 渐变头部 -->
+  <view class="page-header" bindtap="handleHeaderTap">
+    <view class="page-header__inner">
+      <view class="user-info">
+        <image class="user-info__avatar" src="{{userInfo.avatar || '/static/missing-face.png'}}" mode="aspectFill" />
+        <view class="user-info__text">
+          <text class="user-info__name">{{userInfo ? nickname : '点击登录'}}</text>
+          <block wx:if="{{userInfo}}">
+            <view class="user-info__badge">
+              <text class="user-info__badge-text">{{roleName}}</text>
+            </view>
+          </block>
+          <text class="user-info__hint" wx:else>登录后享受更多服务</text>
         </view>
+        <van-icon wx:if="{{userInfo}}" name="arrow" size="32rpx" color="rgba(255,255,255,0.5)" />
       </view>
-      <view class="user-meta">
-        <text class="user-nickname">{{ userInfo ? nickname : '点击登录' }}</text>
-        <view class="user-role-badge" wx:if="{{ userInfo }}">
-          <image class="role-badge-icon" src="/static/tab-my-orange.png" mode="aspectFit" />
-          <text class="role-badge-text">{{ roleName }}</text>
-        </view>
-        <text class="user-login-hint" wx:else>登录后享受更多服务</text>
-      </view>
-      <van-icon wx:if="{{ userInfo }}" name="arrow" size="32rpx" color="rgba(255,255,255,0.6)" custom-style="margin-left:auto;"></van-icon>
     </view>
   </view>
 
-  <!-- 功能入口卡片 -->
+  <!-- 统计卡片 -->
+  <view class="stats-card" wx:if="{{userInfo}}">
+    <view class="stats-card__inner">
+      <view class="stats-card__item" bindtap="toPetArchive">
+        <text class="stats-card__num">{{petCount}}</text>
+        <text class="stats-card__label">我的宠物</text>
+      </view>
+      <view class="stats-card__divider"></view>
+      <view class="stats-card__item" bindtap="toOrders">
+        <text class="stats-card__num">{{orderCount}}</text>
+        <text class="stats-card__label">历史订单</text>
+      </view>
+      <view class="stats-card__divider"></view>
+      <view class="stats-card__item" bindtap="toMyPosts">
+        <text class="stats-card__num">{{postCount}}</text>
+        <text class="stats-card__label">我的帖子</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 未登录提示 -->
+  <view class="login-hint" wx:else bindtap="handleLogin">
+    <text class="login-hint__text">登录查看您的宠物、订单和帖子数据</text>
+    <van-icon name="arrow" size="28rpx" color="#FF9800" />
+  </view>
+
+  <!-- 订单状态卡片 -->
+  <view class="order-card" wx:if="{{userInfo}}">
+    <view class="order-card__header">
+      <text class="order-card__title">我的订单</text>
+      <view class="order-card__more" bindtap="toOrders">
+        <text class="order-card__more-text">查看全部</text>
+        <van-icon name="arrow" size="24rpx" color="#8C7A6B" />
+      </view>
+    </view>
+    <view class="order-card__grid">
+      <!-- 待接单 -->
+      <view class="order-card__item" bindtap="toOrders" data-status="pending">
+        <view class="order-card__icon-wrap">
+          <view class="order-card__icon order-card__icon--orange">
+            <van-icon name="clock-o" size="40rpx" color="#EF6C00" />
+          </view>
+          <view class="order-card__badge" wx:if="{{pendingNew}}">{{pendingCount > 99 ? '99+' : pendingCount}}</view>
+        </view>
+        <text class="order-card__item-label">待接单</text>
+      </view>
+      <!-- 进行中 -->
+      <view class="order-card__item" bindtap="toOrders" data-status="active">
+        <view class="order-card__icon-wrap">
+          <view class="order-card__icon order-card__icon--blue">
+            <van-icon name="logistics" size="40rpx" color="#1565C0" />
+          </view>
+          <view class="order-card__badge" wx:if="{{inProgressNew}}">{{inProgressCount > 99 ? '99+' : inProgressCount}}</view>
+        </view>
+        <text class="order-card__item-label">进行中</text>
+      </view>
+      <!-- 待确认 -->
+      <view class="order-card__item" bindtap="toOrders" data-status="to_confirm">
+        <view class="order-card__icon-wrap">
+          <view class="order-card__icon order-card__icon--red">
+            <van-icon name="passed" size="40rpx" color="#E65100" />
+          </view>
+          <view class="order-card__badge" wx:if="{{toConfirmNew}}">{{toConfirmCount > 99 ? '99+' : toConfirmCount}}</view>
+        </view>
+        <text class="order-card__item-label">待确认</text>
+      </view>
+      <!-- 已完成 -->
+      <view class="order-card__item" bindtap="toOrders" data-status="completed">
+        <view class="order-card__icon-wrap">
+          <view class="order-card__icon order-card__icon--green">
+            <van-icon name="star-o" size="40rpx" color="#2E7D32" />
+          </view>
+          <view class="order-card__badge" wx:if="{{completedNew}}">{{completedCount > 99 ? '99+' : completedCount}}</view>
+        </view>
+        <text class="order-card__item-label">已完成</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 常用功能卡片 -->
   <view class="func-card">
-    <view class="func-card__title">我的服务</view>
-    <view class="func-grid">
-      <view class="func-grid__item" bindtap="toPetArchive">
-        <image class="func-grid__icon" src="/static/tab-pet-orange.png" mode="aspectFit" />
-        <text class="func-grid__label">宠物档案</text>
+    <view class="section-header">
+      <text class="section-header__title">常用功能</text>
+    </view>
+    <view class="func-card__grid">
+      <view class="func-card__item" bindtap="toPetArchive">
+        <view class="func-card__icon func-card__icon--orange">
+          <van-icon name="friends-o" size="44rpx" color="#F57C00" />
+        </view>
+        <text class="func-card__name">宠物档案</text>
+        <text class="func-card__desc">管理宠物信息</text>
       </view>
-      <view class="func-grid__item" bindtap="toFosterCenter">
-        <image class="func-grid__icon" src="/static/tab-cart-orange.png" mode="aspectFit" />
-        <text class="func-grid__label">寄养领养</text>
+      <view class="func-card__item" bindtap="toFosterCenter">
+        <view class="func-card__icon func-card__icon--green">
+          <van-icon name="shop-o" size="44rpx" color="#2E7D32" />
+        </view>
+        <text class="func-card__name">寄养中心</text>
+        <text class="func-card__desc">管理寄养领养信息</text>
       </view>
-      <view class="func-grid__item" bindtap="toHealthRemind">
-        <image class="func-grid__icon" src="/static/tab-notify-orange.png" mode="aspectFit" />
-        <text class="func-grid__label">健康提醒</text>
+      <view class="func-card__item" bindtap="toHealthRemind">
+        <view class="func-card__icon func-card__icon--purple">
+          <van-icon name="like-o" size="44rpx" color="#7B1FA2" />
+        </view>
+        <text class="func-card__name">健康管理</text>
+        <text class="func-card__desc">疫苗体重记录</text>
       </view>
-      <view class="func-grid__item" bindtap="toForum">
-        <image class="func-grid__icon" src="/static/tab-forum-orange.png" mode="aspectFit" />
-        <text class="func-grid__label">宠物社区</text>
+      <view class="func-card__item" bindtap="toMyPosts">
+        <view class="func-card__icon func-card__icon--blue">
+          <van-icon name="comment-o" size="44rpx" color="#1565C0" />
+        </view>
+        <text class="func-card__name">我的帖子</text>
+        <text class="func-card__desc">查看发布内容</text>
       </view>
     </view>
   </view>
 
-  <!-- 常用菜单 -->
-  <van-cell-group inset>
-    <van-cell title="个人订单" icon="orders-o" is-link bindtap="toOrders"></van-cell>
-    <van-cell title="我的帖子" icon="comment-o" is-link bindtap="toMyPosts"></van-cell>
-  </van-cell-group>
-
-  <!-- 管理员功能 -->
-  <van-cell-group inset style="margin-top: 24rpx;" wx:if="{{ userInfo.role === 'admin' }}">
-    <van-cell title="系统后台" icon="setting-o" is-link bindtap="toAdminPanel"></van-cell>
-  </van-cell-group>
+  <!-- 更多工具卡片 -->
+  <view class="tool-card">
+    <view class="section-header">
+      <text class="section-header__title">更多工具</text>
+    </view>
+    <view class="tool-card__list">
+      <view class="tool-card__item" bindtap="toForum">
+        <view class="tool-card__icon tool-card__icon--yellow">
+          <van-icon name="chat-o" size="36rpx" color="#F57F17" />
+        </view>
+        <view class="tool-card__info">
+          <text class="tool-card__name">宠物社区</text>
+          <text class="tool-card__desc">交流养宠经验</text>
+        </view>
+        <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+      </view>
+      <view class="tool-card__divider"></view>
+      <view class="tool-card__item" bindtap="toCustomerService">
+        <view class="tool-card__icon tool-card__icon--blue">
+          <van-icon name="service-o" size="36rpx" color="#1565C0" />
+        </view>
+        <view class="tool-card__info">
+          <text class="tool-card__name">联系客服</text>
+          <text class="tool-card__desc">在线咨询</text>
+        </view>
+        <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+      </view>
+      <block wx:if="{{userInfo.role === 'admin'}}">
+        <view class="tool-card__divider"></view>
+        <view class="tool-card__item" bindtap="toAdminPanel">
+          <view class="tool-card__icon tool-card__icon--grey">
+            <van-icon name="setting-o" size="36rpx" color="#546E7A" />
+          </view>
+          <view class="tool-card__info">
+            <text class="tool-card__name">系统后台</text>
+            <text class="tool-card__desc">管理面板</text>
+          </view>
+          <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+        </view>
+      </block>
+    </view>
+  </view>
 
   <!-- 退出登录 -->
-  <view class="logout-area" wx:if="{{ userInfo }}">
-    <van-button block round plain type="danger" size="normal" bindtap="handleLogout">退出登录</van-button>
+  <view class="logout-area" wx:if="{{userInfo}}">
+    <view class="logout-btn" bindtap="handleLogout">
+      <text class="logout-btn__text">退出登录</text>
+    </view>
   </view>
 
+  <view style="height: 40rpx;"></view>
 </view>

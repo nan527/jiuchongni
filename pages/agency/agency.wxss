@@ -217,6 +217,48 @@
   color: #666;
 }
 
+/* ===== 状态提示条 ===== */
+.status-banner {
+  display: flex;
+  align-items: center;
+  margin: 20rpx 24rpx 0;
+  padding: 20rpx 24rpx;
+  border-radius: 16rpx;
+}
+
+.status-banner--pending {
+  background: linear-gradient(135deg, #FFB74D, #FF9800);
+}
+
+.status-banner--rejected {
+  background: linear-gradient(135deg, #EF5350, #E53935);
+}
+
+.status-banner--unregistered {
+  background: linear-gradient(135deg, #78909C, #546E7A);
+}
+
+.status-banner--none {
+  background: linear-gradient(135deg, #78909C, #546E7A);
+}
+
+.status-banner__text {
+  font-size: 24rpx;
+  color: #fff;
+  line-height: 1.5;
+}
+
+/* ===== 注册入口 ===== */
+.register-cta {
+  margin: 24rpx 48rpx 0;
+}
+
+/* ===== 功能锁定 ===== */
+.locked {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
 /* ===== 底部按钮 ===== */
 .bottom-area {
   padding: 48rpx 48rpx 80rpx;

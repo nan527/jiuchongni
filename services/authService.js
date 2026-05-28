@@ -42,6 +42,20 @@ const authService = {
       // 1. 本地缓存
       const cached = this._getCachedUser();
       if (cached) {
+        await this._ensureOpenid(cached);
+        // 机构用户需验证审核状态是否变化（管理员审核后缓存会过期）
+        if (cached.role === ROLES.AGENCY && cached._id) {
+          try {
+            const fresh = await withTimeout(
+              getDB().collection('users').doc(cached._id).get(),
+              5000
+            );
+            if (fresh.data && fresh.data.auditStatus !== cached.auditStatus) {
+              cached.auditStatus = fresh.data.auditStatus;
+              this._cacheUser(cached);
+            }
+          } catch (e) { /* 查询失败则使用缓存 */ }
+        }
         this._syncToGlobal(cached);
         return cached;
       }
@@ -49,11 +63,12 @@ const authService = {
       // 2. 云端静默查询（5 秒超时，不阻塞体验）
       try {
         const res = await withTimeout(
-          getDB().collection('users').where({ _openid: '{openid}' }).limit(1).get(),
+          getDB().collection('users').where({ _openid: '{openid}' }).orderBy('createTime', 'desc').limit(1).get(),
           5000
         );
         if (res.data.length > 0) {
           const userInfo = res.data[0];
+          await this._ensureOpenid(userInfo);
           this._cacheUser(userInfo);
           return userInfo;
         }
@@ -111,6 +126,9 @@ const authService = {
     } catch (e) { /* 更新失败不阻塞登录 */ }
 
     const safeUser = this._sanitizeUser(userInfo);
+    console.log('[AuthService] loginWithAccount: userInfo._openid =', safeUser._openid, 'userInfo._id =', safeUser._id);
+    await this._ensureOpenid(safeUser);
+    console.log('[AuthService] loginWithAccount: 最终 _openid =', safeUser._openid);
     this._cacheUser(safeUser);
     return safeUser;
   },
@@ -163,6 +181,7 @@ const authService = {
 
   /**
    * 机构注册（待管理员审核）
+   * 已登录用户不需要账号密码（同一微信号拥有多个角色）
    * @param {Object} payload
    */
   async registerAgency(payload) {
@@ -176,17 +195,25 @@ const authService = {
     const region = (data.region || '').trim();
     const detailAddress = (data.detailAddress || '').trim();
 
-    if (!account || !password || !orgName || !creditCode || !legalName || !legalPhone || !region || !detailAddress) {
+    if (!orgName || !creditCode || !legalName || !legalPhone || !region || !detailAddress) {
       throw new Error('MISSING_REQUIRED_FIELDS');
     }
 
-    // 账号唯一
-    const accountRes = await withTimeout(
-      getDB().collection('users').where({ account }).limit(1).get(),
-      8000
-    );
-    if (accountRes.data.length) {
-      throw new Error('ACCOUNT_EXISTS');
+    // 已登录用户不需要账号密码（_openid 自动注入，同一微信号多角色）
+    const isLoggedIn = !!data._skipAccountCheck;
+
+    if (!isLoggedIn) {
+      if (!account || !password) {
+        throw new Error('MISSING_REQUIRED_FIELDS');
+      }
+      // 账号唯一
+      const accountRes = await withTimeout(
+        getDB().collection('users').where({ account }).limit(1).get(),
+        8000
+      );
+      if (accountRes.data.length) {
+        throw new Error('ACCOUNT_EXISTS');
+      }
     }
 
     // 机构名称唯一
@@ -238,7 +265,7 @@ const authService = {
       8000
     );
 
-    // 写入账号（待审核）
+    // 写入机构用户文档（_openid 由云开发自动注入，同一微信号可有多个角色）
     await withTimeout(
       getDB().collection('users').add({
         data: {
@@ -287,24 +314,26 @@ const authService = {
   },
 
   /**
-   * 微信一键登录（仅宠主）
-   * @param {string} role - 角色值，取自 ROLES
+   * 微信一键登录（按 openid + role 查找，一个微信号可拥有多个角色账号）
+   * @param {string} selectedRole - 用户在登录页选择的角色
    * @returns {Object} userInfo
+   * @throws {Error} AGENCY_NOT_REGISTERED - 机构账号不存在，需跳转注册
    */
-  async loginWithWechat(role) {
+  async loginWithWechat(selectedRole) {
+    const role = selectedRole || ROLES.PET_OWNER;
     wx.showLoading({ title: '登录中…', mask: true });
 
     try {
-      // 先检查当前 openid 是否已绑定宠主账号
+      // 按 openid + role 查询该角色的账号（取最新的）
       let existing = { data: [] };
       try {
         existing = await withTimeout(
-          getDB().collection('users').where({ _openid: '{openid}', role: ROLES.PET_OWNER }).limit(1).get(),
+          getDB().collection('users').where({ _openid: '{openid}', role }).orderBy('createTime', 'desc').limit(1).get(),
           8000
         );
       } catch (queryErr) {
         if (isTimeoutError(queryErr)) {
-          console.warn('[AuthService] 查询超时，按新用户注册', queryErr.message);
+          console.warn('[AuthService] 查询超时', queryErr.message);
         } else {
           throw queryErr;
         }
@@ -320,35 +349,39 @@ const authService = {
             5000
           );
         } catch (e) { /* 更新失败不阻塞登录 */ }
+        await this._ensureOpenid(userInfo);
         this._cacheUser(userInfo);
         wx.hideLoading();
         return userInfo;
       }
 
-      // 新用户注册（宠主）
-      const roleInfo = ROLE_INFO[ROLES.PET_OWNER];
-      const addRes = await withTimeout(
-        getDB().collection('users').add({
-          data: {
-            role: ROLES.PET_OWNER,
-            nickname: roleInfo.label,
-            avatar: '',
-            phone: '',
-            createTime: getDB().serverDate(),
-            lastLoginTime: getDB().serverDate(),
-          },
-        }),
-        8000
-      );
+      wx.hideLoading();
 
-      const userInfo = {
-        _id: addRes._id,
-        role: ROLES.PET_OWNER,
+      // 角色不存在 → 自动创建（机构无 agencyProfileId，进入页面后功能锁定）
+      const roleInfo = ROLE_INFO[role] || ROLE_INFO[ROLES.PET_OWNER];
+      wx.showLoading({ title: '注册中…', mask: true });
+      const newUser = {
+        role,
         nickname: roleInfo.label,
         avatar: '',
         phone: '',
+        createTime: getDB().serverDate(),
+        lastLoginTime: getDB().serverDate(),
       };
+      if (role === ROLES.AGENCY) {
+        newUser.auditStatus = 'pending';
+      }
+      const addRes = await withTimeout(
+        getDB().collection('users').add({ data: newUser }),
+        8000
+      );
 
+      const newDoc = await withTimeout(
+        getDB().collection('users').doc(addRes._id).get(),
+        5000
+      );
+      const userInfo = newDoc.data;
+      await this._ensureOpenid(userInfo);
       this._cacheUser(userInfo);
       wx.hideLoading();
       return userInfo;
@@ -398,6 +431,70 @@ const authService = {
       return null;
     }
     return userInfo;
+  },
+
+  /**
+   * 确保 userInfo 包含 _openid
+   * 优先级：已有值 > 云函数（返回当前用户真实 openid）
+   * 注意：不能回退到查询 users 文档的 _openid，因为那是文档创建者的 openid，不一定是当前用户的
+   */
+  async _ensureOpenid(userInfo) {
+    if (!userInfo || userInfo._openid) {
+      console.log('[AuthService] _ensureOpenid: 已有 _openid =', userInfo ? userInfo._openid : 'null');
+      return userInfo;
+    }
+
+    // 方式1：云函数获取（唯一可靠来源，返回当前微信用户的真实 openid）
+    try {
+      const res = await withTimeout(
+        wx.cloud.callFunction({ name: 'ai_handler', data: { action: 'get_openid' } }),
+        8000
+      );
+      if (res.result && res.result.openid) {
+        console.log('[AuthService] _ensureOpenid: 云函数获取 openid =', res.result.openid);
+        userInfo._openid = res.result.openid;
+        this._cacheUser(userInfo);
+        return userInfo;
+      }
+    } catch (e) {
+      console.warn('[AuthService] 云函数获取 openid 失败', e.message || e);
+    }
+
+    // 方式2：通过 '{openid}' 模板查询当前用户的 users 文档
+    // 要求数据库权限为"仅创建者可读写"才能正确过滤
+    try {
+      const userRes = await withTimeout(
+        getDB().collection('users').where({ _openid: '{openid}' }).limit(1).get(),
+        5000
+      );
+      if (userRes.data.length > 0 && userRes.data[0]._openid) {
+        console.log('[AuthService] _ensureOpenid: 数据库查询 openid =', userRes.data[0]._openid);
+        userInfo._openid = userRes.data[0]._openid;
+        this._cacheUser(userInfo);
+        return userInfo;
+      }
+    } catch (e) {
+      console.warn('[AuthService] 数据库查询 openid 失败', e.message || e);
+    }
+
+    // 两种方式都失败：不设置 _openid，让调用方处理
+    console.error('[AuthService] 无法获取当前用户 openid');
+    return userInfo;
+  },
+
+  /**
+   * 获取当前用户的真实 openid（供页面直接调用）
+   * @param {Object} userInfo - checkLogin 返回的用户对象
+   * @returns {string} openid
+   * @throws {Error} OPENID_UNAVAILABLE 当无法获取 openid 时
+   */
+  async getOpenid(userInfo) {
+    if (userInfo && userInfo._openid) return userInfo._openid;
+    await this._ensureOpenid(userInfo);
+    if (!userInfo || !userInfo._openid) {
+      throw new Error('OPENID_UNAVAILABLE');
+    }
+    return userInfo._openid;
   },
 
   /**

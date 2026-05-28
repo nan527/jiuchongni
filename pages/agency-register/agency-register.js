@@ -2,6 +2,7 @@
 const authService = require('../../services/authService');
 
 const BUSINESS_TYPES = ['宠物寄养机构', '宠物医院', '宠物美容洗护', '宠物用品店', '综合服务'];
+const DRAFT_KEY = 'agency_register_draft';
 
 Page({
   data: {
@@ -32,10 +33,20 @@ Page({
     permitFileList: [],
     storefrontFileList: [],
     submitting: false,
+    isLoggedIn: false,
+  },
+
+  async onLoad() {
+    const userInfo = await authService.checkLogin();
+    if (userInfo) {
+      this.setData({ isLoggedIn: true });
+    }
+    this._loadDraft();
   },
 
   setFormField(key, value) {
     this.setData({ [`form.${key}`]: value });
+    this._saveDraft();
   },
 
   onOrgNameChange(e) { this.setFormField('orgName', e.detail); },
@@ -76,6 +87,7 @@ Page({
         [listField]: [{ url: file.url }],
         [`form.${targetField}`]: fileID,
       });
+      this._saveDraft();
     } catch (err) {
       wx.showToast({ title: '上传失败', icon: 'none' });
     } finally {
@@ -111,11 +123,13 @@ Page({
     if (!f.orgName || !f.creditCode || !f.legalName || !f.legalPhone || !f.region || !f.detailAddress) {
       return '请完整填写基础入驻信息';
     }
-    if (!f.account || !f.password) {
-      return '请填写机构登录账号和密码';
-    }
-    if (f.password.length < 6) {
-      return '登录密码至少 6 位';
+    if (!this.data.isLoggedIn) {
+      if (!f.account || !f.password) {
+        return '请填写机构登录账号和密码';
+      }
+      if (f.password.length < 6) {
+        return '登录密码至少 6 位';
+      }
     }
     if (!f.licenseImage || !f.storefrontImage) {
       return '请上传营业执照和门头实景照片';
@@ -132,12 +146,23 @@ Page({
     if (this.data.submitting) return;
     this.setData({ submitting: true });
     try {
-      await authService.registerAgency(this.data.form);
+      const payload = { ...this.data.form };
+      if (this.data.isLoggedIn) {
+        payload._skipAccountCheck = true;
+      }
+      await authService.registerAgency(payload);
+      this._clearDraft();
       wx.showModal({
         title: '提交成功',
-        content: '机构申请已提交，请等待管理员审核后登录。',
+        content: '机构申请已提交，请等待管理员审核。',
         showCancel: false,
-        success: () => wx.navigateBack(),
+        success: () => {
+          if (this.data.isLoggedIn) {
+            wx.redirectTo({ url: '/pages/agency/agency' });
+          } else {
+            wx.navigateBack();
+          }
+        },
       });
     } catch (err) {
       const code = err.message;
@@ -150,5 +175,40 @@ Page({
     } finally {
       this.setData({ submitting: false });
     }
+  },
+
+  _saveDraft() {
+    try {
+      const draft = {
+        form: this.data.form,
+        businessTypeIndex: this.data.businessTypeIndex,
+      };
+      wx.setStorageSync(DRAFT_KEY, draft);
+    } catch (e) { /* ignore */ }
+  },
+
+  _loadDraft() {
+    try {
+      const draft = wx.getStorageSync(DRAFT_KEY);
+      if (draft && draft.form) {
+        const form = { ...this.data.form, ...draft.form };
+        const update = { form };
+        if (draft.businessTypeIndex != null) {
+          update.businessTypeIndex = draft.businessTypeIndex;
+        }
+        // 恢复已上传图片的显示
+        if (draft.form.licenseImage) update.licenseFileList = [{ url: draft.form.licenseImage }];
+        if (draft.form.permitImage) update.permitFileList = [{ url: draft.form.permitImage }];
+        if (draft.form.storefrontImage) update.storefrontFileList = [{ url: draft.form.storefrontImage }];
+        this.setData(update);
+        wx.showToast({ title: '已恢复草稿', icon: 'none', duration: 1500 });
+      }
+    } catch (e) { /* ignore */ }
+  },
+
+  _clearDraft() {
+    try {
+      wx.removeStorageSync(DRAFT_KEY);
+    } catch (e) { /* ignore */ }
   },
 });

@@ -10,16 +10,29 @@
       </view>
       <view class="agency-meta">
         <text class="agency-name">{{ agencyInfo.nickname || '机构名称' }}</text>
-        <view class="agency-status-badge {{ agencyInfo.auditStatus === 'approved' ? 'badge-ok' : 'badge-pending' }}">
+        <view class="agency-status-badge {{ auditStatus === 'approved' ? 'badge-ok' : 'badge-pending' }}">
           <image class="badge-icon" src="/static/tab-my-orange.png" mode="aspectFit" />
-          <text class="badge-text">{{ agencyInfo.auditStatus === 'approved' ? '已认证机构' : '待审核' }}</text>
+          <text class="badge-text">{{ auditStatus === 'approved' ? '已认证机构' : auditStatus === 'pending' ? '审核中' : auditStatus === 'rejected' ? '审核未通过' : '未提交注册' }}</text>
         </view>
       </view>
     </view>
   </view>
 
-  <!-- 数据统计条 -->
-  <view class="stats-bar">
+  <!-- 状态提示条（未通过审核时显示） -->
+  <view class="status-banner status-banner--{{ auditStatus || 'none' }}" wx:if="{{ isLocked }}">
+    <van-icon name="info-o" size="32rpx" color="#fff" custom-style="margin-right:12rpx;" />
+    <text class="status-banner__text">{{ auditStatus === 'pending' ? '机构审核中，审核通过后即可使用管理功能' : auditStatus === 'rejected' ? '审核未通过，请重新提交注册信息' : '请先完成机构注册，通过审核后即可使用管理功能' }}</text>
+  </view>
+
+  <!-- 未注册/已驳回时显示注册按钮 -->
+  <view class="register-cta" wx:if="{{ !isRegistered || auditStatus === 'rejected' }}">
+    <van-button round type="primary" color="#FF9800" block bindtap="toRegister">
+      {{ auditStatus === 'rejected' ? '重新注册机构' : '注册机构' }}
+    </van-button>
+  </view>
+
+  <!-- 数据统计条（审核通过后显示） -->
+  <view class="stats-bar" wx:if="{{ !isLocked }}">
     <view class="stats-item">
       <text class="stats-num">{{ orderCount }}</text>
       <text class="stats-label">订单数</text>
@@ -38,7 +51,7 @@
 
   <!-- 运营管理 -->
   <view class="section-title">运营管理</view>
-  <view class="ops-card">
+  <view class="ops-card {{ isLocked ? 'locked' : '' }}">
     <view class="ops-grid">
       <view class="ops-item" bindtap="toOpsOrders">
         <view class="ops-icon-wrap ops-bg-orange">
@@ -80,8 +93,8 @@
 
   <!-- 快捷功能 -->
   <view class="section-title">快捷功能</view>
-  <view class="service-grid">
-    <view class="service-item" bindtap="toOrders">
+  <view class="service-grid {{ isLocked ? 'locked' : '' }}">
+    <view class="service-item" bindtap="toOpsOrders">
       <image class="service-icon" src="/static/tab-cart-orange.png" mode="aspectFit" />
       <text class="service-label">订单</text>
     </view>

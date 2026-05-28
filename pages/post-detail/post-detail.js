@@ -8,11 +8,14 @@ Page({
     loading: true,
     commentText: '',
     sending: false,
+    liked: false,
   },
 
-  onLoad(options) {
+  async onLoad(options) {
     if (options.id) {
       this.postId = options.id;
+      const userInfo = await authService.checkLogin();
+      if (userInfo) this._userId = userInfo._id;
       this.loadDetail();
       this.loadComments();
     }
@@ -24,7 +27,9 @@ Page({
     try {
       const db = wx.cloud.database();
       const res = await db.collection('posts').doc(this.postId).get();
-      this.setData({ post: res.data, loading: false });
+      const post = res.data;
+      const liked = !!(this._userId && post.likedBy && post.likedBy.includes(this._userId));
+      this.setData({ post, liked, loading: false });
     } catch (err) {
       console.error('[PostDetail] 加载失败', err);
       this.setData({ loading: false });
@@ -60,12 +65,26 @@ Page({
   /** 点赞 */
   async onLike() {
     if (!this.data.post) return;
+    if (this.data.liked) {
+      wx.showToast({ title: '已点赞过', icon: 'none' });
+      return;
+    }
+    if (!this._userId) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      return;
+    }
     try {
       const db = wx.cloud.database();
       await db.collection('posts').doc(this.postId).update({
-        data: { likeCount: db.command.inc(1) },
+        data: {
+          likeCount: db.command.inc(1),
+          likedBy: db.command.addToSet(this._userId),
+        },
       });
-      this.setData({ 'post.likeCount': (this.data.post.likeCount || 0) + 1 });
+      this.setData({
+        'post.likeCount': (this.data.post.likeCount || 0) + 1,
+        liked: true,
+      });
     } catch (err) {
       console.warn('[PostDetail] 点赞失败', err);
     }
@@ -91,6 +110,7 @@ Page({
 
       await db.collection('comments').add({
         data: {
+          ownerId: this._userId,
           postId: this.postId,
           content: this.data.commentText.trim(),
           authorName: userInfo ? userInfo.nickname : '匿名',

@@ -4,13 +4,16 @@
     "pages/browse-agencies/browse-agencies",
     "pages/agency-detail/agency-detail",
     "pages/login/login",
-    "pages/pet/pet",
+    "pages/pet-detail/pet-detail",
     "pages/match/match",
     "pages/health/health",
+    "pages/health-add/health-add",
     "pages/ai/ai",
     "pages/agency/agency",
     "pages/admin/admin",
     "pages/admin/audit",
+    "pages/admin/agencies",
+    "pages/admin/dashboard",
     "pages/my/my",
     "pages/profile/profile",
     "pages/forum/forum",
@@ -29,7 +32,16 @@
     "pages/orders/orders",
     "pages/agency-orders/agency-orders",
     "pages/agency-revenue/agency-revenue",
-    "pages/agency-reviews/agency-reviews"
+    "pages/agency-reviews/agency-reviews",
+    "pages/adoption-review/adoption-review"
+  ],
+  "subpackages": [
+    {
+      "root": "packagePet",
+      "pages": [
+        "pages/pet/pet"
+      ]
+    }
   ],
   "window": {
     "backgroundTextStyle": "light",

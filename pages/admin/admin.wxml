@@ -1,17 +1,71 @@
 <!-- pages/admin/admin.wxml -->
-<view class="container">
-  <view class="header">
-    <text class="title">系统管理员</text>
-  </view>
-  
-  <van-grid direction="horizontal" column-num="1" clickable>
-    <van-grid-item icon="friends-o" text="用户管理" />
-    <van-grid-item icon="shop-o" text="机构审核" bindtap="toAgencyAudit" />
-    <van-grid-item icon="orders-o" text="全局订单记录" />
-    <van-grid-item icon="setting-o" text="系统参数设置" />
-  </van-grid>
+<view class="admin-page">
 
-  <view style="margin: 30px 16px;">
-    <van-button block round type="info" plain bindtap="toHome">返回宠主端</van-button>
+  <!-- 顶部管理员卡片 -->
+  <view class="admin-header">
+    <view class="admin-header__content">
+      <view class="admin-avatar-wrap">
+        <van-icon class="admin-avatar-icon" name="manager-o" size="52rpx" color="#fff" />
+      </view>
+      <view class="admin-meta">
+        <text class="admin-name">系统管理员</text>
+        <view class="admin-badge">
+          <van-icon name="shield-o" size="24rpx" color="#E65100" style="margin-right:6rpx;" />
+          <text class="admin-badge__text">管理员</text>
+        </view>
+      </view>
+    </view>
   </view>
+
+  <!-- 数据统计条 -->
+  <view class="stats-bar">
+    <view class="stats-item">
+      <text class="stats-num">{{ totalCount }}</text>
+      <text class="stats-label">机构总数</text>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item">
+      <text class="stats-num">{{ pendingCount }}</text>
+      <text class="stats-label">待审核</text>
+    </view>
+    <view class="stats-divider"></view>
+    <view class="stats-item">
+      <text class="stats-num">{{ approvedCount }}</text>
+      <text class="stats-label">已入驻</text>
+    </view>
+  </view>
+
+  <!-- 管理中心 -->
+  <view class="section-title">管理中心</view>
+  <view class="ops-card">
+    <view class="ops-grid">
+      <view class="ops-item" bindtap="toAudit">
+        <view class="ops-icon-wrap ops-bg-orange">
+          <van-icon name="shop-o" size="40rpx" color="#E65100" />
+        </view>
+        <text class="ops-label">审核机构</text>
+        <text class="ops-desc">入驻审核</text>
+      </view>
+      <view class="ops-item" bindtap="toAgencies">
+        <view class="ops-icon-wrap ops-bg-blue">
+          <van-icon name="apps-o" size="40rpx" color="#1565C0" />
+        </view>
+        <text class="ops-label">机构管理</text>
+        <text class="ops-desc">查看机构</text>
+      </view>
+      <view class="ops-item" bindtap="toDashboard">
+        <view class="ops-icon-wrap ops-bg-green">
+          <van-icon name="bar-chart-o" size="40rpx" color="#2E7D32" />
+        </view>
+        <text class="ops-label">平台数据</text>
+        <text class="ops-desc">数据统计</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 底部按钮 -->
+  <view class="bottom-area">
+    <van-button block round plain type="danger" size="normal" bindtap="handleLogout">退出登录</van-button>
+  </view>
+
 </view>

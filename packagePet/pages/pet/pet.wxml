@@ -1,0 +1,137 @@
+<!-- pages/pet/pet.wxml -->
+<view class="pet-page">
+
+  <!-- 渐变头部 -->
+  <view class="page-header">
+    <view class="page-header__inner">
+      <text class="page-header__title">宠物档案</text>
+      <text class="page-header__sub">记录每一只毛孩的成长点滴</text>
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#FF9800" size="48rpx" />
+  </view>
+
+  <view wx:if="{{!loading}}">
+
+    <!-- 空状态 -->
+    <view wx:if="{{petList.length === 0}}" class="empty-state">
+      <van-icon name="smile-o" size="100rpx" color="#F0E6D8" />
+      <text class="empty-text">还没有宠物档案</text>
+      <text class="empty-hint">点击下方按钮添加您的爱宠</text>
+    </view>
+
+    <!-- 宠物卡片列表 -->
+    <view class="pet-list" wx:if="{{petList.length > 0}}">
+      <view class="pet-card" wx:for="{{petList}}" wx:key="_id" bindtap="onPetTap" data-id="{{item._id}}">
+        <view class="pet-card__avatar">
+          <image wx:if="{{item.photo}}" class="pet-card__avatar-img" src="{{item.photo}}" mode="aspectFill" />
+          <van-icon wx:else name="friends-o" size="48rpx" color="#FF9800" />
+        </view>
+        <view class="pet-card__info">
+          <view class="pet-card__name-row">
+            <text class="pet-card__name">{{item.name}}</text>
+            <view wx:if="{{item.statusConfig}}" class="pet-card__status" style="background:{{item.statusConfig.bg}};color:{{item.statusConfig.color}};">
+              {{item.statusConfig.label}}
+            </view>
+          </view>
+          <text class="pet-card__detail">{{item.species}}{{item.age ? ' · ' + item.age + '岁' : ''}}</text>
+          <text wx:if="{{item.character}}" class="pet-card__char">{{item.character}}</text>
+        </view>
+        <van-icon name="arrow" size="32rpx" color="#C4B8AC" />
+      </view>
+    </view>
+
+    <!-- 添加按钮 -->
+    <view class="add-btn-area">
+      <van-button
+        round
+        block
+        type="{{showForm ? 'default' : 'primary'}}"
+        icon="{{showForm ? 'cross' : 'plus'}}"
+        color="{{showForm ? '' : 'linear-gradient(135deg, #FF9800, #FFB74D)'}}"
+        bindtap="toggleForm"
+      >{{showForm ? '收起' : '添加宠物'}}</van-button>
+    </view>
+
+    <!-- 添加表单 -->
+    <view wx:if="{{showForm}}" class="form-section">
+      <view class="form-card">
+        <text class="form-card__title">{{editingId ? '编辑宠物信息' : '填写宠物信息'}}</text>
+
+        <view class="form-field">
+          <text class="form-field__label">宠物昵称 <text class="form-field__required">*</text></text>
+          <input class="form-field__input" placeholder="请输入宠物姓名" value="{{name}}" bindinput="onNameChange" />
+        </view>
+
+        <view class="form-field">
+          <text class="form-field__label">品种 <text class="form-field__required">*</text></text>
+          <input class="form-field__input" placeholder="如：布偶猫、金毛" value="{{species}}" bindinput="onSpeciesChange" />
+        </view>
+
+        <view class="form-field">
+          <text class="form-field__label">年龄</text>
+          <input class="form-field__input" placeholder="请输入年龄" type="digit" value="{{age}}" bindinput="onAgeChange" />
+        </view>
+
+        <view class="form-field">
+          <text class="form-field__label">性格描述</text>
+          <input class="form-field__input" placeholder="如：活泼、粘人" value="{{character}}" bindinput="onCharacterChange" />
+        </view>
+
+        <view class="form-field">
+          <text class="form-field__label">特殊需求</text>
+          <input class="form-field__input" placeholder="如：需要喂药、不能吃鸡肉" value="{{special}}" bindinput="onSpecialChange" />
+        </view>
+
+        <!-- 头像上传 -->
+        <view class="form-field">
+          <text class="form-field__label">宠物照片</text>
+          <view class="upload-row">
+            <van-uploader file-list="{{fileList}}" bind:after-read="afterRead" max-count="1" />
+            <view class="preset-btn" bindtap="openAvatarPicker">
+              <van-icon name="photo-o" size="36rpx" color="#FF9800" />
+              <text class="preset-btn__text">预设头像</text>
+            </view>
+          </view>
+        </view>
+
+        <van-button
+          type="primary"
+          block
+          round
+          loading="{{saving}}"
+          loading-text="保存中…"
+          color="linear-gradient(135deg, #FF9800, #FFB74D)"
+          bindtap="savePet"
+          custom-style="margin-top: 32rpx;"
+        >{{editingId ? '保存修改' : '保存档案'}}</van-button>
+      </view>
+    </view>
+
+    <!-- 预设头像弹层 -->
+    <van-popup show="{{showAvatarPicker}}" position="bottom" round bind:close="closeAvatarPicker" custom-style="max-height:70vh;">
+      <view class="avatar-popup">
+        <view class="avatar-popup__header">
+          <text class="avatar-popup__title">选择预设头像</text>
+          <van-icon name="cross" size="36rpx" color="#8C7A6B" bindtap="closeAvatarPicker" />
+        </view>
+        <view class="avatar-grid">
+          <view
+            class="avatar-item {{selectedPresetIdx === index ? 'avatar-item--active' : ''}}"
+            wx:for="{{presetAvatars}}"
+            wx:key="name"
+            data-idx="{{index}}"
+            bindtap="onPickAvatar"
+          >
+            <image class="avatar-item__img" src="{{item.src}}" mode="aspectFill" />
+            <text class="avatar-item__name">{{item.name}}</text>
+          </view>
+        </view>
+      </view>
+    </van-popup>
+
+  </view>
+</view>

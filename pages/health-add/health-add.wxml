@@ -1,0 +1,133 @@
+<!-- pages/health-add/health-add.wxml -->
+<view class="add-page">
+
+  <!-- 渐变头部 -->
+  <view class="page-header">
+    <view class="page-header__inner">
+      <text class="page-header__title">添加健康记录</text>
+      <text class="page-header__sub">{{selectedPet.name || ''}}</text>
+    </view>
+  </view>
+
+  <!-- 类型选择 -->
+  <scroll-view class="type-scroll" scroll-x enable-flex>
+    <view
+      class="type-chip {{activeType === item.key ? 'type-chip--active' : ''}}"
+      wx:for="{{typeList}}"
+      wx:key="key"
+      data-key="{{item.key}}"
+      bindtap="onTypeChange"
+    >{{item.label}}</view>
+  </scroll-view>
+
+  <!-- 表单卡片 -->
+  <view class="form-card">
+
+    <!-- 日期选择 -->
+    <view class="form-field">
+      <text class="form-field__label">日期</text>
+      <picker mode="date" value="{{recordDate}}" bindchange="onDateChange">
+        <view class="form-field__picker">
+          <text class="{{recordDate ? 'form-field__value' : 'form-field__placeholder'}}">{{recordDate || '请选择日期'}}</text>
+          <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+        </view>
+      </picker>
+    </view>
+
+    <!-- 体重输入 -->
+    <view class="form-field" wx:if="{{activeType === 'weight'}}">
+      <text class="form-field__label">体重 (kg) <text class="form-field__required">*</text></text>
+      <input class="form-field__input" placeholder="请输入体重" type="digit" value="{{weight}}" bindinput="onWeightChange" />
+    </view>
+
+    <!-- 疫苗输入 -->
+    <block wx:if="{{activeType === 'vaccine'}}">
+      <view class="form-field">
+        <text class="form-field__label">疫苗名称 <text class="form-field__required">*</text></text>
+        <input class="form-field__input" placeholder="如：猫三联、狂犬疫苗" value="{{vaccineName}}" bindinput="onVaccineNameChange" />
+      </view>
+      <view class="form-field">
+        <text class="form-field__label">接种机构</text>
+        <input class="form-field__input" placeholder="请输入接种机构名称" value="{{institution}}" bindinput="onInstitutionChange" />
+      </view>
+      <view class="form-field">
+        <text class="form-field__label">下次接种日期</text>
+        <picker mode="date" value="{{nextDate}}" bindchange="onNextDateChange">
+          <view class="form-field__picker">
+            <text class="{{nextDate ? 'form-field__value' : 'form-field__placeholder'}}">{{nextDate || '请选择日期'}}</text>
+            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+          </view>
+        </picker>
+      </view>
+    </block>
+
+    <!-- 驱虫输入 -->
+    <block wx:if="{{activeType === 'deworming'}}">
+      <view class="form-field">
+        <text class="form-field__label">驱虫药名称 <text class="form-field__required">*</text></text>
+        <input class="form-field__input" placeholder="如：大宠爱、博来恩" value="{{medicineName}}" bindinput="onMedicineNameChange" />
+      </view>
+      <view class="form-field">
+        <text class="form-field__label">下次驱虫日期</text>
+        <picker mode="date" value="{{nextDate}}" bindchange="onNextDateChange">
+          <view class="form-field__picker">
+            <text class="{{nextDate ? 'form-field__value' : 'form-field__placeholder'}}">{{nextDate || '请选择日期'}}</text>
+            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+          </view>
+        </picker>
+      </view>
+    </block>
+
+    <!-- 体检输入 -->
+    <block wx:if="{{activeType === 'checkup'}}">
+      <view class="form-field">
+        <text class="form-field__label">体检机构</text>
+        <input class="form-field__input" placeholder="请输入体检机构名称" value="{{institution}}" bindinput="onInstitutionChange" />
+      </view>
+      <view class="form-field">
+        <text class="form-field__label">体检结果</text>
+        <textarea class="form-field__textarea" placeholder="请输入体检结果" value="{{checkupResult}}" bindinput="onCheckupResultChange" maxlength="500" />
+      </view>
+    </block>
+
+    <!-- 饮食输入 -->
+    <view class="form-field" wx:if="{{activeType === 'food'}}">
+      <text class="form-field__label">饮食情况 <text class="form-field__required">*</text></text>
+      <textarea class="form-field__textarea" placeholder="如：猫粮 50g，零食少量" value="{{foodIntake}}" bindinput="onFoodIntakeChange" maxlength="200" />
+    </view>
+
+    <!-- 备注输入 -->
+    <view class="form-field" wx:if="{{activeType === 'note'}}">
+      <text class="form-field__label">备注内容 <text class="form-field__required">*</text></text>
+      <textarea class="form-field__textarea" placeholder="请输入备注内容" value="{{noteContent}}" bindinput="onNoteContentChange" maxlength="500" />
+    </view>
+
+    <!-- 通用备注 -->
+    <view class="form-field" wx:if="{{activeType !== 'note'}}">
+      <text class="form-field__label">备注</text>
+      <input class="form-field__input" placeholder="可选备注信息" value="{{note}}" bindinput="onNoteChange" />
+    </view>
+
+    <!-- 图片上传 -->
+    <view class="form-field" wx:if="{{activeType === 'checkup' || activeType === 'note'}}">
+      <text class="form-field__label">附件图片</text>
+      <van-uploader file-list="{{fileList}}" bind:after-read="afterRead" bind:delete="deleteImage" max-count="3" />
+    </view>
+
+  </view>
+
+  <!-- 保存按钮 -->
+  <view class="save-area">
+    <van-button
+      type="primary"
+      block
+      round
+      loading="{{saving}}"
+      loading-text="保存中..."
+      color="linear-gradient(135deg, #FF9800, #FFB74D)"
+      bindtap="saveRecord"
+    >保存记录</van-button>
+  </view>
+
+  <view style="height: 40rpx;"></view>
+</view>

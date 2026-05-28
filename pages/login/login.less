@@ -11,7 +11,7 @@
 /* Logo 区域 */
 .header {
   margin-top: 140rpx;
-  margin-bottom: 80rpx;
+  margin-bottom: 60rpx;
   text-align: center;
   display: flex;
   flex-direction: column;
@@ -51,7 +51,7 @@
 
 /* 角色选择 */
 .role-section {
-  margin-bottom: 60rpx;
+  margin-bottom: 48rpx;
 }
 
 .section-title {
@@ -118,37 +118,19 @@
   margin-left: 16rpx;
 }
 
-/* 账号密码区域 */
-.account-section {
-  margin-bottom: 32rpx;
+/* 登录按钮 */
+.login-section {
+  margin-bottom: 60rpx;
 }
 
-.register-row {
-  margin-top: 16rpx;
-  display: flex;
-  justify-content: flex-end;
-  align-items: center;
-}
-
-.register-tip {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.register-link {
-  font-size: 24rpx;
-  color: #FF9800;
-  margin-left: 8rpx;
-}
-
-/* 底部按钮 */
-.footer-btn {
+/* 底部区域 */
+.footer {
   margin-top: auto;
   padding-bottom: 80rpx;
+  position: relative;
 }
 
 .agreement {
-  margin-top: 32rpx;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -163,4 +145,92 @@
   font-size: 24rpx;
   color: #FF9800;
   margin-left: 4rpx;
+}
+
+/* 管理员入口 */
+.admin-entry {
+  position: absolute;
+  right: 0;
+  bottom: 80rpx;
+  font-size: 24rpx;
+  color: #ccc;
+  padding: 8rpx 0;
+}
+
+/* ===== 管理员弹窗 ===== */
+.admin-popup {
+  padding: 48rpx 40rpx 40rpx;
+}
+
+.admin-popup__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.admin-popup__title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+  margin-top: 16rpx;
+}
+
+.admin-popup__form {
+  background: #f7f8fa;
+  border-radius: 16rpx;
+  padding: 0 28rpx;
+}
+
+.admin-popup__row {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+}
+
+.admin-popup__label {
+  font-size: 28rpx;
+  color: #666;
+  width: 80rpx;
+  flex-shrink: 0;
+}
+
+.admin-popup__input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #333;
+  height: 88rpx;
+  line-height: 88rpx;
+}
+
+.admin-popup__divider {
+  height: 1rpx;
+  background: #e8e8e8;
+}
+
+.admin-popup__btns {
+  display: flex;
+  margin-top: 40rpx;
+  gap: 24rpx;
+}
+
+.admin-popup__btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+}
+
+.admin-popup__btn--cancel {
+  background: #f5f5f5;
+  color: #666;
+}
+
+.admin-popup__btn--confirm {
+  background: linear-gradient(135deg, #FF9800, #F57C00);
+  color: #fff;
 }

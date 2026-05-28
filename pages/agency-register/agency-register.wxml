@@ -2,7 +2,7 @@
 <view class="register-page">
   <view class="tip-bar">
     <van-icon name="shield-o" size="30rpx" color="#FF9800"></van-icon>
-    <text class="tip-text">提交后需管理员审核，通过后机构账号可登录</text>
+    <text class="tip-text">{{ isLoggedIn ? '提交后需管理员审核，通过后即可使用机构功能' : '提交后需管理员审核，通过后机构账号可登录' }}</text>
   </view>
 
   <van-cell-group inset title="一、基础入驻信息（必填）">
@@ -38,9 +38,9 @@
     <van-field label="预约方式" placeholder="例如：电话/微信/小程序" value="{{ form.appointmentMethod }}" bind:change="onAppointmentMethodChange"></van-field>
   </van-cell-group>
 
-  <van-cell-group inset title="四、账号与权限信息" style="margin-top: 24rpx;">
-    <van-field label="机构登录账号" required placeholder="用于机构登录" value="{{ form.account }}" bind:change="onAccountChange"></van-field>
-    <van-field label="登录密码" required password placeholder="请输入密码（至少6位）" value="{{ form.password }}" bind:change="onPasswordChange"></van-field>
+  <van-cell-group inset title="{{ isLoggedIn ? '四、补充信息' : '四、账号与权限信息' }}" style="margin-top: 24rpx;">
+    <van-field wx:if="{{ !isLoggedIn }}" label="机构登录账号" required placeholder="用于机构登录" value="{{ form.account }}" bind:change="onAccountChange"></van-field>
+    <van-field wx:if="{{ !isLoggedIn }}" label="登录密码" required password placeholder="请输入密码（至少6位）" value="{{ form.password }}" bind:change="onPasswordChange"></van-field>
     <van-field label="紧急联系人" placeholder="请输入紧急联系人姓名" value="{{ form.emergencyContact }}" bind:change="onEmergencyContactChange"></van-field>
     <van-field label="备用电话" type="number" placeholder="请输入备用电话" value="{{ form.backupPhone }}" bind:change="onBackupPhoneChange"></van-field>
     <van-field label="机构简介" type="textarea" autosize="{{ { minHeight: 80 } }}" placeholder="机构介绍、服务优势" value="{{ form.orgIntro }}" bind:change="onOrgIntroChange"></van-field>
@@ -49,7 +49,7 @@
 
   <view class="submit-area">
     <van-button type="primary" block round loading="{{ submitting }}" loading-text="提交中..." color="linear-gradient(135deg, #FF9800, #FFB74D)" bindtap="submit">
-      提交入驻申请
+      {{ isLoggedIn ? '提交注册申请' : '提交入驻申请' }}
     </van-button>
   </view>
 </view>

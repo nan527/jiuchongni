@@ -1,0 +1,321 @@
+<h2>宠物主人"我的"页面 UI 重新设计</h2>
+<p class="subtitle">三种设计方案对比 — 请选择你喜欢的风格方向</p>
+
+<div class="cards">
+  <!-- 方案A: 当前设计 -->
+  <div class="card" data-choice="current" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0; overflow:hidden;">
+      <div style="width:300px; height:560px; background:#FFF8F0; margin:0 auto; font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif; position:relative; overflow:hidden;">
+        <!-- Header -->
+        <div style="background:linear-gradient(135deg,#FF9800,#FFB74D); padding:36px 20px 48px; border-radius:0 0 28px 28px;">
+          <div style="display:flex;align-items:center;">
+            <div style="width:56px;height:56px;border-radius:50%;background:rgba(255,255,255,0.4);border:3px solid rgba(255,255,255,0.8);"></div>
+            <div style="margin-left:14px;">
+              <div style="color:#fff;font-size:18px;font-weight:700;">小明的主人</div>
+              <div style="margin-top:4px;background:rgba(255,255,255,0.25);border-radius:10px;padding:2px 10px;display:inline-block;">
+                <span style="color:#fff;font-size:11px;">宠主</span>
+              </div>
+            </div>
+            <div style="margin-left:auto;color:rgba(255,255,255,0.6);font-size:14px;">›</div>
+          </div>
+        </div>
+        <!-- Quick Grid -->
+        <div style="display:flex;flex-wrap:wrap;margin:-16px 14px 0;position:relative;z-index:1;">
+          <div style="width:calc(50% - 6px);background:#FFFAF5;border-radius:14px;padding:20px 0;text-align:center;box-shadow:0 2px 8px rgba(61,44,30,0.06);margin-bottom:12px;margin-right:12px;">
+            <div style="font-size:24px;">📋</div>
+            <div style="font-size:13px;color:#3D2C1E;font-weight:500;margin-top:6px;">我的订单</div>
+          </div>
+          <div style="width:calc(50% - 6px);background:#FFFAF5;border-radius:14px;padding:20px 0;text-align:center;box-shadow:0 2px 8px rgba(61,44,30,0.06);margin-bottom:12px;">
+            <div style="font-size:24px;">🐾</div>
+            <div style="font-size:13px;color:#3D2C1E;font-weight:500;margin-top:6px;">宠物档案</div>
+          </div>
+          <div style="width:calc(50% - 6px);background:#FFFAF5;border-radius:14px;padding:20px 0;text-align:center;box-shadow:0 2px 8px rgba(61,44,30,0.06);margin-bottom:12px;margin-right:12px;">
+            <div style="font-size:24px;">🏠</div>
+            <div style="font-size:13px;color:#3D2C1E;font-weight:500;margin-top:6px;">寄养中心</div>
+          </div>
+          <div style="width:calc(50% - 6px);background:#FFFAF5;border-radius:14px;padding:20px 0;text-align:center;box-shadow:0 2px 8px rgba(61,44,30,0.06);margin-bottom:12px;">
+            <div style="font-size:24px;">💚</div>
+            <div style="font-size:13px;color:#3D2C1E;font-weight:500;margin-top:6px;">健康管理</div>
+          </div>
+        </div>
+        <!-- Services -->
+        <div style="margin:8px 14px 0;">
+          <div style="font-size:14px;font-weight:700;color:#3D2C1E;margin-bottom:10px;">我的服务</div>
+          <div style="display:flex;gap:12px;">
+            <div style="flex:1;background:#FFFAF5;border-radius:14px;padding:20px 0;text-align:center;box-shadow:0 2px 8px rgba(61,44,30,0.06);">
+              <div style="font-size:22px;">💬</div>
+              <div style="font-size:13px;color:#3D2C1E;margin-top:6px;">我的帖子</div>
+            </div>
+            <div style="flex:1;background:#FFFAF5;border-radius:14px;padding:20px 0;text-align:center;box-shadow:0 2px 8px rgba(61,44,30,0.06);">
+              <div style="font-size:22px;">🗨️</div>
+              <div style="font-size:13px;color:#3D2C1E;margin-top:6px;">宠物社区</div>
+            </div>
+          </div>
+        </div>
+        <!-- Logout -->
+        <div style="margin:20px 14px 0;">
+          <div style="border:1px solid #E53935;color:#E53935;border-radius:20px;padding:10px;text-align:center;font-size:14px;">退出登录</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>A. 当前设计（基准）</h3>
+      <p>现有布局：渐变头部 + 2×2快捷入口 + 服务卡片。功能完整但视觉层次单一，缺少数据展示和个人化元素。</p>
+    </div>
+  </div>
+
+  <!-- 方案B: 增强版 -->
+  <div class="card" data-choice="enhanced" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0; overflow:hidden;">
+      <div style="width:300px; height:560px; background:#FFF8F0; margin:0 auto; font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif; position:relative; overflow:hidden;">
+        <!-- Header with stats -->
+        <div style="background:linear-gradient(135deg,#FF9800,#FFB74D); padding:32px 20px 56px; border-radius:0 0 32px 32px; position:relative;">
+          <div style="display:flex;align-items:center;">
+            <div style="width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,0.4);border:3px solid rgba(255,255,255,0.9);box-shadow:0 4px 12px rgba(0,0,0,0.1);"></div>
+            <div style="margin-left:14px;flex:1;">
+              <div style="color:#fff;font-size:19px;font-weight:700;">小明的主人</div>
+              <div style="margin-top:5px;display:flex;gap:6px;">
+                <span style="background:rgba(255,255,255,0.25);border-radius:10px;padding:2px 10px;color:#fff;font-size:11px;">宠主</span>
+                <span style="background:rgba(255,255,255,0.2);border-radius:10px;padding:2px 8px;color:rgba(255,255,255,0.9);font-size:10px;">Lv.3</span>
+              </div>
+            </div>
+            <div style="width:36px;height:36px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:16px;">⚙️</span>
+            </div>
+          </div>
+          <!-- Stats row -->
+          <div style="display:flex;justify-content:space-around;margin-top:20px;background:rgba(255,255,255,0.15);border-radius:16px;padding:12px 0;">
+            <div style="text-align:center;">
+              <div style="color:#fff;font-size:20px;font-weight:700;">3</div>
+              <div style="color:rgba(255,255,255,0.8);font-size:10px;margin-top:2px;">我的宠物</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,0.2);"></div>
+            <div style="text-align:center;">
+              <div style="color:#fff;font-size:20px;font-weight:700;">12</div>
+              <div style="color:rgba(255,255,255,0.8);font-size:10px;margin-top:2px;">历史订单</div>
+            </div>
+            <div style="width:1px;background:rgba(255,255,255,0.2);"></div>
+            <div style="text-align:center;">
+              <div style="color:#fff;font-size:20px;font-weight:700;">5</div>
+              <div style="color:rgba(255,255,255,0.8);font-size:10px;margin-top:2px;">我的帖子</div>
+            </div>
+          </div>
+        </div>
+        <!-- Order status bar -->
+        <div style="margin:-20px 14px 0;background:#FFFAF5;border-radius:16px;padding:14px 16px;box-shadow:0 4px 16px rgba(61,44,30,0.08);position:relative;z-index:1;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span style="font-size:14px;font-weight:700;color:#3D2C1E;">我的订单</span>
+            <span style="font-size:11px;color:#8C7A6B;">查看全部 ›</span>
+          </div>
+          <div style="display:flex;justify-content:space-around;">
+            <div style="text-align:center;">
+              <div style="font-size:20px;position:relative;">💳<span style="position:absolute;top:-4px;right:-8px;background:#FF5722;color:#fff;font-size:9px;border-radius:8px;padding:0 4px;min-width:14px;text-align:center;">2</span></div>
+              <div style="font-size:10px;color:#8C7A6B;margin-top:4px;">待付款</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:20px;">📦</div>
+              <div style="font-size:10px;color:#8C7A6B;margin-top:4px;">待接单</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:20px;">🚚</div>
+              <div style="font-size:10px;color:#8C7A6B;margin-top:4px;">进行中</div>
+            </div>
+            <div style="text-align:center;">
+              <div style="font-size:20px;">⭐</div>
+              <div style="font-size:10px;color:#8C7A6B;margin-top:4px;">待评价</div>
+            </div>
+          </div>
+        </div>
+        <!-- Service grid -->
+        <div style="margin:16px 14px 0;">
+          <div style="font-size:14px;font-weight:700;color:#3D2C1E;margin-bottom:10px;">常用功能</div>
+          <div style="display:flex;flex-wrap:wrap;gap:10px;">
+            <div style="width:calc(25% - 8px);text-align:center;">
+              <div style="width:44px;height:44px;background:linear-gradient(135deg,#FFF3E0,#FFE0B2);border-radius:14px;margin:0 auto;display:flex;align-items:center;justify-content:center;"><span style="font-size:20px;">🐾</span></div>
+              <div style="font-size:11px;color:#3D2C1E;margin-top:5px;">宠物档案</div>
+            </div>
+            <div style="width:calc(25% - 8px);text-align:center;">
+              <div style="width:44px;height:44px;background:linear-gradient(135deg,#E8F5E9,#C8E6C9);border-radius:14px;margin:0 auto;display:flex;align-items:center;justify-content:center;"><span style="font-size:20px;">🏠</span></div>
+              <div style="font-size:11px;color:#3D2C1E;margin-top:5px;">寄养中心</div>
+            </div>
+            <div style="width:calc(25% - 8px);text-align:center;">
+              <div style="width:44px;height:44px;background:linear-gradient(135deg,#F3E5F5,#E1BEE7);border-radius:14px;margin:0 auto;display:flex;align-items:center;justify-content:center;"><span style="font-size:20px;">💊</span></div>
+              <div style="font-size:11px;color:#3D2C1E;margin-top:5px;">健康管理</div>
+            </div>
+            <div style="width:calc(25% - 8px);text-align:center;">
+              <div style="width:44px;height:44px;background:linear-gradient(135deg,#E3F2FD,#BBDEFB);border-radius:14px;margin:0 auto;display:flex;align-items:center;justify-content:center;"><span style="font-size:20px;">💬</span></div>
+              <div style="font-size:11px;color:#3D2C1E;margin-top:5px;">我的帖子</div>
+            </div>
+          </div>
+        </div>
+        <!-- Tools -->
+        <div style="margin:16px 14px 0;">
+          <div style="font-size:14px;font-weight:700;color:#3D2C1E;margin-bottom:10px;">更多工具</div>
+          <div style="background:#FFFAF5;border-radius:14px;overflow:hidden;box-shadow:0 2px 8px rgba(61,44,30,0.04);">
+            <div style="display:flex;align-items:center;padding:14px 16px;border-bottom:1px solid #F0E6D8;">
+              <span style="font-size:18px;margin-right:12px;">🗨️</span>
+              <span style="font-size:13px;color:#3D2C1E;flex:1;">宠物社区</span>
+              <span style="color:#C4B8AC;font-size:12px;">›</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:14px 16px;">
+              <span style="font-size:18px;margin-right:12px;">📞</span>
+              <span style="font-size:13px;color:#3D2C1E;flex:1;">联系客服</span>
+              <span style="color:#C4B8AC;font-size:12px;">›</span>
+            </div>
+          </div>
+        </div>
+        <!-- Logout -->
+        <div style="margin:20px 14px 0;">
+          <div style="background:rgba(229,57,53,0.06);color:#E53935;border-radius:14px;padding:12px;text-align:center;font-size:14px;font-weight:500;">退出登录</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>B. 增强版（推荐）</h3>
+      <p>增加数据统计条、订单状态快捷入口、渐变图标背景、列表式更多工具。信息密度更高，视觉层次更丰富，但保持温暖风格一致性。</p>
+    </div>
+  </div>
+
+  <!-- 方案C: 精致版 -->
+  <div class="card" data-choice="premium" onclick="toggleSelect(this)">
+    <div class="card-image" style="padding:0; overflow:hidden;">
+      <div style="width:300px; height:560px; background:#FFF8F0; margin:0 auto; font-family:-apple-system,BlinkMacSystemFont,'PingFang SC',sans-serif; position:relative; overflow:hidden;">
+        <!-- Large header with wave -->
+        <div style="background:linear-gradient(135deg,#FF9800,#FFB74D); padding:32px 20px 64px; border-radius:0 0 36px 36px; position:relative;">
+          <!-- Top bar -->
+          <div style="display:flex;justify-content:flex-end;gap:12px;margin-bottom:16px;">
+            <div style="width:30px;height:30px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:14px;">🔔</span>
+            </div>
+            <div style="width:30px;height:30px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;">
+              <span style="font-size:14px;">⚙️</span>
+            </div>
+          </div>
+          <!-- User info centered -->
+          <div style="text-align:center;">
+            <div style="width:72px;height:72px;border-radius:50%;background:rgba(255,255,255,0.4);border:4px solid rgba(255,255,255,0.9);margin:0 auto;box-shadow:0 6px 20px rgba(0,0,0,0.12);"></div>
+            <div style="color:#fff;font-size:20px;font-weight:700;margin-top:12px;">小明的主人</div>
+            <div style="margin-top:6px;display:flex;justify-content:center;gap:8px;">
+              <span style="background:rgba(255,255,255,0.25);border-radius:12px;padding:3px 14px;color:#fff;font-size:12px;">宠主</span>
+              <span style="background:rgba(255,255,255,0.2);border-radius:12px;padding:3px 10px;color:rgba(255,255,255,0.9);font-size:11px;">Lv.3 · 328积分</span>
+            </div>
+          </div>
+        </div>
+        <!-- Stats card overlapping -->
+        <div style="margin:-28px 14px 0;background:#FFFAF5;border-radius:20px;padding:18px 0;box-shadow:0 6px 24px rgba(61,44,30,0.1);position:relative;z-index:1;display:flex;justify-content:space-around;">
+          <div style="text-align:center;">
+            <div style="color:#FF9800;font-size:22px;font-weight:700;">3</div>
+            <div style="color:#8C7A6B;font-size:11px;margin-top:3px;">宠物</div>
+          </div>
+          <div style="width:1px;background:#F0E6D8;"></div>
+          <div style="text-align:center;">
+            <div style="color:#FF9800;font-size:22px;font-weight:700;">12</div>
+            <div style="color:#8C7A6B;font-size:11px;margin-top:3px;">订单</div>
+          </div>
+          <div style="width:1px;background:#F0E6D8;"></div>
+          <div style="text-align:center;">
+            <div style="color:#FF9800;font-size:22px;font-weight:700;">5</div>
+            <div style="color:#8C7A6B;font-size:11px;margin-top:3px;">帖子</div>
+          </div>
+          <div style="width:1px;background:#F0E6D8;"></div>
+          <div style="text-align:center;">
+            <div style="color:#FF9800;font-size:22px;font-weight:700;">28</div>
+            <div style="color:#8C7A6B;font-size:11px;margin-top:3px;">获赞</div>
+          </div>
+        </div>
+        <!-- Order shortcuts -->
+        <div style="margin:14px 14px 0;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+            <span style="font-size:14px;font-weight:700;color:#3D2C1E;">我的订单</span>
+            <span style="font-size:11px;color:#FF9800;">全部订单 ›</span>
+          </div>
+          <div style="display:flex;gap:10px;">
+            <div style="flex:1;background:#FFFAF5;border-radius:14px;padding:14px 0;text-align:center;box-shadow:0 2px 8px rgba(61,44,30,0.04);position:relative;">
+              <span style="position:absolute;top:6px;right:10px;background:#FF5722;color:#fff;font-size:9px;border-radius:8px;padding:0 5px;min-width:16px;text-align:center;">2</span>
+              <div style="font-size:20px;">💳</div>
+              <div style="font-size:10px;color:#8C7A6B;margin-top:4px;">待付款</div>
+            </div>
+            <div style="flex:1;background:#FFFAF5;border-radius:14px;padding:14px 0;text-align:center;box-shadow:0 2px 8px rgba(61,44,30,0.04);">
+              <div style="font-size:20px;">📦</div>
+              <div style="font-size:10px;color:#8C7A6B;margin-top:4px;">待接单</div>
+            </div>
+            <div style="flex:1;background:#FFFAF5;border-radius:14px;padding:14px 0;text-align:center;box-shadow:0 2px 8px rgba(61,44,30,0.04);">
+              <div style="font-size:20px;">🚚</div>
+              <div style="font-size:10px;color:#8C7A6B;margin-top:4px;">进行中</div>
+            </div>
+            <div style="flex:1;background:#FFFAF5;border-radius:14px;padding:14px 0;text-align:center;box-shadow:0 2px 8px rgba(61,44,30,0.04);">
+              <div style="font-size:20px;">⭐</div>
+              <div style="font-size:10px;color:#8C7A6B;margin-top:4px;">待评价</div>
+            </div>
+          </div>
+        </div>
+        <!-- Service menu style -->
+        <div style="margin:14px 14px 0;">
+          <div style="font-size:14px;font-weight:700;color:#3D2C1E;margin-bottom:10px;">我的服务</div>
+          <div style="background:#FFFAF5;border-radius:16px;overflow:hidden;box-shadow:0 2px 10px rgba(61,44,30,0.05);">
+            <div style="display:flex;align-items:center;padding:15px 16px;border-bottom:1px solid #F0E6D8;">
+              <div style="width:36px;height:36px;background:linear-gradient(135deg,#FFF3E0,#FFE0B2);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:12px;"><span style="font-size:18px;">🐾</span></div>
+              <span style="font-size:14px;color:#3D2C1E;flex:1;font-weight:500;">宠物档案</span>
+              <span style="color:#C4B8AC;font-size:14px;">›</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:15px 16px;border-bottom:1px solid #F0E6D8;">
+              <div style="width:36px;height:36px;background:linear-gradient(135deg,#E8F5E9,#C8E6C9);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:12px;"><span style="font-size:18px;">🏠</span></div>
+              <span style="font-size:14px;color:#3D2C1E;flex:1;font-weight:500;">寄养中心</span>
+              <span style="color:#C4B8AC;font-size:14px;">›</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:15px 16px;border-bottom:1px solid #F0E6D8;">
+              <div style="width:36px;height:36px;background:linear-gradient(135deg,#F3E5F5,#E1BEE7);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:12px;"><span style="font-size:18px;">💊</span></div>
+              <span style="font-size:14px;color:#3D2C1E;flex:1;font-weight:500;">健康管理</span>
+              <span style="color:#C4B8AC;font-size:14px;">›</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:15px 16px;border-bottom:1px solid #F0E6D8;">
+              <div style="width:36px;height:36px;background:linear-gradient(135deg,#E3F2FD,#BBDEFB);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:12px;"><span style="font-size:18px;">💬</span></div>
+              <span style="font-size:14px;color:#3D2C1E;flex:1;font-weight:500;">我的帖子</span>
+              <span style="color:#C4B8AC;font-size:14px;">›</span>
+            </div>
+            <div style="display:flex;align-items:center;padding:15px 16px;">
+              <div style="width:36px;height:36px;background:linear-gradient(135deg,#FFF8E1,#FFECB3);border-radius:10px;display:flex;align-items:center;justify-content:center;margin-right:12px;"><span style="font-size:18px;">🗨️</span></div>
+              <span style="font-size:14px;color:#3D2C1E;flex:1;font-weight:500;">宠物社区</span>
+              <span style="color:#C4B8AC;font-size:14px;">›</span>
+            </div>
+          </div>
+        </div>
+        <!-- Logout -->
+        <div style="margin:18px 14px 0;">
+          <div style="background:rgba(229,57,53,0.06);color:#E53935;border-radius:14px;padding:12px;text-align:center;font-size:14px;font-weight:500;">退出登录</div>
+        </div>
+      </div>
+    </div>
+    <div class="card-body">
+      <h3>C. 精致版</h3>
+      <p>居中头像布局、四维数据统计、订单状态角标、列表式服务菜单。更精致大气，类似小红书/美团个人中心风格，适合追求品质感的用户。</p>
+    </div>
+  </div>
+</div>
+
+<div style="margin-top:32px; padding:20px; background:#FFF3E0; border-radius:12px;">
+  <h3 style="margin-top:0; color:#3D2C1E;">设计要点说明</h3>
+  <div style="display:flex; gap:20px; flex-wrap:wrap;">
+    <div style="flex:1; min-width:200px;">
+      <h4 style="color:#FF9800; margin-bottom:8px;">B. 增强版特点</h4>
+      <ul style="font-size:14px; color:#3D2C1E; line-height:1.8; padding-left:20px; margin:0;">
+        <li>头部增加数据统计条（宠物/订单/帖子数）</li>
+        <li>订单状态快捷入口带角标提醒</li>
+        <li>4列渐变图标网格（常用功能）</li>
+        <li>列表式更多工具（社区、客服）</li>
+        <li>信息密度适中，不显拥挤</li>
+      </ul>
+    </div>
+    <div style="flex:1; min-width:200px;">
+      <h4 style="color:#FF9800; margin-bottom:8px;">C. 精致版特点</h4>
+      <ul style="font-size:14px; color:#3D2C1E; line-height:1.8; padding-left:20px; margin:0;">
+        <li>居中大头像 + 积分等级展示</li>
+        <li>顶部通知/设置图标按钮</li>
+        <li>四维数据统计卡片（含获赞数）</li>
+        <li>订单状态角标实时提醒</li>
+        <li>列表式服务菜单，每项带渐变图标</li>
+        <li>整体更精致大气，适合品质感定位</li>
+      </ul>
+    </div>
+  </div>
+</div>

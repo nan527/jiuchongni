@@ -13,7 +13,6 @@
   <!-- 角色选择 -->
   <view class="role-section">
     <view class="section-title">请选择您的身份</view>
-
     <van-radio-group value="{{ role }}" bind:change="onRoleChange">
       <view
         wx:for="{{ roles }}"
@@ -23,109 +22,39 @@
         bindtap="onRoleClick"
       >
         <view class="role-card__left">
-          <van-icon name="{{ item.icon }}" size="48rpx" color="{{ role === item.value ? '#FF9800' : '#999' }}"></van-icon>
+          <van-icon name="{{ item.icon }}" size="48rpx" color="{{ role === item.value ? '#FF9800' : '#999' }}" />
         </view>
         <view class="role-card__center">
           <text class="role-card__label">{{ item.label }}</text>
           <text class="role-card__desc">{{ item.desc }}</text>
         </view>
         <view class="role-card__right">
-          <van-radio name="{{ item.value }}" checked-color="#FF9800"></van-radio>
+          <van-radio name="{{ item.value }}" checked-color="#FF9800" />
         </view>
       </view>
     </van-radio-group>
   </view>
 
-  <!-- 宠主登录方式切换 -->
-  <view class="login-mode-tabs" wx:if="{{ role === 'pet_owner' }}" style="display:flex;flex-direction:row;align-items:center;justify-content:space-between;">
-    <view class="mode-tab {{ loginMode === 'wechat' ? 'mode-tab--active' : '' }}" bindtap="switchToWechat" style="display:flex;flex-direction:row;align-items:center;justify-content:center;width:50%;">
-      <view class="mode-tab__icon">
-        <van-icon name="wechat" size="36rpx" color="{{ loginMode === 'wechat' ? '#07c160' : '#999' }}"></van-icon>
-      </view>
-      <text class="mode-tab__text">微信登录</text>
-    </view>
-    <view class="mode-tab {{ loginMode === 'account' ? 'mode-tab--active' : '' }}" bindtap="switchToAccount" style="display:flex;flex-direction:row;align-items:center;justify-content:center;width:50%;">
-      <view class="mode-tab__icon">
-        <van-icon name="user-o" size="36rpx" color="{{ loginMode === 'account' ? '#FF9800' : '#999' }}"></van-icon>
-      </view>
-      <text class="mode-tab__text">账号登录</text>
-    </view>
+  <!-- 微信登录按钮 -->
+  <view class="login-section">
+    <van-button
+      type="primary"
+      block
+      round
+      size="large"
+      loading="{{ logging }}"
+      loading-text="登录中…"
+      color="#07c160"
+      bindtap="login"
+      custom-style="font-size:34rpx;font-weight:700;letter-spacing:4rpx;height:96rpx;"
+    >
+      <van-icon name="wechat" size="44rpx" color="#fff" custom-style="margin-right:12rpx;vertical-align:middle;" />
+      微信一键登录
+    </van-button>
   </view>
 
-  <!-- 账号密码表单（宠主账号模式 / 机构 / 管理员） -->
-  <view class="account-section" wx:if="{{ role !== 'pet_owner' || loginMode === 'account' }}">
-    <van-cell-group inset>
-      <van-field
-        label="登录账号"
-        placeholder="请输入账号"
-        value="{{ account }}"
-        bind:change="onAccountChange"
-      ></van-field>
-      <van-field
-        label="登录密码"
-        placeholder="请输入密码"
-        password
-        value="{{ password }}"
-        bind:change="onPasswordChange"
-      ></van-field>
-    </van-cell-group>
-
-    <view class="register-row" wx:if="{{ role === 'pet_owner' && loginMode === 'account' && !showRegister }}">
-      <text class="register-tip">还没有账号？</text>
-      <text class="register-link" bindtap="toggleRegister">注册宠主账号</text>
-    </view>
-    <view class="register-row" wx:if="{{ role === 'agency' }}">
-      <text class="register-tip">还没有机构账号？</text>
-      <text class="register-link" bindtap="toAgencyRegister">去注册机构</text>
-    </view>
-  </view>
-
-  <!-- 宠主注册表单（展开） -->
-  <view class="account-section" wx:if="{{ showRegister }}">
-    <view class="register-form-title">注册宠主账号</view>
-    <van-cell-group inset>
-      <van-field
-        label="账号"
-        placeholder="至少3个字符"
-        value="{{ regAccount }}"
-        bind:change="onRegAccountChange"
-      ></van-field>
-      <van-field
-        label="密码"
-        placeholder="至少6个字符"
-        password
-        value="{{ regPassword }}"
-        bind:change="onRegPasswordChange"
-      ></van-field>
-      <van-field
-        label="昵称"
-        placeholder="选填，默认为宠物主人"
-        value="{{ regNickname }}"
-        bind:change="onRegNicknameChange"
-      ></van-field>
-    </van-cell-group>
-    <view class="register-actions">
-      <van-button size="small" round plain bindtap="toggleRegister" custom-style="flex:1;margin-right:16rpx;">取消</van-button>
-      <van-button size="small" round type="primary" color="#FF9800" loading="{{ registering }}" bindtap="doRegister" custom-style="flex:1;">注册</van-button>
-    </view>
-  </view>
-
-  <!-- 底部按钮区 -->
-  <view class="footer-btn">
-    <view class="login-btn-wrap">
-      <van-button
-        type="primary"
-        block
-        round
-        size="large"
-        loading="{{ logging }}"
-        loading-text="登录中…"
-        color="linear-gradient(135deg, #FF9800, #F57C00)"
-        bindtap="login"
-        custom-style="font-size:34rpx;font-weight:700;letter-spacing:4rpx;height:96rpx;"
-      >{{ loginBtnText }}</van-button>
-    </view>
-
+  <!-- 底部区域 -->
+  <view class="footer">
     <view class="agreement">
       <van-checkbox
         value="{{ isCheck }}"
@@ -137,6 +66,37 @@
       </van-checkbox>
       <text class="agreement__link" bindtap="viewAgreement">《服务协议》</text>
     </view>
+
+    <!-- 管理员入口 -->
+    <text class="admin-entry" bindtap="showAdminLogin">管理员</text>
   </view>
+
+  <!-- 管理员登录弹窗 -->
+  <van-popup show="{{ showAdmin }}" position="center" round bind:close="closeAdminLogin" custom-style="width:85vw;overflow:hidden;">
+    <view class="admin-popup">
+      <view class="admin-popup__header">
+        <van-icon name="manager-o" size="48rpx" color="#FF9800" />
+        <text class="admin-popup__title">管理员登录</text>
+      </view>
+      <view class="admin-popup__form">
+        <view class="admin-popup__row">
+          <text class="admin-popup__label">账号</text>
+          <input class="admin-popup__input" placeholder="请输入管理员账号" value="{{ adminAccount }}" bindinput="onAdminAccountChange" />
+        </view>
+        <view class="admin-popup__divider"></view>
+        <view class="admin-popup__row">
+          <text class="admin-popup__label">密码</text>
+          <input class="admin-popup__input" placeholder="请输入密码" password value="{{ adminPassword }}" bindinput="onAdminPasswordChange" />
+        </view>
+      </view>
+      <view class="admin-popup__btns">
+        <view class="admin-popup__btn admin-popup__btn--cancel" bindtap="closeAdminLogin">取消</view>
+        <view class="admin-popup__btn admin-popup__btn--confirm" bindtap="adminLogin">
+          <text wx:if="{{ !adminLogging }}">登 录</text>
+          <van-loading wx:else size="28rpx" color="#fff" />
+        </view>
+      </view>
+    </view>
+  </van-popup>
 
 </view>

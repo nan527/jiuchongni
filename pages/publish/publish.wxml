@@ -1,62 +1,79 @@
 <!-- pages/publish/publish.wxml -->
 <view class="publish-page">
 
-  <!-- 页面标题 -->
-  <view class="page-title">
-    <text class="page-title__text">发布您感兴趣的内容</text>
+  <!-- 渐变头部 -->
+  <view class="page-header">
+    <view class="page-header__inner">
+      <text class="page-header__title">发布</text>
+      <text class="page-header__sub">为您的宠物找到最好的归宿</text>
+    </view>
   </view>
 
-  <!-- 发布选项卡片 -->
-  <view class="pub-card" bindtap="toCreatePost">
-    <view class="pub-card__icon pub-card__icon--post">
-      <image src="/static/tab-forum-orange.png" mode="aspectFit" class="pub-card__icon-img"></image>
-    </view>
-    <view class="pub-card__info">
-      <text class="pub-card__title">发布帖子</text>
-      <text class="pub-card__desc">分享你和宠物的日常故事</text>
-    </view>
-    <van-button round size="small" color="#FF9800" custom-style="min-width: 140rpx;" bindtap="toCreatePost">去发布</van-button>
-  </view>
-
-  <view class="pub-card" bindtap="toAdopt">
-    <view class="pub-card__icon pub-card__icon--find">
-      <image src="/static/tab-ask-orange.png" mode="aspectFit" class="pub-card__icon-img"></image>
-    </view>
-    <view class="pub-card__info">
-      <text class="pub-card__title">发布送养</text>
-      <text class="pub-card__desc">为宠物找一个温暖的新家</text>
-    </view>
-    <van-button round size="small" color="#FF9800" custom-style="min-width: 140rpx;" bindtap="toAdopt">去发布</van-button>
-  </view>
-
-  <view class="pub-card" bindtap="toFoster">
-    <view class="pub-card__icon pub-card__icon--foster">
-      <image src="/static/tab-cart-orange.png" mode="aspectFit" class="pub-card__icon-img"></image>
-    </view>
-    <view class="pub-card__info">
-      <text class="pub-card__title">发布寄养</text>
-      <text class="pub-card__desc">请填写真实宠物信息和个人信息</text>
-    </view>
-    <van-button round size="small" color="#FF9800" custom-style="min-width: 140rpx;" bindtap="toFoster">去发布</van-button>
-  </view>
-
-  <!-- 快捷入口 -->
-  <view class="quick-section">
-    <view class="quick-title">快捷入口</view>
-    <view class="quick-grid">
-      <view class="quick-item" bindtap="toForum">
-        <image src="/static/tab-forum-orange.png" mode="aspectFit" class="quick-icon"></image>
-        <text class="quick-label">宠物社区</text>
+  <!-- 发布选项 -->
+  <view class="publish-options">
+    <view class="publish-option" bindtap="toCreatePost">
+      <view class="publish-option__icon publish-option__icon--orange">
+        <van-icon name="edit" size="44rpx" color="#F57C00" />
       </view>
-      <view class="quick-item" bindtap="toPetArchive">
-        <image src="/static/tab-pet-orange.png" mode="aspectFit" class="quick-icon"></image>
-        <text class="quick-label">宠物档案</text>
+      <text class="publish-option__name">发布帖子</text>
+      <text class="publish-option__desc">分享养宠日常</text>
+    </view>
+    <view class="publish-option" bindtap="toAdopt">
+      <view class="publish-option__icon publish-option__icon--green">
+        <van-icon name="friends-o" size="44rpx" color="#2E7D32" />
       </view>
-      <view class="quick-item" bindtap="toMyPosts">
-        <image src="/static/tab-cate-orange.png" mode="aspectFit" class="quick-icon"></image>
-        <text class="quick-label">我的帖子</text>
+      <text class="publish-option__name">发布送养</text>
+      <text class="publish-option__desc">为宠物找新家</text>
+    </view>
+    <view class="publish-option" bindtap="toFoster">
+      <view class="publish-option__icon publish-option__icon--blue">
+        <van-icon name="home-o" size="44rpx" color="#1565C0" />
+      </view>
+      <text class="publish-option__name">发布寄养</text>
+      <text class="publish-option__desc">寻求寄养帮助</text>
+    </view>
+  </view>
+
+  <!-- 最新信息 -->
+  <view class="section-header">
+    <text class="section-header__title">最新寄养/送养</text>
+    <view class="section-header__more" bindtap="toFosterCenter">
+      <text class="section-header__more-text">查看更多</text>
+      <van-icon name="arrow" size="24rpx" color="#8C7A6B" />
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#FF9800" size="48rpx" />
+  </view>
+
+  <!-- 信息列表 -->
+  <view class="listing-list" wx:if="{{!loading && listingList.length > 0}}">
+    <view class="listing-card" wx:for="{{listingList}}" wx:key="_id" bindtap="onListingTap" data-id="{{item._id}}" data-type="{{item.type}}">
+      <image class="listing-card__img" src="{{item.images[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
+      <view class="listing-card__body">
+        <view class="listing-card__top">
+          <text class="listing-card__name">{{item.petName}}</text>
+          <view class="listing-card__tag listing-card__tag--{{item.type}}">{{item.type === 'foster' ? '寄养' : '送养'}}</view>
+        </view>
+        <text class="listing-card__breed">{{item.breed || '未知品种'}}{{item.age ? ' · ' + item.age + '岁' : ''}}</text>
+        <view class="listing-card__bottom">
+          <view class="listing-card__author">
+            <image wx:if="{{item.authorAvatar}}" class="listing-card__avatar" src="{{item.authorAvatar}}" mode="aspectFill" />
+            <text class="listing-card__author-name">{{item.authorName || '匿名'}}</text>
+          </view>
+          <text class="listing-card__date">{{item.createTimeStr}}</text>
+        </view>
       </view>
     </view>
   </view>
 
+  <!-- 空状态 -->
+  <view class="empty-wrap" wx:if="{{!loading && listingList.length === 0}}">
+    <van-icon name="smile-o" size="80rpx" color="#F0E6D8" />
+    <text class="empty-wrap__text">暂无寄养/送养信息</text>
+  </view>
+
+  <view style="height: 40rpx;"></view>
 </view>

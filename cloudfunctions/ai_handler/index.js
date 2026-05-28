@@ -15,10 +15,102 @@ exports.main = async (event, context) => {
   switch (action) {
     case 'analyze_health':
       return await analyzeHealth(event);
+    case 'get_openid':
+      return { success: true, openid: cloud.getWXContext().OPENID };
+    case 'delete_agency':
+      return await deleteAgency(event);
+    case 'cleanup_orphaned_agencies':
+      return await cleanupOrphanedAgencies();
+    case 'migrate_ownerid':
+      return await migrateOwnerId(event);
     default:
       return { success: false, msg: '未知操作: ' + action };
   }
 };
+
+/**
+ * 迁移旧数据：为缺少 ownerId 的记录补上 ownerId
+ * 根据记录的 _openid 查询 users 集合找到对应的用户 _id
+ */
+async function migrateOwnerId(event) {
+  const db = cloud.database();
+  const _ = db.command;
+  const collections = ['pets', 'user_orders', 'fosters', 'adoptions', 'health_records', 'foster_applications', 'posts', 'comments'];
+  const results = {};
+
+  for (const colName of collections) {
+    let migrated = 0;
+    let skipped = 0;
+    let errors = 0;
+
+    try {
+      // 分批获取所有记录（云函数每次最多100条）
+      let hasMore = true;
+      let lastId = null;
+
+      while (hasMore) {
+        let query = db.collection(colName).orderBy('_id', 'asc').limit(100);
+        if (lastId) {
+          query = query.where({ _id: _.gt(lastId) });
+        }
+        const res = await query.get();
+        const records = res.data;
+
+        if (records.length === 0) {
+          hasMore = false;
+          break;
+        }
+
+        for (const record of records) {
+          lastId = record._id;
+
+          // 已有 ownerId 则跳过
+          if (record.ownerId) {
+            skipped++;
+            continue;
+          }
+
+          // 没有 _openid 则跳过（无法关联用户）
+          if (!record._openid) {
+            skipped++;
+            continue;
+          }
+
+          try {
+            // 根据 _openid 查询 users 集合找到用户
+            const userRes = await db.collection('users').where({ _openid: record._openid }).limit(1).get();
+            if (userRes.data.length > 0) {
+              const userId = userRes.data[0]._id;
+              await db.collection(colName).doc(record._id).update({
+                data: { ownerId: userId },
+              });
+              migrated++;
+            } else {
+              // 找不到对应用户，用 _openid 作为 ownerId 兜底
+              await db.collection(colName).doc(record._id).update({
+                data: { ownerId: record._openid },
+              });
+              migrated++;
+            }
+          } catch (e) {
+            errors++;
+          }
+        }
+
+        if (records.length < 100) {
+          hasMore = false;
+        }
+      }
+    } catch (e) {
+      results[colName] = { error: e.message };
+      continue;
+    }
+
+    results[colName] = { migrated, skipped, errors };
+  }
+
+  return { success: true, results };
+}
 
 /**
  * 健康数据智能分析
@@ -76,4 +168,102 @@ async function analyzeHealth(event) {
 function extractTags(text) {
   const keywords = ['控制饮食', '多运动', '补充营养', '注意保暖', '定期体检', '减少零食'];
   return keywords.filter((kw) => text.includes(kw));
+}
+
+/**
+ * 删除机构（管理员操作）
+ * 同时删除 users 文档和 agency_profiles 文档
+ * @param {Object} event - { userId, profileId } 至少提供一个
+ */
+async function deleteAgency(event) {
+  let { userId, profileId } = event;
+  if (!userId && !profileId) {
+    return { success: false, msg: '缺少 userId 或 profileId' };
+  }
+  const db = cloud.database();
+  try {
+    // 如果只有 profileId，查找对应的 users 文档
+    if (!userId && profileId) {
+      const userRes = await db.collection('users').where({ agencyProfileId: profileId }).limit(1).get();
+      if (userRes.data.length > 0) {
+        userId = userRes.data[0]._id;
+      }
+    }
+    if (userId) {
+      await db.collection('users').doc(userId).remove();
+    }
+    if (profileId) {
+      await db.collection('agency_profiles').doc(profileId).remove();
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('[deleteAgency] 删除失败', err);
+    return { success: false, msg: err.message };
+  }
+}
+
+/**
+ * 清理孤立的机构数据（管理员操作）
+ * 1. 删除没有对应 users 文档的 agency_profiles（孤立资料）
+ * 2. 删除没有对应 agency_profiles 文档的 users（孤立账号）
+ */
+async function cleanupOrphanedAgencies() {
+  const db = cloud.database();
+  const _ = db.command;
+  let deletedProfiles = 0;
+  let deletedUsers = 0;
+
+  try {
+    // 1. 查找所有 agency_profiles，找出没有对应 users 文档的
+    let hasMore = true;
+    let lastId = null;
+    while (hasMore) {
+      let query = db.collection('agency_profiles').orderBy('_id', 'asc').limit(100);
+      if (lastId) query = query.where({ _id: _.gt(lastId) });
+      const res = await query.get();
+      const profiles = res.data;
+      if (!profiles.length) break;
+
+      for (const profile of profiles) {
+        lastId = profile._id;
+        const userRes = await db.collection('users').where({ agencyProfileId: profile._id }).limit(1).get();
+        if (userRes.data.length === 0) {
+          await db.collection('agency_profiles').doc(profile._id).remove();
+          deletedProfiles++;
+        }
+      }
+      if (profiles.length < 100) hasMore = false;
+    }
+
+    // 2. 查找 role=agency 的 users，找出没有对应 agency_profiles 文档的
+    hasMore = true;
+    lastId = null;
+    while (hasMore) {
+      let query = db.collection('users').where({ role: 'agency' }).orderBy('_id', 'asc').limit(100);
+      if (lastId) query = query.where({ _id: _.gt(lastId) });
+      const res = await query.get();
+      const users = res.data;
+      if (!users.length) break;
+
+      for (const user of users) {
+        lastId = user._id;
+        if (!user.agencyProfileId) {
+          await db.collection('users').doc(user._id).remove();
+          deletedUsers++;
+          continue;
+        }
+        const profileRes = await db.collection('agency_profiles').doc(user.agencyProfileId).get().catch(() => null);
+        if (!profileRes || !profileRes.data) {
+          await db.collection('users').doc(user._id).remove();
+          deletedUsers++;
+        }
+      }
+      if (users.length < 100) hasMore = false;
+    }
+
+    return { success: true, deletedProfiles, deletedUsers };
+  } catch (err) {
+    console.error('[cleanupOrphanedAgencies] 清理失败', err);
+    return { success: false, msg: err.message, deletedProfiles, deletedUsers };
+  }
 }

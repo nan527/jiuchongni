@@ -91,9 +91,21 @@
   box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.06);
 }
 
-.owner-bar {
+.owner-sub-actions {
   display: flex;
+  justify-content: center;
+  gap: 80rpx;
+  margin-top: 16rpx;
+}
+.owner-sub-actions__item {
+  display: flex;
+  flex-direction: column;
   align-items: center;
+  gap: 4rpx;
+}
+.owner-sub-actions__text {
+  font-size: 22rpx;
+  color: #666;
 }
 
 /* 编辑区 */
@@ -102,4 +114,20 @@
   margin-top: 28rpx;
   padding-top: 20rpx;
   border-top: 1rpx solid #f0f0f0;
+}
+
+/* 申请表单 */
+.apply-form {
+  padding: 0 32rpx;
+}
+.apply-form__title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #333;
+  text-align: center;
+  padding: 24rpx 0 16rpx;
+}
+.apply-form__btn {
+  padding: 32rpx 0;
+  padding-bottom: calc(32rpx + env(safe-area-inset-bottom));
 }

@@ -1,4 +1,4 @@
-// pages/agency/agency.js (TradeService - 同学C负责)
+// pages/agency/agency.js
 const authService = require('../../services/authService');
 
 Page({
@@ -8,13 +8,38 @@ Page({
     petCount: 0,
     serviceCount: 0,
     loading: false,
+    isLocked: true,
+    isRegistered: false,
+    auditStatus: '',
   },
 
   async onShow() {
     try {
       const userInfo = await authService.checkLogin();
-      if (userInfo) {
-        this.setData({ agencyInfo: userInfo });
+      if (!userInfo) return;
+
+      const isRegistered = !!userInfo.agencyProfileId;
+
+      // 直接从数据库获取最新审核状态，避免缓存过期
+      let auditStatus = userInfo.auditStatus || '';
+      if (isRegistered && userInfo._id) {
+        try {
+          const db = wx.cloud.database();
+          const fresh = await db.collection('users').doc(userInfo._id).get();
+          if (fresh.data) {
+            auditStatus = fresh.data.auditStatus || auditStatus;
+            // 同步更新缓存
+            userInfo.auditStatus = auditStatus;
+            const STORAGE_KEYS = require('../../constants/index').STORAGE_KEYS;
+            wx.setStorageSync(STORAGE_KEYS.USER_INFO, userInfo);
+          }
+        } catch (e) { /* 查询失败则使用缓存 */ }
+      }
+
+      const isLocked = !isRegistered || auditStatus !== 'approved';
+      let displayStatus = isRegistered ? auditStatus : 'unregistered';
+      this.setData({ agencyInfo: userInfo, isRegistered, auditStatus: displayStatus, isLocked });
+      if (!isLocked) {
         this.loadStats(userInfo);
       }
     } catch (err) {
@@ -36,6 +61,17 @@ Page({
       const svcRes = await db.collection('agency_services').where({ agencyProfileId: pid }).count();
       this.setData({ serviceCount: svcRes.total || 0 });
     } catch (e) { /* ignore */ }
+    try {
+      const petRes = await db.collection('user_orders')
+        .where({ orderType: 'agency', agencyProfileId: pid, category: 'foster', orderStatus: db.command.in(['confirmed', 'in_progress']) })
+        .count();
+      this.setData({ petCount: petRes.total || 0 });
+    } catch (e) { /* ignore */ }
+  },
+
+  // ====== 注册入口 ======
+  toRegister() {
+    wx.navigateTo({ url: '/pages/agency-register/agency-register' });
   },
 
   // ====== 运营管理 ======
@@ -60,10 +96,6 @@ Page({
   },
 
   // ====== 快捷功能 ======
-  toOrders() {
-    wx.navigateTo({ url: '/pages/agency-orders/agency-orders' });
-  },
-
   toPetManage() {
     wx.showToast({ title: '宠物管理开发中', icon: 'none' });
   },

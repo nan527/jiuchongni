@@ -37,6 +37,24 @@ Page({
     leftPetCount: 0,
     occupiedPetsAll: [],
     occupiedPets: [],
+    // 健康录入
+    showHealthPopup: false,
+    healthPetId: '',
+    healthPetName: '',
+    healthType: 'weight',
+    healthTypeOptions: [
+      { key: 'weight', label: '体重' },
+      { key: 'temperature', label: '体温' },
+      { key: 'food', label: '饮食' },
+      { key: 'vaccine', label: '疫苗' },
+      { key: 'deworming', label: '驱虫' },
+      { key: 'checkup', label: '体检' },
+      { key: 'note', label: '备注' },
+    ],
+    healthValue: '',
+    healthFood: '',
+    healthNote: '',
+    healthSaving: false,
   },
 
   _agencyProfileId: '',
@@ -203,12 +221,18 @@ Page({
           if (targetOrder && targetOrder.category === 'foster' && targetOrder.petId) {
             const nextPetStatus = this._mapFosterPetStatusByOrderStatus(status);
             try {
-              await db.collection('pets').doc(targetOrder.petId).update({
-                data: {
-                  petStatus: nextPetStatus,
-                  updateTime: db.serverDate(),
-                },
-              });
+              // 校验宠物归属：宠物必须属于下单用户
+              const petRes = await db.collection('pets').doc(targetOrder.petId).get();
+              if (petRes.data && petRes.data.ownerId === targetOrder.ownerId) {
+                await db.collection('pets').doc(targetOrder.petId).update({
+                  data: {
+                    petStatus: nextPetStatus,
+                    updateTime: db.serverDate(),
+                  },
+                });
+              } else {
+                console.warn('[AgencyOrders] pet ownership mismatch, skip pet status update');
+              }
             } catch (petErr) {
               console.warn('[AgencyOrders] sync foster pet status failed', petErr);
             }
@@ -320,5 +344,62 @@ Page({
     const m = String(d.getMonth() + 1).padStart(2, '0');
     const day = String(d.getDate()).padStart(2, '0');
     return `${y}-${m}-${day}`;
+  },
+
+  // ===== 健康录入 =====
+  openHealthRecord(e) {
+    const { petid, petname } = e.currentTarget.dataset;
+    this.setData({
+      showHealthPopup: true,
+      healthPetId: petid || '',
+      healthPetName: petname || '宠物',
+      healthType: 'weight',
+      healthValue: '',
+      healthFood: '',
+      healthNote: '',
+    });
+  },
+
+  closeHealthRecord() {
+    this.setData({ showHealthPopup: false });
+  },
+
+  onHealthTypeChange(e) {
+    this.setData({ healthType: e.currentTarget.dataset.key });
+  },
+
+  onHealthValueChange(e) { this.setData({ healthValue: e.detail.value || e.detail }); },
+  onHealthFoodChange(e) { this.setData({ healthFood: e.detail.value || e.detail }); },
+  onHealthNoteChange(e) { this.setData({ healthNote: e.detail.value || e.detail }); },
+
+  async saveHealthRecord() {
+    const { healthPetId, healthType, healthValue, healthFood, healthNote } = this.data;
+    if (!healthValue && !healthFood && !healthNote) {
+      wx.showToast({ title: '请至少填写一项数据', icon: 'none' });
+      return;
+    }
+    if (this.data.healthSaving) return;
+    this.setData({ healthSaving: true });
+
+    try {
+      const db = wx.cloud.database();
+      await db.collection('health_records').add({
+        data: {
+          ownerId: this._agencyProfileId,
+          pet_id: healthPetId,
+          type: healthType,
+          value: healthValue,
+          food_intake: healthFood,
+          note: healthNote,
+          record_date: db.serverDate(),
+          recorder_role: 'agency',
+        },
+      });
+      wx.showToast({ title: '录入成功' });
+      this.setData({ showHealthPopup: false, healthSaving: false });
+    } catch (err) {
+      this.setData({ healthSaving: false });
+      wx.showToast({ title: '录入失败', icon: 'none' });
+    }
   },
 });

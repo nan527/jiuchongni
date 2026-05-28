@@ -111,6 +111,7 @@
             </view>
             <view class="ao-card__actions">
               <van-button wx:if="{{ item.orderStatus === 'confirmed' }}" size="small" round type="primary" color="#FF9800" data-id="{{ item._id }}" data-status="in_progress" bindtap="onUpdateStatus">开始服务</van-button>
+              <van-button wx:if="{{ item.orderStatus === 'in_progress' }}" size="small" round plain type="primary" color="#FF9800" data-id="{{ item._id }}" data-petid="{{ item.petId }}" data-petname="{{ item.petName }}" bindtap="openHealthRecord" custom-style="margin-right:12rpx;">录入健康</van-button>
               <van-button wx:if="{{ item.orderStatus === 'in_progress' }}" size="small" round type="primary" color="#07c160" data-id="{{ item._id }}" data-status="to_confirm" bindtap="onUpdateStatus">完成服务</van-button>
             </view>
           </view>
@@ -184,4 +185,53 @@
     </van-tab>
 
   </van-tabs>
+
+  <!-- 健康录入弹窗 -->
+  <van-popup show="{{showHealthPopup}}" position="bottom" round bind:close="closeHealthRecord" custom-style="max-height:80vh;">
+    <view class="health-popup">
+      <view class="health-popup__header">
+        <text class="health-popup__title">录入健康数据 — {{healthPetName}}</text>
+        <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeHealthRecord" />
+      </view>
+
+      <view class="health-popup__form">
+        <view class="health-popup__field">
+          <text class="health-popup__label">记录类型</text>
+          <view class="health-popup__types">
+            <view
+              class="health-type-chip {{healthType === item.key ? 'health-type-chip--active' : ''}}"
+              wx:for="{{healthTypeOptions}}"
+              wx:key="key"
+              data-key="{{item.key}}"
+              bindtap="onHealthTypeChange"
+            >{{item.label}}</view>
+          </view>
+        </view>
+
+        <view class="health-popup__field">
+          <text class="health-popup__label">数值</text>
+          <input class="health-popup__input" placeholder="如：3.5（体重kg）、38.5（体温℃）" type="digit" value="{{healthValue}}" bindinput="onHealthValueChange" />
+        </view>
+
+        <view class="health-popup__field">
+          <text class="health-popup__label">饮食情况</text>
+          <input class="health-popup__input" placeholder="如：猫粮 50g，饮水正常" value="{{healthFood}}" bindinput="onHealthFoodChange" />
+        </view>
+
+        <view class="health-popup__field">
+          <text class="health-popup__label">备注</text>
+          <textarea class="health-popup__textarea" placeholder="其他观察记录..." value="{{healthNote}}" bindinput="onHealthNoteChange" />
+        </view>
+      </view>
+
+      <van-button
+        type="primary"
+        block
+        round
+        loading="{{healthSaving}}"
+        color="linear-gradient(135deg, #FF9800, #FFB74D)"
+        bindtap="saveHealthRecord"
+      >保存记录</van-button>
+    </view>
+  </van-popup>
 </view>

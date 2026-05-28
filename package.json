@@ -18,8 +18,7 @@
   "license": "MIT",
   "description": "a start-kit for wechat miniprogram powerby TDesign miniprogram",
   "dependencies": {
-    "@vant/weapp": "^1.11.7",
-    "tdesign-miniprogram": "^1.11.2"
+    "@vant/weapp": "^1.11.7"
   },
   "devDependencies": {
     "eslint": "^8.49.0",

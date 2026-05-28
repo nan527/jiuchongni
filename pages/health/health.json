@@ -1,12 +1,9 @@
 {
-  "navigationBarTitleText": "宠物健康管理",
+  "navigationBarTitleText": "健康管理",
+  "navigationBarBackgroundColor": "#FF9800",
+  "navigationBarTextStyle": "white",
   "usingComponents": {
-    "van-notice-bar": "@vant/weapp/notice-bar/index",
-    "van-panel": "@vant/weapp/panel/index",
-    "van-cell": "@vant/weapp/cell/index",
-    "van-cell-group": "@vant/weapp/cell-group/index",
-    "van-field": "@vant/weapp/field/index",
-    "van-button": "@vant/weapp/button/index",
-    "van-divider": "@vant/weapp/divider/index"
+    "van-icon": "/miniprogram_npm/@vant/weapp/icon/index",
+    "van-loading": "/miniprogram_npm/@vant/weapp/loading/index"
   }
 }

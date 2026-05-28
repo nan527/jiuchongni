@@ -21,7 +21,9 @@ Page({
     if (!userInfo) {
       wx.showToast({ title: '请先登录', icon: 'none' });
       setTimeout(() => wx.navigateBack(), 800);
+      return;
     }
+    this._userId = userInfo._id;
   },
 
   // ===== 表单事件 =====
@@ -54,19 +56,22 @@ Page({
   afterRead(event) {
     const { file } = event.detail;
     const files = Array.isArray(file) ? file : [file];
+    const startIndex = this.data.fileList.length;
     const newFileList = [...this.data.fileList, ...files.map(f => ({ url: f.url, status: 'uploading', message: '上传中' }))];
-    this.setData({ fileList: newFileList });
+    const newImageUrls = [...this.data.imageUrls, ...files.map(() => '')];
+    this.setData({ fileList: newFileList, imageUrls: newImageUrls });
 
     files.forEach((f, i) => {
-      const fileIndex = this.data.fileList.length - files.length + i;
+      const fileIndex = startIndex + i;
       wx.cloud.uploadFile({
         cloudPath: `posts/${Date.now()}-${Math.floor(Math.random() * 10000)}.jpg`,
         filePath: f.url,
         success: (res) => {
-          const imageUrls = [...this.data.imageUrls, res.fileID];
           const updatedList = [...this.data.fileList];
           updatedList[fileIndex] = { ...updatedList[fileIndex], status: 'done', message: '' };
-          this.setData({ fileList: updatedList, imageUrls });
+          const updatedUrls = [...this.data.imageUrls];
+          updatedUrls[fileIndex] = res.fileID;
+          this.setData({ fileList: updatedList, imageUrls: updatedUrls });
         },
         fail: () => {
           const updatedList = [...this.data.fileList];
@@ -106,9 +111,10 @@ Page({
 
       await db.collection('posts').add({
         data: {
+          ownerId: this._userId,
           title: this.data.title.trim(),
           content: this.data.content.trim(),
-          images: this.data.imageUrls,
+          images: this.data.imageUrls.filter(u => u),
           topics: this.data.selectedTopics,
           authorName: userInfo ? userInfo.nickname : '匿名',
           authorAvatar: userInfo ? userInfo.avatar : '',

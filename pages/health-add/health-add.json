@@ -1,0 +1,10 @@
+{
+  "navigationBarTitleText": "添加健康记录",
+  "navigationBarBackgroundColor": "#FF9800",
+  "navigationBarTextStyle": "white",
+  "usingComponents": {
+    "van-icon": "/miniprogram_npm/@vant/weapp/icon/index",
+    "van-button": "/miniprogram_npm/@vant/weapp/button/index",
+    "van-uploader": "/miniprogram_npm/@vant/weapp/uploader/index"
+  }
+}

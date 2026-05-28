@@ -2,19 +2,69 @@
 const authService = require('../../services/authService');
 
 Page({
+  data: {
+    loading: true,
+    totalCount: 0,
+    pendingCount: 0,
+    approvedCount: 0,
+  },
+
   async onShow() {
     const userInfo = await authService.checkLogin();
     if (!userInfo || userInfo.role !== 'admin') {
       wx.showToast({ title: '请先以管理员身份登录', icon: 'none' });
       setTimeout(() => wx.navigateTo({ url: '/pages/login/login' }), 600);
+      return;
+    }
+    this.loadStats();
+  },
+
+  async loadStats() {
+    this.setData({ loading: true });
+    const db = wx.cloud.database();
+    const _ = db.command;
+    try {
+      const [totalRes, approvedRes, pendingRes] = await Promise.all([
+        db.collection('agency_profiles').count().catch(() => ({ total: 0 })),
+        db.collection('agency_profiles').where({ auditStatus: 'approved' }).count().catch(() => ({ total: 0 })),
+        db.collection('agency_profiles').where({ auditStatus: _.in(['pending', 'rejected']) }).count().catch(() => ({ total: 0 })),
+      ]);
+      this.setData({
+        totalCount: totalRes.total || 0,
+        pendingCount: pendingRes.total || 0,
+        approvedCount: approvedRes.total || 0,
+        loading: false,
+      });
+    } catch (e) {
+      this.setData({ loading: false });
     }
   },
 
-  toAgencyAudit() {
+  toAudit() {
     wx.navigateTo({ url: '/pages/admin/audit' });
   },
 
-  toHome() {
-    wx.switchTab({ url: '/pages/index/index' });
-  }
+  toAgencies() {
+    wx.navigateTo({ url: '/pages/admin/agencies' });
+  },
+
+  toDashboard() {
+    wx.navigateTo({ url: '/pages/admin/dashboard' });
+  },
+
+  handleLogout() {
+    wx.showModal({
+      title: '提示',
+      content: '确定退出登录吗？',
+      success: (res) => {
+        if (res.confirm) {
+          authService.logout();
+          wx.showToast({ title: '已退出', icon: 'success' });
+          setTimeout(() => {
+            wx.redirectTo({ url: '/pages/login/login' });
+          }, 800);
+        }
+      },
+    });
+  },
 });

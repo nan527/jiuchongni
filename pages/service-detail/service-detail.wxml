@@ -25,7 +25,7 @@
   </view>
 
   <!-- 下单表单 -->
-  <view class="info-section" wx:if="{{ !ordering }}">
+  <view class="info-section">
     <view class="section-title">填写订单信息</view>
 
     <view class="cage-panel" wx:if="{{ svc.category === 'foster' }}">

@@ -1,45 +1,164 @@
 <!-- pages/health/health.wxml -->
-<view class="container">
-  <van-notice-bar
-    left-icon="volume-o"
-    text="AI 提醒：您的宠物奶球已经 3 个月没有接种疫苗了，请及时处理。"
-  />
+<view class="health-page">
 
-  <van-cell-group title="录入今日健康数据">
-    <van-field
-      label="今日体重"
-      value="{{ weight }}"
-      placeholder="kg"
-      type="digit"
-      bind:change="onWeightChange"
+  <!-- 渐变头部 -->
+  <view class="page-header">
+    <view class="page-header__inner">
+      <text class="page-header__title">健康管理</text>
+      <text class="page-header__sub">记录宠物的健康档案</text>
+    </view>
+  </view>
+
+  <!-- 宠物选择器 -->
+  <scroll-view class="pet-scroll" scroll-x enable-flex wx:if="{{petList.length > 1}}">
+    <view
+      class="pet-chip {{selectedPetId === item._id ? 'pet-chip--active' : ''}}"
+      wx:for="{{petList}}"
+      wx:key="_id"
+      data-id="{{item._id}}"
+      bindtap="onSelectPet"
     >
-      <van-button slot="button" size="small" type="primary" bindtap="saveHealthData" loading="{{loading}}">
-        录入并 AI 分析
-      </van-button>
-    </van-field>
-    <van-field
-      label="饮食情况"
-      value="{{ food }}"
-      placeholder="如：猫粮 50g，零食少量"
-      bind:change="onFoodChange"
-    />
-  </van-cell-group>
+      <image wx:if="{{item.photo}}" class="pet-chip__avatar" src="{{item.photo}}" mode="aspectFill" />
+      <view wx:else class="pet-chip__avatar pet-chip__avatar--default">
+        <van-icon name="friends-o" size="28rpx" color="#FF9800" />
+      </view>
+      <text class="pet-chip__name">{{item.name}}</text>
+    </view>
+  </scroll-view>
 
-  <view class="ai-card">
-    <van-panel title="AI 智能养护建议" status="由开源大模型提供">
-      <view class="ai-content">{{ aiSuggestion }}</view>
-    </van-panel>
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#FF9800" size="48rpx" />
   </view>
 
-  <van-divider contentPosition="center">历史趋势 (最近 10 次记录)</van-divider>
-  
-  <view class="history-list">
-    <van-cell 
-      wx:for="{{ healthRecords }}" 
-      wx:key="_id" 
-      title="{{ item.value }}kg" 
-      value="{{ item.record_date }}" 
-      label="{{ item.food_intake }}" 
-    />
+  <view wx:if="{{!loading && selectedPet}}">
+
+    <!-- 健康状态卡 -->
+    <view class="status-card">
+      <view class="status-card__row">
+        <view class="status-card__item">
+          <text class="status-card__value">{{latestWeight || '-'}}</text>
+          <text class="status-card__unit">kg</text>
+          <text class="status-card__trend" wx:if="{{weightTrend === 'up'}}">↑</text>
+          <text class="status-card__trend status-card__trend--down" wx:if="{{weightTrend === 'down'}}">↓</text>
+        </view>
+        <view class="status-card__divider"></view>
+        <view class="status-card__item">
+          <text class="status-card__label">上次疫苗</text>
+          <text class="status-card__date">{{lastVaccine || '未记录'}}</text>
+        </view>
+        <view class="status-card__divider"></view>
+        <view class="status-card__item">
+          <text class="status-card__label">上次驱虫</text>
+          <text class="status-card__date">{{lastDeworming || '未记录'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 待办提醒 -->
+    <view class="reminder-card" wx:if="{{reminders.length > 0}}">
+      <view class="section-header">
+        <text class="section-header__title">待办提醒</text>
+      </view>
+      <view class="reminder-list">
+        <view class="reminder-item {{item.isOverdue ? 'reminder-item--overdue' : ''}}" wx:for="{{reminders}}" wx:key="index">
+          <van-icon name="warning-o" size="32rpx" color="{{item.isOverdue ? '#E53935' : '#FF9800'}}" />
+          <text class="reminder-item__text">{{item.title}}</text>
+          <text class="reminder-item__date">{{item.dueDateStr}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 快捷操作 -->
+    <view class="quick-card">
+      <view class="section-header">
+        <text class="section-header__title">快捷记录</text>
+      </view>
+      <view class="quick-grid">
+        <view class="quick-item" bindtap="goToAddRecord" data-type="weight">
+          <view class="quick-item__icon quick-item__icon--orange">
+            <van-icon name="chart-trending-o" size="40rpx" color="#F57C00" />
+          </view>
+          <text class="quick-item__label">记录体重</text>
+        </view>
+        <view class="quick-item" bindtap="goToAddRecord" data-type="vaccine">
+          <view class="quick-item__icon quick-item__icon--blue">
+            <van-icon name="shield-o" size="40rpx" color="#1565C0" />
+          </view>
+          <text class="quick-item__label">接种疫苗</text>
+        </view>
+        <view class="quick-item" bindtap="goToAddRecord" data-type="deworming">
+          <view class="quick-item__icon quick-item__icon--green">
+            <van-icon name="good-job-o" size="40rpx" color="#2E7D32" />
+          </view>
+          <text class="quick-item__label">驱虫记录</text>
+        </view>
+        <view class="quick-item" bindtap="goToAddRecord" data-type="checkup">
+          <view class="quick-item__icon quick-item__icon--purple">
+            <van-icon name="notes-o" size="40rpx" color="#7B1FA2" />
+          </view>
+          <text class="quick-item__label">体检记录</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 最近记录 -->
+    <view class="record-card">
+      <view class="section-header">
+        <text class="section-header__title">最近记录</text>
+        <view class="section-header__more" bindtap="goToAllRecords">
+          <text class="section-header__more-text">全部记录</text>
+          <van-icon name="arrow" size="24rpx" color="#8C7A6B" />
+        </view>
+      </view>
+
+      <view class="empty-wrap" wx:if="{{recentRecords.length === 0}}">
+        <van-icon name="edit" size="60rpx" color="#F0E6D8" />
+        <text class="empty-wrap__text">暂无健康记录</text>
+      </view>
+
+      <view class="record-list" wx:if="{{recentRecords.length > 0}}">
+        <view class="record-item" wx:for="{{recentRecords}}" wx:key="_id">
+          <view class="record-item__left">
+            <view class="record-item__type record-item__type--{{item.type}}">
+              {{item.typeLabel}}
+            </view>
+            <view class="record-item__info">
+              <text class="record-item__value">{{item.displayValue}}</text>
+              <text class="record-item__note" wx:if="{{item.note}}">{{item.note}}</text>
+            </view>
+          </view>
+          <text class="record-item__date">{{item.dateStr}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- AI 建议 -->
+    <view class="ai-card" wx:if="{{aiSuggestion}}">
+      <view class="section-header">
+        <text class="section-header__title">AI 健康建议</text>
+      </view>
+      <view class="ai-card__body">
+        <van-icon name="bulb-o" size="36rpx" color="#FF9800" />
+        <text class="ai-card__text">{{aiSuggestion}}</text>
+      </view>
+    </view>
+
   </view>
+
+  <!-- 空状态（未选择宠物） -->
+  <view class="empty-wrap" wx:if="{{!loading && !selectedPet && petList.length === 0}}">
+    <van-icon name="friends-o" size="80rpx" color="#F0E6D8" />
+    <text class="empty-wrap__text">暂无宠物档案</text>
+    <view class="empty-wrap__btn" bindtap="toPetArchive">
+      <text class="empty-wrap__btn-text">添加宠物</text>
+    </view>
+  </view>
+
+  <!-- 添加记录按钮 -->
+  <view class="fab-btn" bindtap="goToAddRecord" data-type="" wx:if="{{!loading && selectedPet}}">
+    <van-icon name="plus" size="44rpx" color="#fff" />
+  </view>
+
+  <view style="height: 120rpx;"></view>
 </view>

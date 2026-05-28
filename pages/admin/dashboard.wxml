@@ -1,0 +1,90 @@
+<!-- pages/admin/dashboard.wxml -->
+<view class="dashboard-page">
+
+  <van-loading wx:if="{{ loading }}" vertical style="padding: 120rpx 0; text-align: center;">加载中...</van-loading>
+
+  <block wx:if="{{ !loading }}">
+
+    <!-- 顶部概览 -->
+    <view class="summary-header">
+      <text class="summary-total">{{ totalAgencies }}</text>
+      <text class="summary-total-label">机构总数</text>
+      <view class="summary-row">
+        <view class="summary-item">
+          <text class="summary-num">{{ totalUsers }}</text>
+          <text class="summary-label">宠主用户</text>
+        </view>
+        <view class="summary-divider"></view>
+        <view class="summary-item">
+          <text class="summary-num">{{ totalOrders }}</text>
+          <text class="summary-label">总订单</text>
+        </view>
+        <view class="summary-divider"></view>
+        <view class="summary-item">
+          <text class="summary-num">{{ totalServices }}</text>
+          <text class="summary-label">服务项目</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 审核状态分布 -->
+    <view class="section-title">审核状态</view>
+    <view class="chart-card">
+      <view class="status-row">
+        <view class="status-item">
+          <view class="status-dot status-dot--approved"></view>
+          <text class="status-label">已通过</text>
+          <text class="status-count">{{ approvedAgencies }}</text>
+        </view>
+        <view class="status-item">
+          <view class="status-dot status-dot--pending"></view>
+          <text class="status-label">待审核</text>
+          <text class="status-count">{{ pendingAgencies }}</text>
+        </view>
+        <view class="status-item">
+          <view class="status-dot status-dot--rejected"></view>
+          <text class="status-label">已驳回</text>
+          <text class="status-count">{{ rejectedAgencies }}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 机构类型分布 -->
+    <view class="section-title">机构类型分布</view>
+    <view class="chart-card">
+      <view wx:for="{{ typeDistribution }}" wx:key="label" class="bar-row">
+        <text class="bar-label">{{ item.label }}</text>
+        <view class="bar-track">
+          <view class="bar-fill" style="width: {{ item.percent }}%;"></view>
+        </view>
+        <text class="bar-count">{{ item.count }}</text>
+      </view>
+    </view>
+
+    <!-- 最近入驻 -->
+    <view class="section-title">最近入驻机构</view>
+    <view class="chart-card">
+      <view wx:if="{{ recentAgencies.length === 0 }}" class="empty-mini">暂无数据</view>
+      <view wx:for="{{ recentAgencies }}" wx:key="_id" class="recent-row">
+        <view class="recent-info">
+          <text class="recent-name">{{ item.orgName || '未命名' }}</text>
+          <text class="recent-type">{{ item.businessType || '-' }}</text>
+        </view>
+        <text class="recent-address">{{ item.region || '' }}</text>
+      </view>
+    </view>
+
+    <!-- 数据维护 -->
+    <view class="section-title">数据维护</view>
+    <view class="chart-card">
+      <view class="cleanup-row">
+        <view class="cleanup-info">
+          <text class="cleanup-title">清理冗余数据</text>
+          <text class="cleanup-desc">删除孤立的机构资料和无效账号</text>
+        </view>
+        <van-button size="small" type="danger" round plain loading="{{ cleaning }}" bindtap="cleanupData">清理</van-button>
+      </view>
+    </view>
+
+  </block>
+</view>

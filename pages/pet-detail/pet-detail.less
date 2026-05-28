@@ -1,0 +1,292 @@
+/* pages/pet-detail/pet-detail.wxss */
+
+.detail-page {
+  min-height: 100vh;
+  background: #FFF8F0;
+  padding-bottom: 60rpx;
+}
+
+/* ===== 宠物头图 ===== */
+.pet-hero {
+  position: relative;
+  width: 100%;
+  height: 480rpx;
+}
+
+.pet-hero__img {
+  width: 100%;
+  height: 100%;
+  background: #F0E6D8;
+}
+
+.pet-hero__overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 48rpx 32rpx 28rpx;
+  background: linear-gradient(transparent, rgba(61, 44, 30, 0.75));
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+}
+
+.pet-hero__name {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+.pet-hero__meta {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.pet-hero__species {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.9);
+}
+
+.pet-hero__age {
+  font-size: 26rpx;
+  color: rgba(255, 255, 255, 0.75);
+  padding-left: 16rpx;
+  border-left: 2rpx solid rgba(255, 255, 255, 0.4);
+}
+
+.pet-hero__status {
+  display: inline-block;
+  padding: 6rpx 20rpx;
+  border-radius: 20rpx;
+  margin-top: 6rpx;
+  width: fit-content;
+}
+
+.pet-hero__status text {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+/* ===== 信息卡片 ===== */
+.info-card {
+  background: #FFFAF5;
+  margin: 20rpx 32rpx 0;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+}
+
+.info-card__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3D2C1E;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.info-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0;
+}
+
+.info-item {
+  width: 50%;
+  padding: 12rpx 0;
+}
+
+.info-item__label {
+  font-size: 22rpx;
+  color: #8C7A6B;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.info-item__value {
+  font-size: 28rpx;
+  color: #3D2C1E;
+  font-weight: 500;
+}
+
+/* ===== 通用标题 ===== */
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D2C1E;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+/* ===== 健康记录 ===== */
+.health-section {
+  margin: 24rpx 32rpx 0;
+}
+
+.health-list {
+  position: relative;
+  padding-left: 28rpx;
+}
+
+.health-list::before {
+  content: '';
+  position: absolute;
+  left: 8rpx;
+  top: 16rpx;
+  bottom: 16rpx;
+  width: 2rpx;
+  background: #F0E6D8;
+}
+
+.health-item {
+  display: flex;
+  position: relative;
+  padding-bottom: 24rpx;
+}
+
+.health-item:last-child {
+  padding-bottom: 0;
+}
+
+.health-item__dot {
+  position: absolute;
+  left: -28rpx;
+  top: 16rpx;
+  width: 16rpx;
+  height: 16rpx;
+  border-radius: 50%;
+  background: #FF9800;
+  border: 3rpx solid #FFF3E0;
+  z-index: 1;
+}
+
+.health-item__content {
+  flex: 1;
+  background: #FFFAF5;
+  border-radius: 20rpx;
+  padding: 20rpx;
+  margin-left: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(61, 44, 30, 0.04);
+}
+
+.health-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
+}
+
+.health-item__date {
+  font-size: 22rpx;
+  color: #C4B8AC;
+}
+
+.health-item__value {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3D2C1E;
+  display: block;
+  margin-bottom: 6rpx;
+}
+
+.health-item__note {
+  font-size: 24rpx;
+  color: #8C7A6B;
+  display: block;
+  margin-top: 4rpx;
+}
+
+.health-item__recorder {
+  margin-top: 8rpx;
+}
+
+.health-item__recorder-text {
+  font-size: 20rpx;
+  color: #C4B8AC;
+  background: #FFF8F0;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+}
+
+/* ===== 空健康状态 ===== */
+.empty-health {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 0;
+}
+
+.empty-health__text {
+  font-size: 28rpx;
+  color: #8C7A6B;
+  margin-top: 16rpx;
+}
+
+.empty-health__hint {
+  font-size: 22rpx;
+  color: #C4B8AC;
+  margin-top: 8rpx;
+}
+
+/* ===== 操作按钮 ===== */
+.action-bar {
+  padding: 32rpx;
+  margin-top: 16rpx;
+}
+
+/* ===== 编辑模式 ===== */
+.edit-mode {
+  padding: 24rpx 32rpx;
+}
+
+.edit-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28rpx;
+}
+
+.edit-header__title {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #3D2C1E;
+}
+
+.edit-form {
+  background: #FFFAF5;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+}
+
+.form-field {
+  margin-bottom: 24rpx;
+}
+
+.form-field__label {
+  font-size: 26rpx;
+  color: #3D2C1E;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 12rpx;
+}
+
+.form-field__required {
+  color: #FF5252;
+}
+
+.form-field__input {
+  background: #FFF8F0;
+  border: 2rpx solid #F0E6D8;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #3D2C1E;
+}
+
+/* ===== 加载状态 ===== */
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 60rpx 0;
+}

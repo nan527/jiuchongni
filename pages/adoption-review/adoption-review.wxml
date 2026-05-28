@@ -1,0 +1,81 @@
+<!-- pages/adoption-review/adoption-review.wxml -->
+<view class="ar-page">
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{ loading }}">
+    <van-loading type="spinner" color="#FF9800" size="48rpx" />
+  </view>
+
+  <block wx:if="{{ !loading && postDetail }}">
+
+    <!-- 帖子摘要 -->
+    <view class="post-summary">
+      <image class="post-summary__img" src="{{ postDetail.images[0] || '/static/pet/logo.png' }}" mode="aspectFill" />
+      <view class="post-summary__info">
+        <view class="post-summary__name">
+          <text>{{ postDetail.petName }}</text>
+          <van-tag wx:if="{{ postType === 'foster' }}" type="warning" size="medium">寄养</van-tag>
+          <van-tag wx:if="{{ postType === 'adopt' }}" type="success" size="medium">送养</van-tag>
+        </view>
+        <text class="post-summary__breed">{{ postDetail.breed || '未知品种' }}</text>
+        <view class="post-summary__status post-summary__status--{{ postDetail.status }}">
+          {{ postDetail.status === 'open' ? '进行中' : postDetail.status === 'matched' ? '已匹配' : '已关闭' }}
+        </view>
+      </view>
+    </view>
+
+    <!-- 申请数量 -->
+    <view class="section-header">
+      <text class="section-header__title">申请列表</text>
+      <text class="section-header__count">共 {{ applications.length }} 条</text>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-wrap" wx:if="{{ applications.length === 0 }}">
+      <van-icon name="friends-o" size="80rpx" color="#F0E6D8" />
+      <text class="empty-wrap__text">暂无申请</text>
+    </view>
+
+    <!-- 申请列表 -->
+    <view class="app-card" wx:for="{{ applications }}" wx:key="_id">
+      <!-- 头部：头像 + 昵称 + 状态 -->
+      <view class="app-card__header">
+        <image class="app-card__avatar" src="{{ item.applicantAvatar || '/static/pet/logo.png' }}" mode="aspectFill" />
+        <view class="app-card__user">
+          <text class="app-card__nickname">{{ item.applicantNickname || item.applicantName || '匿名用户' }}</text>
+          <text class="app-card__time">{{ item.applyTimeStr }}</text>
+        </view>
+        <view class="app-card__tag app-card__tag--{{ item.applyStatus }}">
+          {{ item.applyStatus === 'pending' ? '待审核' : item.applyStatus === 'approved' ? '已通过' : '已拒绝' }}
+        </view>
+      </view>
+
+      <!-- 申请说明（主要内容） -->
+      <text class="app-card__message" wx:if="{{ item.applyMessage }}">{{ item.applyMessage }}</text>
+
+      <!-- 附加信息标签 -->
+      <view class="app-card__meta" wx:if="{{ item.applicantExperience || item.applicantName || (item.applyStatus === 'approved' && item.applicantPhone) }}">
+        <view class="app-card__chip" wx:if="{{ item.applicantExperience }}">
+          <text class="app-card__chip-label">经验</text>
+          <text class="app-card__chip-val">{{ item.applicantExperience }}</text>
+        </view>
+        <view class="app-card__chip" wx:if="{{ item.applicantName }}">
+          <text class="app-card__chip-label">联系人</text>
+          <text class="app-card__chip-val">{{ item.applicantName }}</text>
+        </view>
+        <view class="app-card__chip app-card__chip--phone" wx:if="{{ item.applyStatus === 'approved' && item.applicantPhone }}">
+          <text class="app-card__chip-label">电话</text>
+          <text class="app-card__chip-val">{{ item.applicantPhone }}</text>
+        </view>
+      </view>
+
+      <!-- 操作按钮 -->
+      <view class="app-card__actions" wx:if="{{ item.applyStatus === 'pending' }}">
+        <text class="app-card__btn app-card__btn--reject" bindtap="onReject" data-id="{{ item._id }}">拒绝</text>
+        <text class="app-card__btn app-card__btn--approve" bindtap="onApprove" data-id="{{ item._id }}">通过</text>
+      </view>
+    </view>
+
+  </block>
+
+</view>

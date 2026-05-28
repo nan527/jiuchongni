@@ -77,7 +77,13 @@ Page({
     try {
       const db = wx.cloud.database();
       const res = await db.collection('pets').orderBy('createTime', 'desc').get();
-      this.setData({ myPets: res.data || [] });
+      let pets = res.data || [];
+      // 寄养服务：过滤掉已在寄养中或待接单的宠物
+      if (this.data.svc && this.data.svc.category === 'foster') {
+        const FOSTER_STATUSES = ['agency_foster', 'pending_foster', 'waiting_pickup'];
+        pets = pets.filter(p => !p.petStatus || !FOSTER_STATUSES.includes(p.petStatus));
+      }
+      this.setData({ myPets: pets });
     } catch (e) {
       console.warn('[ServiceDetail] loadMyPets', e);
     }
@@ -124,7 +130,7 @@ Page({
   },
 
   toPetArchive() {
-    wx.navigateTo({ url: '/pages/pet/pet' });
+    wx.navigateTo({ url: '/packagePet/pages/pet/pet' });
   },
 
   onPetNameChange(e) { this.setData({ petName: e.detail }); },
@@ -177,6 +183,7 @@ Page({
 
       await db.collection('user_orders').add({
         data: {
+          ownerId: userInfo._id,
           orderType: 'agency',
           serviceId: s._id,
           serviceName: s.name,

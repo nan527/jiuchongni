@@ -9,7 +9,12 @@
       <text class="section-title__hint">（必须从宠物档案中选择）</text>
     </view>
 
-    <view class="pet-empty-tip" wx:if="{{ myPets.length === 0 }}">
+    <view class="pet-loading-tip" wx:if="{{ petsLoading }}">
+      <van-loading type="spinner" color="#FF9800" size="40rpx" />
+      <text class="pet-loading-tip__text">加载宠物列表...</text>
+    </view>
+
+    <view class="pet-empty-tip" wx:if="{{ !petsLoading && myPets.length === 0 }}">
       <text class="pet-empty-tip__text">暂无宠物档案，请先添加宠物</text>
       <view class="pet-empty-tip__btn" bindtap="toPetArchive">
         <van-icon name="plus" size="24rpx" color="#FF9800"></van-icon>
@@ -17,7 +22,7 @@
       </view>
     </view>
 
-    <view class="pet-selector" wx:if="{{ myPets.length > 0 }}">
+    <view class="pet-selector" wx:if="{{ !petsLoading && myPets.length > 0 }}">
       <view
         class="pet-opt {{ selectedPetId === item._id ? 'pet-opt--active' : '' }}"
         wx:for="{{ myPets }}"

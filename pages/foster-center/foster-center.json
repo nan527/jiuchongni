@@ -1,10 +1,11 @@
 {
   "navigationBarTitleText": "寄养领养中心",
+  "navigationBarBackgroundColor": "#FF9800",
+  "navigationBarTextStyle": "white",
   "usingComponents": {
     "van-tabs": "/miniprogram_npm/@vant/weapp/tabs/index",
     "van-tab": "/miniprogram_npm/@vant/weapp/tab/index",
-    "van-tag": "/miniprogram_npm/@vant/weapp/tag/index",
     "van-icon": "/miniprogram_npm/@vant/weapp/icon/index",
-    "van-empty": "/miniprogram_npm/@vant/weapp/empty/index"
+    "van-loading": "/miniprogram_npm/@vant/weapp/loading/index"
   }
 }

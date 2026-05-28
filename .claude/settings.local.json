@@ -2,11 +2,21 @@
   "permissions": {
     "allow": [
       "Bash(mkdir -p /f/wechat_devtools/mycode/jcn/docs)",
-      "Bash(mkdir -p /f/wechat_devtools/mycode/jcn/docs/superpowers/specs)"
+      "Bash(mkdir -p /f/wechat_devtools/mycode/jcn/docs/superpowers/specs)",
+      "Read(//c/Users/a2686/.claude/plugins/cache/ui-ux-pro-max-skill/ui-ux-pro-max/2.5.0/.claude/skills/ui-ux-pro-max/**)",
+      "Bash(python scripts/search.py \"pet service app profile page warm healing\" --design-system -p \"就宠你\")",
+      "Read(//c/Users/a2686/.claude/plugins/cache/claude-plugins-official/superpowers/5.1.0/skills/brainstorming/**)",
+      "Bash(bash \"C:\\\\Users\\\\a2686\\\\.claude\\\\plugins\\\\cache\\\\claude-plugins-official\\\\superpowers\\\\5.1.0\\\\skills\\\\brainstorming\\\\scripts/start-server.sh\" --project-dir \"f:/wechat_devtools/mycode/jcn\")",
+      "Bash(ls \"C:/Users/a2686/.claude/memory/\" 2>/dev/null || echo \"empty or not exist\")",
+      "Read(//c/Users/a2686/.claude/**)",
+      "Bash(mkdir -p \"C:/Users/a2686/.claude/memory\")",
+      "Bash(python -c \"from PIL import Image; print\\('Pillow available'\\)\")",
+      "Bash(python)"
     ],
     "additionalDirectories": [
       "F:\\wechat_devtools\\mycode\\jcn",
-      "F:\\wechat_devtools\\mycode\\jcn\\docs\\superpowers"
+      "F:\\wechat_devtools\\mycode\\jcn\\docs\\superpowers",
+      "C:\\Users\\a2686\\.claude"
     ]
   }
 }

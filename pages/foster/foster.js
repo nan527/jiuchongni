@@ -1,9 +1,17 @@
 // pages/foster/foster.js
 const authService = require('../../services/authService');
 
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
 Page({
   data: {
     myPets: [],
+    petsLoading: true,
     selectedPetId: '',
     fileList: [],
     imageUrls: [],
@@ -38,17 +46,35 @@ Page({
       setTimeout(() => wx.navigateBack(), 800);
       return;
     }
+    this._userId = userInfo._id;
     this.loadMyPets();
   },
 
   async loadMyPets() {
-    try {
-      const db = wx.cloud.database();
-      const res = await db.collection('pets').where({ _openid: '{openid}' }).orderBy('createTime', 'desc').get();
-      this.setData({ myPets: res.data || [] });
-    } catch (e) {
-      console.warn('[Foster] loadMyPets', e);
+    const userId = this._userId;
+    if (!userId) {
+      this.setData({ myPets: [], petsLoading: false });
+      wx.showToast({ title: '请重新登录', icon: 'none' });
+      return;
     }
+    this.setData({ petsLoading: true });
+    for (let retry = 0; retry < 2; retry++) {
+      try {
+        const db = wx.cloud.database();
+        const res = await withTimeout(
+          db.collection('pets').where({ ownerId: userId }).orderBy('createTime', 'desc').get(),
+          8000
+        );
+        const myPets = (res.data || []).filter(p => p.ownerId === userId);
+        this.setData({ myPets, petsLoading: false });
+        return;
+      } catch (e) {
+        console.warn(`[Foster] loadMyPets 第${retry + 1}次失败:`, e);
+        if (retry === 0) await new Promise(r => setTimeout(r, 1000));
+      }
+    }
+    this.setData({ myPets: [], petsLoading: false });
+    wx.showToast({ title: '加载宠物列表失败，请重试', icon: 'none' });
   },
 
   onSelectPet(e) {
@@ -67,7 +93,7 @@ Page({
   },
 
   toPetArchive() {
-    wx.navigateTo({ url: '/pages/pet/pet' });
+    wx.navigateTo({ url: '/packagePet/pages/pet/pet' });
   },
 
   // ===== 表单事件 =====
@@ -97,19 +123,23 @@ Page({
   afterRead(event) {
     const { file } = event.detail;
     const files = Array.isArray(file) ? file : [file];
+    const startIndex = this.data.fileList.length;
     const newFileList = [...this.data.fileList, ...files.map(f => ({ url: f.url, status: 'uploading', message: '上传中' }))];
-    this.setData({ fileList: newFileList });
+    // 预留 imageUrls 位置，避免并发覆盖
+    const newImageUrls = [...this.data.imageUrls, ...files.map(() => '')];
+    this.setData({ fileList: newFileList, imageUrls: newImageUrls });
 
     files.forEach((f, i) => {
-      const fileIndex = this.data.fileList.length - files.length + i;
+      const fileIndex = startIndex + i;
       wx.cloud.uploadFile({
         cloudPath: `foster/${Date.now()}-${Math.floor(Math.random() * 10000)}.jpg`,
         filePath: f.url,
         success: (res) => {
-          const imageUrls = [...this.data.imageUrls, res.fileID];
           const updatedList = [...this.data.fileList];
           updatedList[fileIndex] = { ...updatedList[fileIndex], status: 'done', message: '' };
-          this.setData({ fileList: updatedList, imageUrls });
+          const updatedUrls = [...this.data.imageUrls];
+          updatedUrls[fileIndex] = res.fileID;
+          this.setData({ fileList: updatedList, imageUrls: updatedUrls });
         },
         fail: () => {
           const updatedList = [...this.data.fileList];
@@ -145,11 +175,13 @@ Page({
       const db = wx.cloud.database();
       const userInfo = await authService.checkLogin();
       const pet = this.data.myPets.find(p => p._id === selectedPetId);
-      const images = this.data.imageUrls.length > 0 ? this.data.imageUrls : (pet && pet.photo ? [pet.photo] : []);
+      const uploadedUrls = this.data.imageUrls.filter(u => u);
+      const images = uploadedUrls.length > 0 ? uploadedUrls : (pet && pet.photo ? [pet.photo] : []);
 
       await db.collection('fosters').add({
         data: {
           type: 'foster',
+          ownerId: this._userId,
           petId: selectedPetId,
           petName: petName.trim(),
           breed: breed.trim(),
