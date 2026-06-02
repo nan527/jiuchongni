@@ -19,6 +19,8 @@ exports.main = async (event, context) => {
       return { success: true, openid: cloud.getWXContext().OPENID };
     case 'delete_agency':
       return await deleteAgency(event);
+    case 'get_file_urls':
+      return await getFileUrls(event);
     case 'cleanup_orphaned_agencies':
       return await cleanupOrphanedAgencies();
     case 'migrate_ownerid':
@@ -35,7 +37,7 @@ exports.main = async (event, context) => {
 async function migrateOwnerId(event) {
   const db = cloud.database();
   const _ = db.command;
-  const collections = ['pets', 'user_orders', 'fosters', 'adoptions', 'health_records', 'foster_applications', 'posts', 'comments'];
+  const collections = ['pets', 'user_orders', 'health_records'];
   const results = {};
 
   for (const colName of collections) {
@@ -265,5 +267,25 @@ async function cleanupOrphanedAgencies() {
   } catch (err) {
     console.error('[cleanupOrphanedAgencies] 清理失败', err);
     return { success: false, msg: err.message, deletedProfiles, deletedUsers };
+  }
+}
+
+/**
+ * 将 cloud:// 文件 ID 转为临时 HTTP URL（管理员权限，不受创建者限制）
+ * @param {Object} event - { fileIDs: string[] }
+ */
+async function getFileUrls(event) {
+  const { fileIDs } = event;
+  if (!fileIDs || !fileIDs.length) return { success: true, urls: [] };
+  try {
+    const res = await cloud.getTempFileURL({ fileList: fileIDs });
+    const urls = (res.fileList || []).map((item, i) => {
+      if (item.tempFileURL) return item.tempFileURL;
+      return fileIDs[i]; // 失败时返回原始 ID
+    });
+    return { success: true, urls };
+  } catch (err) {
+    console.error('[getFileUrls] 转换失败', err);
+    return { success: false, msg: err.message, urls: fileIDs };
   }
 }

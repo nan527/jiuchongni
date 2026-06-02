@@ -1,0 +1,220 @@
+/* pages/payment/payment.less */
+.payment-page {
+  min-height: 100vh;
+  background: #f0f2f5;
+}
+
+/* ===== 自定义导航栏 ===== */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #FF9800;
+}
+
+.nav-bar__inner {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 16rpx;
+}
+
+.nav-bar__back {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-bar__right {
+  width: 72rpx;
+}
+
+/* ===== 倒计时 ===== */
+.countdown-bar {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  padding: 24rpx 32rpx;
+  margin: 16rpx 28rpx 0;
+  background: #FFF3E0;
+  border-radius: 16rpx;
+}
+
+.countdown-bar--expired {
+  background: #E53935;
+}
+
+.countdown-text {
+  font-size: 26rpx;
+  color: #E53935;
+  font-weight: 500;
+}
+
+.countdown-bar--expired .countdown-text {
+  color: #fff;
+}
+
+/* ===== 订单卡片 ===== */
+.order-card {
+  margin: 24rpx 28rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.order-card__header {
+  padding: 18rpx 24rpx;
+  border-bottom: 1rpx solid #f0f0f0;
+}
+
+.order-card__type-badge {
+  font-size: 22rpx;
+  font-weight: 600;
+  padding: 4rpx 16rpx;
+  border-radius: 12rpx;
+  background: #FFF3E0;
+  color: #E65100;
+  display: inline-block;
+}
+
+.order-card__body {
+  display: flex;
+  padding: 20rpx 24rpx;
+}
+
+.order-card__img {
+  width: 140rpx;
+  height: 140rpx;
+  border-radius: 16rpx;
+  flex-shrink: 0;
+  background: #f5f5f5;
+}
+
+.order-card__info {
+  flex: 1;
+  margin-left: 20rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.order-card__name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #1a1a1a;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.order-card__sub {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 6rpx;
+}
+
+.order-card__price-row {
+  display: flex;
+  align-items: baseline;
+  margin-top: 10rpx;
+}
+
+.order-card__price {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #FF9800;
+}
+
+.order-card__unit {
+  font-size: 22rpx;
+  color: #999;
+  margin-left: 4rpx;
+}
+
+/* ===== 支付方式 ===== */
+.pay-method-card {
+  margin: 0 28rpx 24rpx;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx 32rpx;
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.04);
+}
+
+.pay-method-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #1a1a1a;
+  display: block;
+  margin-bottom: 20rpx;
+}
+
+.pay-method-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 0;
+}
+
+.pay-method-left {
+  display: flex;
+  align-items: center;
+  gap: 20rpx;
+}
+
+.pay-method-icon {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 16rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.pay-method-icon--green { background: #E8F5E9; }
+.pay-method-icon--blue { background: #E3F2FD; }
+
+.pay-method-name {
+  font-size: 28rpx;
+  color: #333;
+}
+
+.pay-method-divider {
+  height: 1rpx;
+  background: #f0f0f0;
+}
+
+/* ===== 支付按钮区域 ===== */
+.pay-btn-area {
+  position: fixed;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: #fff;
+  padding: 20rpx 32rpx;
+  padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
+  box-shadow: 0 -4rpx 16rpx rgba(0, 0, 0, 0.06);
+}
+
+.pay-btn-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 16rpx;
+}
+
+.pay-btn-label {
+  font-size: 26rpx;
+  color: #999;
+}
+
+.pay-btn-price {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #FF9800;
+  margin-left: 12rpx;
+}

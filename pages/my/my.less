@@ -3,6 +3,29 @@
 .my-page {
   min-height: 100vh;
   background: #FFF8F0;
+  padding-top: var(--nav-height);
+}
+
+/* ===== 自定义导航栏 ===== */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #FF9800;
+}
+
+.nav-bar__inner {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 16rpx;
+}
+
+.nav-bar__left,
+.nav-bar__right {
+  width: 72rpx;
 }
 
 /* ===== 渐变头部 ===== */
@@ -29,6 +52,7 @@
   box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.1);
   background: rgba(255, 255, 255, 0.3);
   flex-shrink: 0;
+  margin-top: 16rpx;
 }
 
 .user-info__text {
@@ -183,25 +207,10 @@
   width: 88rpx;
   height: 88rpx;
   border-radius: 50%;
+  background: #FFF3E0;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.order-card__icon--orange {
-  background: #FFF3E0;
-}
-
-.order-card__icon--blue {
-  background: #E3F2FD;
-}
-
-.order-card__icon--red {
-  background: #FBE9E7;
-}
-
-.order-card__icon--green {
-  background: #E8F5E9;
 }
 
 .order-card__badge {
@@ -240,68 +249,197 @@
   color: #3D2C1E;
 }
 
-/* ===== 常用功能卡片 ===== */
-.func-card {
+/* ===== 通用卡片区块 ===== */
+.section-card {
   margin: 20rpx 28rpx 0;
   background: #FFFAF5;
   border-radius: 24rpx;
-  padding: 28rpx 24rpx;
   box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  overflow: hidden;
 }
 
-.func-card__grid {
+.section-card__header {
   display: flex;
-  flex-wrap: wrap;
-}
-
-.func-card__item {
-  width: 50%;
-  display: flex;
-  flex-direction: column;
   align-items: center;
-  padding: 20rpx 0;
+  justify-content: space-between;
+  padding: 24rpx 28rpx 0;
 }
 
-.func-card__icon {
-  width: 96rpx;
-  height: 96rpx;
-  border-radius: 28rpx;
+.section-card__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3D2C1E;
+}
+
+.section-card__more {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+}
+
+.section-card__more-text {
+  font-size: 24rpx;
+  color: #FF9800;
+}
+
+.section-card__body {
+  padding: 20rpx 28rpx 28rpx;
+}
+
+.card-loading {
+  display: flex;
+  justify-content: center;
+  padding: 32rpx 0;
+}
+
+.card-empty {
+  display: flex;
+  justify-content: center;
+  padding: 32rpx 0;
+}
+
+.card-empty__text {
+  font-size: 26rpx;
+  color: #C4B8AC;
+}
+
+/* ===== 宠物档案预览 ===== */
+.pet-preview {
+  display: flex;
+  align-items: center;
+}
+
+.pet-preview__avatar {
+  width: 112rpx;
+  height: 112rpx;
+  border-radius: 50%;
+  background: #FFF3E0;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 14rpx;
+  flex-shrink: 0;
+  margin-right: 24rpx;
+  overflow: hidden;
 }
 
-.func-card__icon--orange {
-  background: #FFF3E0;
-  box-shadow: 0 4rpx 16rpx rgba(255, 152, 0, 0.12);
+.pet-preview__avatar-img {
+  width: 100%;
+  height: 100%;
 }
 
-.func-card__icon--green {
-  background: #E8F5E9;
-  box-shadow: 0 4rpx 16rpx rgba(46, 125, 50, 0.12);
+.pet-preview__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
 }
 
-.func-card__icon--purple {
-  background: #F3E5F5;
-  box-shadow: 0 4rpx 16rpx rgba(123, 31, 162, 0.12);
+.pet-preview__name-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 6rpx;
 }
 
-.func-card__icon--blue {
-  background: #E3F2FD;
-  box-shadow: 0 4rpx 16rpx rgba(21, 101, 192, 0.12);
-}
-
-.func-card__name {
-  font-size: 28rpx;
-  color: #3D2C1E;
+.pet-preview__name {
+  font-size: 32rpx;
   font-weight: 600;
+  color: #3D2C1E;
 }
 
-.func-card__desc {
+.pet-preview__status {
+  font-size: 20rpx;
+  padding: 4rpx 14rpx;
+  border-radius: 20rpx;
+  font-weight: 500;
+}
+
+.pet-preview__detail {
+  font-size: 26rpx;
+  color: #8C7A6B;
+  margin-bottom: 4rpx;
+}
+
+.pet-preview__char {
+  font-size: 24rpx;
+  color: #C4B8AC;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* ===== 健康概览 ===== */
+.health-brief__stats {
+  display: flex;
+  align-items: center;
+  background: #FFF8F0;
+  border-radius: 16rpx;
+  padding: 20rpx 0;
+}
+
+.health-brief__stat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rpx;
+}
+
+.health-brief__value {
+  font-size: 28rpx;
+  font-weight: 700;
+  color: #3D2C1E;
+}
+
+.health-brief__unit {
+  font-size: 20rpx;
+  color: #8C7A6B;
+}
+
+.health-brief__trend {
   font-size: 22rpx;
-  color: #A89585;
-  margin-top: 4rpx;
+  color: #E53935;
+}
+
+.health-brief__trend--down {
+  color: #2E7D32;
+}
+
+.health-brief__label {
+  font-size: 22rpx;
+  color: #C4B8AC;
+  margin-top: 2rpx;
+}
+
+.health-brief__divider {
+  width: 2rpx;
+  height: 56rpx;
+  background: #F0E6D8;
+}
+
+.health-brief__reminders {
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
+  margin-top: 16rpx;
+}
+
+.health-brief__reminder {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  background: #FFF8E1;
+  border-radius: 12rpx;
+  padding: 14rpx 18rpx;
+}
+
+.health-brief__reminder--overdue {
+  background: #FFEBEE;
+}
+
+.health-brief__reminder-text {
+  font-size: 24rpx;
+  color: #3D2C1E;
 }
 
 /* ===== 更多工具卡片 ===== */

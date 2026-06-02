@@ -12,26 +12,45 @@ Page({
     // 统计数据
     petCount: 0,
     orderCount: 0,
-    postCount: 0,
     // 订单状态数量
+    unpaidCount: 0,
     pendingCount: 0,
-    inProgressCount: 0,
     toConfirmCount: 0,
-    completedCount: 0,
+    toReviewCount: 0,
     // 新消息红点
+    unpaidNew: false,
     pendingNew: false,
-    inProgressNew: false,
     toConfirmNew: false,
-    completedNew: false,
+    toReviewNew: false,
     loading: true,
+    // 导航栏
+    statusBarHeight: 0,
+    navBarHeight: 0,
+    // 宠物档案卡片
+    firstPet: null,
+    petLoading: false,
+    // 健康概览卡片
+    healthLoading: false,
+    healthBrief: {
+      latestWeight: '',
+      weightTrend: '',
+      lastVaccine: '',
+      lastDeworming: '',
+      reminders: [],
+    },
   },
 
   onLoad() {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
     this._loadLastSeen();
   },
 
   _loadLastSeen() {
-    this._lastSeen = { pending: 0, in_progress: 0, to_confirm: 0, completed: 0 };
+    this._lastSeen = { unpaid: 0, pending: 0, to_confirm: 0, to_review: 0 };
     try {
       const saved = wx.getStorageSync(SEEN_STORAGE_KEY);
       if (saved) this._lastSeen = saved;
@@ -45,12 +64,12 @@ Page({
   },
 
   _updateBadges() {
-    const seen = this._lastSeen || { pending: 0, in_progress: 0, to_confirm: 0, completed: 0 };
+    const seen = this._lastSeen || { unpaid: 0, pending: 0, to_confirm: 0, to_review: 0 };
     this.setData({
+      unpaidNew: this.data.unpaidCount > (seen.unpaid || 0),
       pendingNew: this.data.pendingCount > (seen.pending || 0),
-      inProgressNew: this.data.inProgressCount > (seen.in_progress || 0),
       toConfirmNew: this.data.toConfirmCount > (seen.to_confirm || 0),
-      completedNew: this.data.completedCount > (seen.completed || 0),
+      toReviewNew: this.data.toReviewCount > (seen.to_review || 0),
     });
   },
 
@@ -76,14 +95,16 @@ Page({
           petCount: 0,
           orderCount: 0,
           postCount: 0,
+          unpaidCount: 0,
           pendingCount: 0,
-          inProgressCount: 0,
           toConfirmCount: 0,
-          completedCount: 0,
+          toReviewCount: 0,
+          unpaidNew: false,
           pendingNew: false,
-          inProgressNew: false,
           toConfirmNew: false,
-          completedNew: false,
+          toReviewNew: false,
+          firstPet: null,
+          healthBrief: { latestWeight: '', weightTrend: '', lastVaccine: '', lastDeworming: '', reminders: [] },
         });
       }
     } catch (err) {
@@ -104,33 +125,133 @@ Page({
       return;
     }
     try {
-      const [petsRes, ordersRes, postsRes, pendingRes, inProgressRes, toConfirmRes, completedRes] =
+      const [petsRes, ordersRes, unpaidRes, pendingRes, toConfirmRes, toReviewRes] =
         await Promise.all([
           db.collection('pets').where({ ownerId: userId }).count(),
           db.collection('user_orders').where({ ownerId: userId }).count(),
-          db.collection('posts').where({ ownerId: userId }).count(),
+          db.collection('user_orders').where({ ownerId: userId, orderStatus: 'unpaid' }).count(),
           db.collection('user_orders').where({ ownerId: userId, orderStatus: 'pending' }).count(),
-          db.collection('user_orders').where({ ownerId: userId, orderStatus: 'in_progress' }).count(),
           db.collection('user_orders').where({ ownerId: userId, orderStatus: 'to_confirm' }).count(),
-          db.collection('user_orders').where({ ownerId: userId, orderStatus: 'completed' }).count(),
+          db.collection('user_orders').where({ ownerId: userId, orderStatus: 'completed', review: db.command.exists(false) }).count(),
         ]);
 
       this.setData({
         petCount: petsRes.total,
         orderCount: ordersRes.total,
-        postCount: postsRes.total,
+        unpaidCount: unpaidRes.total,
         pendingCount: pendingRes.total,
-        inProgressCount: inProgressRes.total,
         toConfirmCount: toConfirmRes.total,
-        completedCount: completedRes.total,
+        toReviewCount: toReviewRes.total,
         loading: false,
       });
 
       this._updateBadges();
+
+      // 加载宠物档案和健康概览
+      this.loadFirstPet();
     } catch (err) {
       console.warn('[My] loadStats 异常', err);
       this.setData({ loading: false });
     }
+  },
+
+  async loadFirstPet() {
+    const userId = this._userId;
+    if (!userId) return;
+    this.setData({ petLoading: true });
+    try {
+      const res = await db.collection('pets')
+        .where({ ownerId: userId })
+        .orderBy('createTime', 'desc')
+        .limit(1)
+        .get();
+      const pet = (res.data || [])[0] || null;
+      if (pet) {
+        const STATUS_MAP = {
+          agency_foster: { label: '寄养中', color: '#FF9800', bg: '#FFF3E0' },
+          pending_foster: { label: '待寄养', color: '#E65100', bg: '#FFF3E0' },
+          waiting_pickup: { label: '待取回', color: '#EF6C00', bg: '#FFF8E1' },
+          other_foster: { label: '他人寄养', color: '#1565C0', bg: '#E3F2FD' },
+        };
+        const sc = STATUS_MAP[pet.petStatus];
+        if (sc) {
+          pet.statusLabel = sc.label;
+          pet.statusColor = sc.color;
+          pet.statusBg = sc.bg;
+        }
+      }
+      this.setData({ firstPet: pet, petLoading: false });
+      if (pet) this.loadHealthBrief(pet._id);
+    } catch (err) {
+      console.warn('[My] loadFirstPet 异常', err);
+      this.setData({ petLoading: false });
+    }
+  },
+
+  async loadHealthBrief(petId) {
+    this.setData({ healthLoading: true });
+    try {
+      const res = await db.collection('health_records')
+        .where({ pet_id: petId })
+        .orderBy('record_date', 'desc')
+        .limit(50)
+        .get();
+      const records = res.data || [];
+
+      const weightRecords = records.filter(r => r.type === 'weight');
+      const latestWeight = weightRecords.length > 0 ? weightRecords[0].value : '';
+      let weightTrend = '';
+      if (weightRecords.length >= 2) {
+        const diff = parseFloat(weightRecords[0].value) - parseFloat(weightRecords[1].value);
+        if (diff > 0.05) weightTrend = 'up';
+        else if (diff < -0.05) weightTrend = 'down';
+      }
+
+      const vaccineRecords = records.filter(r => r.type === 'vaccine');
+      const dewormingRecords = records.filter(r => r.type === 'deworming');
+      const lastVaccine = vaccineRecords.length > 0 ? this._formatDate(vaccineRecords[0].record_date) : '';
+      const lastDeworming = dewormingRecords.length > 0 ? this._formatDate(dewormingRecords[0].record_date) : '';
+
+      const reminders = [];
+      const now = new Date();
+      if (vaccineRecords.length > 0) {
+        const dueDate = new Date(new Date(vaccineRecords[0].record_date).getTime() + 90 * 86400000);
+        const daysLeft = Math.ceil((dueDate - now) / 86400000);
+        if (daysLeft <= 14) {
+          reminders.push({
+            title: daysLeft <= 0 ? '疫苗已过期，请尽快接种' : `疫苗即将到期（${daysLeft}天后）`,
+            isOverdue: daysLeft <= 0,
+          });
+        }
+      }
+      if (dewormingRecords.length > 0) {
+        const dueDate = new Date(new Date(dewormingRecords[0].record_date).getTime() + 30 * 86400000);
+        const daysLeft = Math.ceil((dueDate - now) / 86400000);
+        if (daysLeft <= 7) {
+          reminders.push({
+            title: daysLeft <= 0 ? '驱虫已过期，请尽快处理' : `驱虫即将到期（${daysLeft}天后）`,
+            isOverdue: daysLeft <= 0,
+          });
+        }
+      }
+
+      this.setData({
+        healthLoading: false,
+        healthBrief: { latestWeight, weightTrend, lastVaccine, lastDeworming, reminders },
+      });
+    } catch (err) {
+      console.warn('[My] loadHealthBrief 异常', err);
+      this.setData({ healthLoading: false });
+    }
+  },
+
+  _formatDate(t) {
+    if (!t) return '';
+    const d = typeof t === 'string' ? new Date(t) : (t instanceof Date ? t : new Date(t));
+    if (isNaN(d.getTime())) return '';
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${m}-${day}`;
   },
 
   handleLogin() {
@@ -160,11 +281,12 @@ Page({
             nickname: '未登录',
             petCount: 0,
             orderCount: 0,
-            postCount: 0,
+            unpaidCount: 0,
             pendingCount: 0,
-            inProgressCount: 0,
             toConfirmCount: 0,
-            completedCount: 0,
+            toReviewCount: 0,
+            firstPet: null,
+            healthBrief: { latestWeight: '', weightTrend: '', lastVaccine: '', lastDeworming: '', reminders: [] },
           });
           wx.showToast({ title: '已退出', icon: 'success' });
         }
@@ -180,18 +302,12 @@ Page({
     wx.navigateTo({ url: '/packagePet/pages/pet/pet' });
   },
 
-  toFosterCenter() {
-    wx.navigateTo({ url: '/pages/foster-center/foster-center' });
-  },
-
   toOrders(e) {
     const status = e.currentTarget.dataset.status;
-    // 标记该状态为已读（active 对应 in_progress）
-    const seenKey = status === 'active' ? 'in_progress' : status;
     const seen = this._lastSeen || {};
-    if (seenKey && seen.hasOwnProperty(seenKey)) {
-      const countMap = { pending: 'pendingCount', in_progress: 'inProgressCount', to_confirm: 'toConfirmCount', completed: 'completedCount' };
-      seen[seenKey] = this.data[countMap[seenKey]] || 0;
+    if (status && seen.hasOwnProperty(status)) {
+      const countMap = { unpaid: 'unpaidCount', pending: 'pendingCount', to_confirm: 'toConfirmCount', to_review: 'toReviewCount' };
+      seen[status] = this.data[countMap[status]] || 0;
       this._lastSeen = seen;
       this._saveLastSeen();
       this._updateBadges();
@@ -205,14 +321,6 @@ Page({
 
   toHealthRemind() {
     wx.navigateTo({ url: '/pages/health/health' });
-  },
-
-  toForum() {
-    wx.switchTab({ url: '/pages/forum/forum' });
-  },
-
-  toMyPosts() {
-    wx.navigateTo({ url: '/pages/forum/forum?tab=mine' });
   },
 
   toAdminPanel() {

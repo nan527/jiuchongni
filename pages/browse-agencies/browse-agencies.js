@@ -1,4 +1,5 @@
 // pages/browse-agencies/browse-agencies.js
+const { resolveAgencyImages } = require('../../utils/fileHelper');
 const TYPE_LIST = [
   { key: 'all', label: '全部' },
   { key: '宠物寄养机构', label: '寄养机构' },
@@ -37,7 +38,8 @@ Page({
         .orderBy('createTime', 'desc')
         .limit(50)
         .get();
-      this.setData({ agencyList: res.data || [], loading: false });
+      const list = await resolveAgencyImages(res.data || []);
+      this.setData({ agencyList: list, loading: false });
     } catch (e) {
       this.setData({ agencyList: [], loading: false });
     }
@@ -86,7 +88,8 @@ Page({
         .orderBy('createTime', 'desc')
         .limit(50)
         .get();
-      this.setData({ agencyList: res.data || [], loading: false });
+      const list = await resolveAgencyImages(res.data || []);
+      this.setData({ agencyList: list, loading: false });
     } catch (e) {
       this.setData({ agencyList: [], loading: false });
     }

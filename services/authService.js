@@ -39,6 +39,10 @@ const authService = {
    */
   async checkLogin() {
     try {
+      // 0. 已主动登出，不再静默恢复
+      if (wx.getStorageSync('jcn_logged_out')) {
+        return null;
+      }
       // 1. 本地缓存
       const cached = this._getCachedUser();
       if (cached) {
@@ -126,9 +130,8 @@ const authService = {
     } catch (e) { /* 更新失败不阻塞登录 */ }
 
     const safeUser = this._sanitizeUser(userInfo);
-    console.log('[AuthService] loginWithAccount: userInfo._openid =', safeUser._openid, 'userInfo._id =', safeUser._id);
     await this._ensureOpenid(safeUser);
-    console.log('[AuthService] loginWithAccount: 最终 _openid =', safeUser._openid);
+    try { wx.removeStorageSync('jcn_logged_out'); } catch (e) { /* ignore */ }
     this._cacheUser(safeUser);
     return safeUser;
   },
@@ -167,6 +170,9 @@ const authService = {
           nickname,
           avatar: '',
           phone: '',
+          email: '',
+          address: '',
+          bio: '',
           account,
           password,
           createTime: getDB().serverDate(),
@@ -273,6 +279,9 @@ const authService = {
           nickname: orgName,
           avatar: '',
           phone: legalPhone,
+          email: '',
+          address: '',
+          bio: '',
           account,
           password,
           agencyProfileId: profileRes._id,
@@ -303,6 +312,9 @@ const authService = {
             password: 'admin123',
             avatar: '',
             phone: '',
+            email: '',
+            address: '',
+            bio: '',
             auditStatus: 'approved',
             createTime: getDB().serverDate(),
             lastLoginTime: getDB().serverDate(),
@@ -350,6 +362,7 @@ const authService = {
           );
         } catch (e) { /* 更新失败不阻塞登录 */ }
         await this._ensureOpenid(userInfo);
+        try { wx.removeStorageSync('jcn_logged_out'); } catch (e) { /* ignore */ }
         this._cacheUser(userInfo);
         wx.hideLoading();
         return userInfo;
@@ -365,6 +378,9 @@ const authService = {
         nickname: roleInfo.label,
         avatar: '',
         phone: '',
+        email: '',
+        address: '',
+        bio: '',
         createTime: getDB().serverDate(),
         lastLoginTime: getDB().serverDate(),
       };
@@ -382,6 +398,7 @@ const authService = {
       );
       const userInfo = newDoc.data;
       await this._ensureOpenid(userInfo);
+      try { wx.removeStorageSync('jcn_logged_out'); } catch (e) { /* ignore */ }
       this._cacheUser(userInfo);
       wx.hideLoading();
       return userInfo;
@@ -402,6 +419,7 @@ const authService = {
     try {
       wx.removeStorageSync(STORAGE_KEYS.USER_INFO);
       wx.removeStorageSync(STORAGE_KEYS.LOGIN_TIME);
+      wx.setStorageSync('jcn_logged_out', true);
     } catch (e) { /* ignore */ }
     this._syncToGlobal(null);
   },
@@ -440,7 +458,6 @@ const authService = {
    */
   async _ensureOpenid(userInfo) {
     if (!userInfo || userInfo._openid) {
-      console.log('[AuthService] _ensureOpenid: 已有 _openid =', userInfo ? userInfo._openid : 'null');
       return userInfo;
     }
 
@@ -451,7 +468,6 @@ const authService = {
         8000
       );
       if (res.result && res.result.openid) {
-        console.log('[AuthService] _ensureOpenid: 云函数获取 openid =', res.result.openid);
         userInfo._openid = res.result.openid;
         this._cacheUser(userInfo);
         return userInfo;
@@ -468,7 +484,6 @@ const authService = {
         5000
       );
       if (userRes.data.length > 0 && userRes.data[0]._openid) {
-        console.log('[AuthService] _ensureOpenid: 数据库查询 openid =', userRes.data[0]._openid);
         userInfo._openid = userRes.data[0]._openid;
         this._cacheUser(userInfo);
         return userInfo;

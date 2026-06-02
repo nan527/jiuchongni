@@ -1,11 +1,6 @@
 // pages/agency-detail/agency-detail.js
-const CAT_TITLE_MAP = {
-  foster: '宠物寄养',
-  grooming: '美容洗护',
-  medical: '医疗健康',
-  door: '上门服务',
-  extra: '商品增值',
-};
+const { resolveAgencyImages, resolveTempUrls } = require('../../utils/fileHelper');
+const { CAT_TITLE_MAP } = require('../../utils/helpers');
 
 Page({
   data: {
@@ -13,9 +8,21 @@ Page({
     svcList: [],
     loading: true,
     svcLoading: true,
+    statusBarHeight: 0,
+    navBarHeight: 0,
+  },
+
+  onGoBack() {
+    wx.navigateBack();
   },
 
   onLoad(options) {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+
     const { id } = options;
     if (id) {
       this.loadAgency(id);
@@ -27,33 +34,34 @@ Page({
     const db = wx.cloud.database();
     try {
       const res = await db.collection('agency_profiles').doc(id).get();
-      const agency = res.data;
+      const agencies = await resolveAgencyImages([res.data]);
+      const agency = agencies[0];
       this.setData({ agency, loading: false });
-      // 用机构的 _openid 加载其服务
-      if (agency._openid) {
-        this.loadServices(agency._openid);
-      } else {
-        this.setData({ svcLoading: false });
-      }
+      // 用机构 profileId 加载其服务
+      this.loadServices(id);
     } catch (e) {
       this.setData({ agency: null, loading: false, svcLoading: false });
       wx.showToast({ title: '机构信息加载失败', icon: 'none' });
     }
   },
 
-  async loadServices(openid) {
+  async loadServices(profileId) {
     this.setData({ svcLoading: true });
     const db = wx.cloud.database();
     try {
       const res = await db.collection('agency_services')
-        .where({ _openid: openid })
+        .where({ agencyProfileId: profileId })
         .orderBy('createTime', 'desc')
         .limit(20)
         .get();
-      const svcList = (res.data || []).map(s => ({
-        ...s,
-        catTitle: CAT_TITLE_MAP[s.category] || '服务',
-      }));
+      const svcList = [];
+      for (const s of (res.data || [])) {
+        const item = { ...s, catTitle: CAT_TITLE_MAP[s.category] || '服务' };
+        if (Array.isArray(item.images) && item.images.length) {
+          item.images = await resolveTempUrls(item.images);
+        }
+        svcList.push(item);
+      }
       this.setData({ svcList, svcLoading: false });
     } catch (e) {
       this.setData({ svcList: [], svcLoading: false });

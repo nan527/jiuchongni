@@ -1,8 +1,6 @@
 {
-  "navigationBarTitleText": "编辑个人资料",
+  "navigationStyle": "custom",
   "usingComponents": {
-    "van-field": "@vant/weapp/field/index",
-    "van-cell-group": "@vant/weapp/cell-group/index",
     "van-button": "@vant/weapp/button/index",
     "van-icon": "@vant/weapp/icon/index"
   }

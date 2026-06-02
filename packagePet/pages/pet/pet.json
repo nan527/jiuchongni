@@ -1,7 +1,5 @@
 {
-  "navigationBarTitleText": "宠物档案",
-  "navigationBarBackgroundColor": "#FF9800",
-  "navigationBarTextStyle": "white",
+  "navigationStyle": "custom",
   "usingComponents": {
     "van-uploader": "/miniprogram_npm/@vant/weapp/uploader/index",
     "van-button": "/miniprogram_npm/@vant/weapp/button/index",

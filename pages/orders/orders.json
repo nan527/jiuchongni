@@ -1,7 +1,5 @@
 {
-  "navigationBarTitleText": "我的订单",
-  "navigationBarBackgroundColor": "#FF9800",
-  "navigationBarTextStyle": "white",
+  "navigationStyle": "custom",
   "usingComponents": {
     "van-tabs": "/miniprogram_npm/@vant/weapp/tabs/index",
     "van-tab": "/miniprogram_npm/@vant/weapp/tab/index",

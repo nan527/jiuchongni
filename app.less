@@ -1,9 +1,97 @@
 /**app.wxss**/
 page {
-  background-color: #f3f3f3;
+  --primary-color: #FF9800;
+  --primary-light: #FFB74D;
+  --primary-bg: #FFF3E0;
+  --bg-color: #FFF8F0;
+  --card-bg: #FFFAF5;
+  --text-main: #3D2C1E;
+  --text-gray: #8C7A6B;
+  --divider-color: #F0E6D8;
+  --shadow-warm: 0 4rpx 16rpx rgba(61,44,30,0.06);
+
+  background-color: var(--bg-color);
+  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', Helvetica,
+    Segoe UI, Arial, Roboto, 'PingFang SC', 'miui', 'Hiragino Sans GB', 'Microsoft Yahei',
+    sans-serif;
 }
 
-.page {
-  height: 100vh;
-  background-color: #fff;
+.container {
+  min-height: 100vh;
+  box-sizing: border-box;
+}
+
+.header {
+  padding: 20px 16px;
+  background: #fff;
+  margin-bottom: 12px;
+}
+
+.title {
+  font-size: 20px;
+  font-weight: bold;
+  color: var(--text-main);
+  display: block;
+}
+
+.subtitle {
+  font-size: 14px;
+  color: var(--text-gray);
+  margin-top: 4px;
+  display: block;
+}
+
+.card {
+  background: #fff;
+  border-radius: 8px;
+  margin: 12px;
+  padding: 16px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.user-info-section {
+  padding: 40px 20px;
+  background: linear-gradient(180deg, #FF9800, #FFB74D);
+  display: flex;
+  align-items: center;
+  color: #fff;
+}
+
+.avatar-placeholder {
+  width: 60px;
+  height: 60px;
+  background: rgba(255, 255, 255, 0.9);
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 15px;
+}
+
+.user-detail {
+  display: flex;
+  flex-direction: column;
+}
+
+.nickname {
+  font-size: 20px;
+  font-weight: bold;
+}
+
+.role-tag {
+  font-size: 12px;
+  background: rgba(255, 255, 255, 0.2);
+  padding: 2px 8px;
+  border-radius: 10px;
+  margin-top: 5px;
+  width: fit-content;
+}
+
+/* 全局自定义导航栏标题样式 */
+.nav-bar__title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 600;
+  color: #fff;
 }

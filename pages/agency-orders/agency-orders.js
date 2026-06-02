@@ -1,5 +1,6 @@
 // pages/agency-orders/agency-orders.js
 const authService = require('../../services/authService');
+const { formatDate, buildLeaveRemainText, isLeaveExpired } = require('../../utils/helpers');
 
 const STATUS_LABEL = {
   confirmed: '接单',
@@ -115,9 +116,9 @@ Page({
       profile = profileRes.data || {};
       list = (res.data || []).map(item => ({
         ...item,
-        createTimeStr: this._formatTime(item.createTime),
-        leaveRemainText: this._buildLeaveRemainText(item.leaveTimeMs),
-        isLeaveExpired: this._isLeaveExpired(item.leaveTimeMs),
+        createTimeStr: formatDate(item.createTime),
+        leaveRemainText: buildLeaveRemainText(item.leaveTimeMs),
+        isLeaveExpired: isLeaveExpired(item.leaveTimeMs),
       }));
     } catch (e) {
       console.warn('[AgencyOrders] load', e);
@@ -201,7 +202,7 @@ Page({
                 }).get(),
               ]);
               const total = Number((profileRes.data || {}).totalCages) || 0;
-              const occupied = (activeRes.data || []).filter(o => !this._isLeaveExpired(o.leaveTimeMs)).length;
+              const occupied = (activeRes.data || []).filter(o => !isLeaveExpired(o.leaveTimeMs)).length;
               if (total <= 0) {
                 throw new Error('CAGE_NOT_CONFIGURED');
               }
@@ -294,8 +295,8 @@ Page({
       if (!allOrders.length) return;
       const refreshed = allOrders.map(item => ({
         ...item,
-        leaveRemainText: this._buildLeaveRemainText(item.leaveTimeMs),
-        isLeaveExpired: this._isLeaveExpired(item.leaveTimeMs),
+        leaveRemainText: buildLeaveRemainText(item.leaveTimeMs),
+        isLeaveExpired: isLeaveExpired(item.leaveTimeMs),
       }));
       const occupiedFosterOrders = refreshed.filter(o => o.category === 'foster' && ['confirmed', 'in_progress', 'to_confirm'].includes(o.orderStatus));
       const occupiedPetsAll = occupiedFosterOrders.map(o => ({
@@ -334,16 +335,6 @@ Page({
       clearInterval(this._leaveTickTimer);
       this._leaveTickTimer = null;
     }
-  },
-
-  _formatTime(t) {
-    if (!t) return '';
-    const d = typeof t === 'string' ? new Date(t) : (t instanceof Date ? t : new Date(t));
-    if (isNaN(d.getTime())) return '';
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
   },
 
   // ===== 健康录入 =====

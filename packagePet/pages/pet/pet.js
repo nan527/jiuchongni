@@ -56,6 +56,20 @@ Page({
     showAvatarPicker: false,
     presetAvatars: PRESET_AVATARS,
     selectedPresetIdx: -1,
+    statusBarHeight: 0,
+    navBarHeight: 0,
+  },
+
+  onGoBack() {
+    wx.navigateBack();
+  },
+
+  onLoad() {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
   },
 
   async onShow() {
@@ -108,6 +122,35 @@ Page({
           if (!existNames.has(ap.name)) petList.push(ap);
         });
       } catch (e) { /* collection may not exist */ }
+
+      // 校验寄养状态：如果宠物标记为寄养中但没有对应的活跃订单，重置状态
+      const FOSTER_STATUSES = ['agency_foster', 'pending_foster', 'waiting_pickup'];
+      const fosterPets = petList.filter(p => p.petStatus && FOSTER_STATUSES.includes(p.petStatus) && !p._isAdopted);
+      if (fosterPets.length > 0) {
+        try {
+          const _ = db.command;
+          const activeRes = await db.collection('user_orders')
+            .where({
+              ownerId: userId,
+              category: 'foster',
+              petId: _.in(fosterPets.map(p => p._id)),
+              orderStatus: _.in(['unpaid', 'pending', 'confirmed', 'in_progress', 'to_confirm']),
+            })
+            .get();
+          const activePetIds = new Set((activeRes.data || []).map(o => o.petId));
+          for (const pet of fosterPets) {
+            if (!activePetIds.has(pet._id)) {
+              pet.petStatus = '';
+              pet.statusConfig = null;
+              try {
+                await db.collection('pets').doc(pet._id).update({
+                  data: { petStatus: '', updateTime: db.serverDate() },
+                });
+              } catch (e) { /* ignore */ }
+            }
+          }
+        } catch (e) { /* ignore */ }
+      }
 
       this.setData({ petList, loading: false });
     } catch (err) {

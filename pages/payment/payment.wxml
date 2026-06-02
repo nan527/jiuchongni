@@ -1,0 +1,91 @@
+<!-- pages/payment/payment.wxml -->
+<view class="payment-page">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">确认支付</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
+  <view class="content" style="padding-top: {{ navBarHeight }}px;">
+
+    <!-- 倒计时 -->
+    <view class="countdown-bar" wx:if="{{countdownText && !expired}}">
+      <van-icon name="clock-o" size="28rpx" color="#E53935" />
+      <text class="countdown-text">{{countdownText}} 请尽快完成支付</text>
+    </view>
+    <view class="countdown-bar countdown-bar--expired" wx:if="{{expired}}">
+      <van-icon name="warning-o" size="28rpx" color="#fff" />
+      <text class="countdown-text">支付已超时，请重新下单</text>
+    </view>
+
+    <!-- 订单信息卡片 -->
+    <view class="order-card">
+      <view class="order-card__header">
+        <view class="order-card__type-badge">机构服务</view>
+      </view>
+      <view class="order-card__body">
+        <image class="order-card__img" src="{{order.images[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
+        <view class="order-card__info">
+          <text class="order-card__name">{{order.serviceName}}</text>
+          <text class="order-card__sub">宠物：{{order.petName || '-'}}</text>
+          <text class="order-card__sub" wx:if="{{order.petInfoText}}">{{order.petInfoText}}</text>
+          <view class="order-card__price-row">
+            <text class="order-card__price">¥{{order.price}}</text>
+            <text class="order-card__unit">/{{order.unit || '次'}}</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 支付方式 -->
+    <view class="pay-method-card">
+      <text class="pay-method-title">支付方式</text>
+      <van-radio-group value="{{payMethod}}" bind:change="onPayMethodChange">
+        <view class="pay-method-item">
+          <view class="pay-method-left">
+            <view class="pay-method-icon pay-method-icon--green">
+              <van-icon name="wechat" size="36rpx" color="#07C160" />
+            </view>
+            <text class="pay-method-name">微信支付</text>
+          </view>
+          <van-radio name="wechat" color="#FF9800" />
+        </view>
+        <view class="pay-method-divider"></view>
+        <view class="pay-method-item">
+          <view class="pay-method-left">
+            <view class="pay-method-icon pay-method-icon--blue">
+              <van-icon name="balance-o" size="36rpx" color="#1565C0" />
+            </view>
+            <text class="pay-method-name">余额支付</text>
+          </view>
+          <van-radio name="balance" color="#FF9800" />
+        </view>
+      </van-radio-group>
+    </view>
+
+    <!-- 支付按钮 -->
+    <view class="pay-btn-area">
+      <view class="pay-btn-row">
+        <text class="pay-btn-label">需支付</text>
+        <text class="pay-btn-price">¥{{order.price}}</text>
+      </view>
+      <van-button
+        type="primary"
+        round
+        block
+        disabled="{{expired}}"
+        color="linear-gradient(135deg, #FF9800, #FFB74D)"
+        loading="{{paying}}"
+        loading-text="支付中…"
+        bindtap="onConfirmPay"
+      >确认支付</van-button>
+    </view>
+
+  </view>
+</view>

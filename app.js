@@ -43,12 +43,4 @@ App({
       console.warn('[App] 静默登录异常', err);
     }
   },
-
-  // 全局解耦函数：统一云函数调用入口 (同学 A/D 维护)
-  callService(name, data) {
-    return wx.cloud.callFunction({
-      name: name,
-      data: data,
-    });
-  },
 });

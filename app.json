@@ -16,24 +16,17 @@
     "pages/admin/dashboard",
     "pages/my/my",
     "pages/profile/profile",
-    "pages/forum/forum",
-    "pages/post/post",
-    "pages/post-detail/post-detail",
-    "pages/publish/publish",
-    "pages/adopt/adopt",
-    "pages/foster/foster",
     "pages/agency-register/agency-register",
     "pages/agency-edit/agency-edit",
     "pages/agency-services/agency-services",
     "pages/agency-services-add/agency-services-add",
-    "pages/foster-center/foster-center",
-    "pages/foster-detail/foster-detail",
     "pages/service-detail/service-detail",
     "pages/orders/orders",
+    "pages/order-detail/order-detail",
+    "pages/payment/payment",
     "pages/agency-orders/agency-orders",
     "pages/agency-revenue/agency-revenue",
-    "pages/agency-reviews/agency-reviews",
-    "pages/adoption-review/adoption-review"
+    "pages/agency-reviews/agency-reviews"
   ],
   "subpackages": [
     {
@@ -60,18 +53,6 @@
         "text": "首页",
         "iconPath": "static/tab-home.png",
         "selectedIconPath": "static/tab-home-orange.png"
-      },
-      {
-        "pagePath": "pages/forum/forum",
-        "text": "社区",
-        "iconPath": "static/tab-forum.png",
-        "selectedIconPath": "static/tab-forum-orange.png"
-      },
-      {
-        "pagePath": "pages/publish/publish",
-        "text": "发布",
-        "iconPath": "static/tab-ask.png",
-        "selectedIconPath": "static/tab-ask-orange.png"
       },
       {
         "pagePath": "pages/my/my",

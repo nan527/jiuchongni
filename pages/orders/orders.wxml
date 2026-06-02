@@ -1,17 +1,23 @@
 <!-- pages/orders/orders.wxml -->
 <view class="orders-page">
 
-  <!-- 渐变头部 -->
-  <view class="page-header">
-    <text class="page-header__title">我的订单</text>
+  <!-- 固定头部：导航栏 + Tab -->
+  <view class="fixed-header" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">我的订单</text>
+      <view class="nav-bar__right"></view>
+    </view>
+    <van-tabs active="{{activeTab}}" bind:change="onTabChange" color="#FF9800" line-width="60rpx" swipeable>
+      <van-tab title="全部" />
+      <van-tab title="机构订单" />
+    </van-tabs>
   </view>
 
-  <!-- Tab 切换 -->
-  <van-tabs active="{{activeTab}}" bind:change="onTabChange" color="#FF9800" line-width="60rpx" swipeable>
-    <van-tab title="全部" />
-    <van-tab title="个人交易" />
-    <van-tab title="机构订单" />
-  </van-tabs>
+  <!-- 内容区域，下移避开固定头部 -->
+  <view class="scroll-area" style="margin-top: {{ headerHeight }}px;">
 
   <!-- 状态筛选 -->
   <scroll-view class="status-scroll" scroll-x enable-flex>
@@ -31,12 +37,12 @@
 
   <!-- 订单列表 -->
   <view class="order-list" wx:if="{{!loading && filteredOrders.length > 0}}">
-    <view class="o-card" wx:for="{{filteredOrders}}" wx:key="_id">
+    <view class="o-card" wx:for="{{filteredOrders}}" wx:key="_id" bindtap="onOrderTap" data-id="{{item._id}}">
 
       <!-- 卡片头部 -->
       <view class="o-card__header">
-        <view class="o-card__type-badge {{item.orderType === 'agency' ? 'badge-agency' : 'badge-personal'}}">
-          {{item.orderType === 'agency' ? '机构服务' : '个人交易'}}
+        <view class="o-card__type-badge badge-agency">
+          机构服务
         </view>
         <view class="o-card__status" style="background:{{item.statusConfig.bg}};color:{{item.statusConfig.color}};">
           {{item.statusConfig.label}}
@@ -45,15 +51,12 @@
 
       <!-- 卡片内容 -->
       <view class="o-card__body">
-        <image class="o-card__img" src="{{item.images[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
+        <image class="o-card__img" src="{{item._imgError ? '/static/pet/logo.png' : (item.images[0] || item.petInfo.photo || '/static/pet/logo.png')}}" mode="aspectFill" binderror="onImageError" data-idx="{{index}}" />
         <view class="o-card__info">
           <text class="o-card__name">{{item.serviceName || item.petName}}</text>
-          <text class="o-card__sub" wx:if="{{item.orderType === 'agency'}}">宠物：{{item.petName || '-'}}</text>
-          <text class="o-card__sub" wx:if="{{item.orderType === 'agency' && item.petInfoText}}">{{item.petInfoText}}</text>
-          <text class="o-card__remain {{item.isLeaveExpired ? 'o-card__remain--left' : ''}}" wx:if="{{item.orderType === 'agency' && item.leaveRemainText}}">{{item.leaveRemainText}}</text>
-          <text class="o-card__sub" wx:if="{{item.orderType === 'personal'}}">
-            {{item.sourceType === 'adopt' ? '领养' : '寄养'}}{{item.counterpart ? ' · ' + item.counterpart : ''}}
-          </text>
+          <text class="o-card__sub">宠物：{{item.petName || '-'}}</text>
+          <text class="o-card__sub" wx:if="{{item.petInfoText}}">{{item.petInfoText}}</text>
+          <text class="o-card__remain {{item.isLeaveExpired ? 'o-card__remain--left' : ''}}" wx:if="{{item.leaveRemainText}}">{{item.leaveRemainText}}</text>
           <view class="o-card__price-row" wx:if="{{item.price}}">
             <text class="o-card__price">¥{{item.price}}</text>
             <text class="o-card__unit">/{{item.unit || '次'}}</text>
@@ -62,24 +65,33 @@
         </view>
       </view>
 
-      <!-- 操作按钮 -->
-      <view class="o-card__actions" wx:if="{{item.orderStatus === 'to_confirm' || (item.orderStatus === 'completed' && !item.review)}}">
-        <van-button wx:if="{{item.orderStatus === 'to_confirm'}}" size="small" round type="primary" color="#FF9800" data-id="{{item._id}}" data-category="{{item.category}}" bindtap="onConfirmComplete">
-          {{item.category === 'foster' ? '确认取回' : '确认完成'}}
-        </van-button>
-        <van-button wx:if="{{item.orderStatus === 'completed' && !item.review}}" size="small" round plain type="warning" data-id="{{item._id}}" bindtap="openReview">评价服务</van-button>
+      <!-- 付款倒计时 -->
+      <view class="o-card__countdown" wx:if="{{item.orderStatus === 'unpaid' && item.countdownText}}">
+        <van-icon name="clock-o" size="28rpx" color="#E53935" />
+        <text class="o-card__countdown-text {{item.countdownExpired ? 'o-card__countdown-text--expired' : ''}}">{{item.countdownText}}</text>
       </view>
 
-      <!-- 已有评价 -->
-      <view class="o-card__review" wx:if="{{item.review}}">
-        <view class="review-header">
-          <van-icon name="comment-o" size="28rpx" color="#FF9800" />
-          <text class="review-title">我的评价</text>
-          <view class="review-stars">
-            <van-icon wx:for="{{item.review.ratingArr}}" wx:for-index="si" wx:key="si" name="star" size="24rpx" color="#FF9800" />
-          </view>
+      <!-- 操作按钮 -->
+      <view class="o-card__actions" wx:if="{{item.orderStatus === 'unpaid' || item.orderStatus === 'to_confirm' || (item.orderStatus === 'completed' && !item.review)}}">
+        <view class="o-card__btn" wx:if="{{item.orderStatus === 'unpaid' && !item.countdownExpired}}">
+          <van-button size="small" round type="primary" color="#FF9800" data-id="{{item._id}}" catchtap="onPayOrder">立即付款</van-button>
         </view>
-        <text class="review-content">{{item.review.content}}</text>
+        <view class="o-card__btn" wx:if="{{item.orderStatus === 'to_confirm'}}">
+          <van-button size="small" round type="primary" color="#FF9800" data-id="{{item._id}}" data-category="{{item.category}}" catchtap="onConfirmComplete">
+            {{item.category === 'foster' ? '确认取回' : '确认完成'}}
+          </van-button>
+        </view>
+        <view class="o-card__btn" wx:if="{{item.orderStatus === 'completed' && !item.review}}">
+          <van-button size="small" round plain type="warning" data-id="{{item._id}}" catchtap="openReview">评价服务</van-button>
+        </view>
+        <view class="o-card__btn">
+          <van-button size="small" round plain data-id="{{item._id}}" catchtap="onViewDetail">查看详情</van-button>
+        </view>
+      </view>
+      <view class="o-card__actions" wx:elif="{{item.orderStatus !== 'unpaid'}}">
+        <view class="o-card__btn">
+          <van-button size="small" round plain data-id="{{item._id}}" catchtap="onViewDetail">查看详情</van-button>
+        </view>
       </view>
     </view>
   </view>
@@ -89,6 +101,8 @@
     <van-icon name="orders-o" size="80rpx" color="#F0E6D8" />
     <text class="empty-wrap__text">暂无订单</text>
   </view>
+
+  </view><!-- scroll-area -->
 
   <!-- 评价弹窗 -->
   <van-popup show="{{showReview}}" position="bottom" round bind:close="closeReview">

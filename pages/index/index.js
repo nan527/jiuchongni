@@ -1,11 +1,6 @@
 // pages/index/index.js
-const CAT_TITLE_MAP = {
-  foster: '宠物寄养',
-  grooming: '美容洗护',
-  medical: '医疗健康',
-  door: '上门服务',
-  extra: '商品增值',
-};
+const { CAT_TITLE_MAP } = require('../../utils/helpers');
+const { resolveAgencyImages, resolveTempUrls } = require('../../utils/fileHelper');
 
 Page({
   data: {
@@ -29,7 +24,8 @@ Page({
         .orderBy('createTime', 'desc')
         .limit(4)
         .get();
-      this.setData({ agencyList: res.data || [], agencyLoading: false });
+      const list = await resolveAgencyImages(res.data || []);
+      this.setData({ agencyList: list, agencyLoading: false });
     } catch (e) {
       this.setData({ agencyList: [], agencyLoading: false });
     }
@@ -43,10 +39,14 @@ Page({
         .orderBy('createTime', 'desc')
         .limit(4)
         .get();
-      const svcList = (res.data || []).map(s => ({
-        ...s,
-        catTitle: CAT_TITLE_MAP[s.category] || '服务',
-      }));
+      const svcList = [];
+      for (const s of (res.data || [])) {
+        const item = { ...s, catTitle: CAT_TITLE_MAP[s.category] || '服务' };
+        if (Array.isArray(item.images) && item.images.length) {
+          item.images = await resolveTempUrls(item.images);
+        }
+        svcList.push(item);
+      }
       this.setData({ svcList, svcLoading: false });
     } catch (e) {
       this.setData({ svcList: [], svcLoading: false });

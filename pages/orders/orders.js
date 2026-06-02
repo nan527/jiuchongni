@@ -1,31 +1,36 @@
 // pages/orders/orders.js
 const authService = require('../../services/authService');
+const { resolveTempUrls } = require('../../utils/fileHelper');
+const { formatDate, buildPetInfoText, buildLeaveRemainText, isLeaveExpired } = require('../../utils/helpers');
 
 const STATUS_FILTER = [
   { key: 'all', label: '全部' },
-  { key: 'pending', label: '待处理' },
-  { key: 'active', label: '进行中' },
+  { key: 'unpaid', label: '待付款' },
+  { key: 'pending', label: '待接单' },
+  { key: 'in_progress', label: '进行中' },
   { key: 'to_confirm', label: '待确认' },
+  { key: 'to_review', label: '待评价' },
   { key: 'completed', label: '已完成' },
   { key: 'cancelled', label: '已取消' },
 ];
 
 const STATUS_CONFIG = {
-  pending:     { label: '待接单',   color: '#EF6C00', bg: '#FFF8E1' },
+  unpaid:      { label: '待付款',   color: '#EF6C00', bg: '#FFF8E1' },
+  pending:     { label: '待接单',   color: '#1565C0', bg: '#E3F2FD' },
   confirmed:   { label: '已接单',   color: '#1565C0', bg: '#E3F2FD' },
-  in_progress: { label: '服务中',   color: '#2E7D32', bg: '#E8F5E9' },
+  in_progress: { label: '进行中',   color: '#2E7D32', bg: '#E8F5E9' },
   to_confirm:  { label: '待确认',   color: '#E65100', bg: '#FFF3E0' },
+  to_review:   { label: '待评价',   color: '#7B1FA2', bg: '#F3E5F5' },
   completed:   { label: '已完成',   color: '#66BB6A', bg: '#E8F5E9' },
   cancelled:   { label: '已取消',   color: '#999',    bg: '#F5F5F5' },
 };
 
-const FOSTER_STATUS_CONFIG = {
-  pending:     { label: '待寄养',   color: '#EF6C00', bg: '#FFF8E1' },
-  confirmed:   { label: '寄养中',   color: '#1565C0', bg: '#E3F2FD' },
-  in_progress: { label: '寄养中',   color: '#2E7D32', bg: '#E8F5E9' },
-  to_confirm:  { label: '待取回',   color: '#E65100', bg: '#FFF3E0' },
-  completed:   { label: '已取回',   color: '#66BB6A', bg: '#E8F5E9' },
-  cancelled:   { label: '已取消',   color: '#999',    bg: '#F5F5F5' },
+const CAT_TEXT = {
+  foster: '宠物寄养',
+  grooming: '美容洗护',
+  medical: '医疗健康',
+  door: '上门服务',
+  extra: '商品增值',
 };
 
 Page({
@@ -42,9 +47,20 @@ Page({
     reviewRating: 5,
     reviewContent: '',
     submittingReview: false,
+    // 导航栏
+    statusBarHeight: 0,
+    navBarHeight: 0,
+    headerHeight: 0,
   },
 
   onLoad(options) {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    const headerHeight = navBarHeight + 60;
+    this.setData({ statusBarHeight, navBarHeight, headerHeight });
+
     if (options.tab !== undefined) {
       const tabIndex = parseInt(options.tab, 10);
       if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex < STATUS_FILTER.length) {
@@ -57,6 +73,17 @@ Page({
         this.setData({ activeStatus: options.status });
       }
     }
+  },
+
+  onUnload() {
+    if (this._countdownTimer) {
+      clearInterval(this._countdownTimer);
+      this._countdownTimer = null;
+    }
+  },
+
+  onGoBack() {
+    wx.navigateBack({ fail: () => wx.switchTab({ url: '/pages/my/my' }) });
   },
 
   async onShow() {
@@ -85,14 +112,13 @@ Page({
     const { allOrders, activeTab, activeStatus } = this.data;
     let list = allOrders;
 
-    // Tab 过滤
-    if (activeTab === 1) list = list.filter(o => o.orderType === 'personal');
-    if (activeTab === 2) list = list.filter(o => o.orderType === 'agency');
+    if (activeTab === 1) list = list.filter(o => o.orderType === 'agency');
 
-    // 状态过滤
-    if (activeStatus === 'pending') list = list.filter(o => o.orderStatus === 'pending');
-    else if (activeStatus === 'active') list = list.filter(o => o.orderStatus === 'confirmed' || o.orderStatus === 'in_progress');
+    if (activeStatus === 'unpaid') list = list.filter(o => o.orderStatus === 'unpaid');
+    else if (activeStatus === 'pending') list = list.filter(o => o.orderStatus === 'pending');
+    else if (activeStatus === 'in_progress') list = list.filter(o => o.orderStatus === 'in_progress');
     else if (activeStatus === 'to_confirm') list = list.filter(o => o.orderStatus === 'to_confirm');
+    else if (activeStatus === 'to_review') list = list.filter(o => o.orderStatus === 'completed' && !o.review);
     else if (activeStatus === 'completed') list = list.filter(o => o.orderStatus === 'completed');
     else if (activeStatus === 'cancelled') list = list.filter(o => o.orderStatus === 'cancelled');
 
@@ -116,16 +142,17 @@ Page({
         .limit(50)
         .get();
       list = (res.data || []).filter(item => item.ownerId === userId).map(item => {
-        const isFoster = item.category === 'foster';
-        const statusMap = isFoster ? FOSTER_STATUS_CONFIG : STATUS_CONFIG;
-        const config = statusMap[item.orderStatus] || {};
+        const config = STATUS_CONFIG[item.orderStatus] || {};
         return {
           ...item,
           statusConfig: config,
-          createTimeStr: this._formatTime(item.createTime),
-          leaveRemainText: this._buildLeaveRemainText(item.leaveTimeMs),
-          isLeaveExpired: this._isLeaveExpired(item.leaveTimeMs),
-          petInfoText: this._buildPetInfoText(item.petInfo),
+          categoryText: CAT_TEXT[item.category] || item.category || '',
+          createTimeStr: formatDate(item.createTime),
+          leaveRemainText: buildLeaveRemainText(item.leaveTimeMs),
+          isLeaveExpired: isLeaveExpired(item.leaveTimeMs),
+          petInfoText: buildPetInfoText(item.petInfo),
+          countdownText: this._buildCountdownText(item.payDeadline),
+          countdownExpired: this._isCountdownExpired(item.payDeadline),
           review: item.review ? {
             ...item.review,
             ratingArr: new Array(item.review.rating || 0).fill(1),
@@ -134,10 +161,134 @@ Page({
       });
     } catch (e) { /* ignore */ }
 
+    // 解析云存储图片
+    for (const order of list) {
+      if (Array.isArray(order.images) && order.images.length) {
+        order.images = await resolveTempUrls(order.images);
+      }
+    }
+
+    // 补充缺失的机构名称
+    const missingAgencyIds = [...new Set(list
+      .filter(o => o.agencyProfileId && !o.agencyName)
+      .map(o => o.agencyProfileId))];
+    if (missingAgencyIds.length > 0) {
+      try {
+        const _ = db.command;
+        const agencyRes = await db.collection('agency_profiles')
+          .where({ _id: _.in(missingAgencyIds) })
+          .field({ _id: true, orgName: true })
+          .get();
+        const agencyMap = {};
+        (agencyRes.data || []).forEach(a => { agencyMap[a._id] = a.orgName; });
+        list.forEach(o => {
+          if (!o.agencyName && agencyMap[o.agencyProfileId]) {
+            o.agencyName = agencyMap[o.agencyProfileId];
+          }
+        });
+      } catch (e) { /* ignore */ }
+    }
+
     this.setData({ allOrders: list, loading: false });
     this.applyFilter();
+    this._startCountdownTick();
   },
 
+  // 付款倒计时
+  _buildCountdownText(payDeadline) {
+    if (!payDeadline) return '';
+    const deadline = typeof payDeadline === 'string' ? new Date(payDeadline).getTime() : (payDeadline instanceof Date ? payDeadline.getTime() : Number(payDeadline));
+    if (!deadline) return '';
+    const diff = deadline - Date.now();
+    if (diff <= 0) return '付款已超时';
+    const min = Math.floor(diff / 60000);
+    const sec = Math.floor((diff % 60000) / 1000);
+    return `剩余 ${String(min).padStart(2, '0')}:${String(sec).padStart(2, '0')} 请尽快付款`;
+  },
+
+  _isCountdownExpired(payDeadline) {
+    if (!payDeadline) return false;
+    const deadline = typeof payDeadline === 'string' ? new Date(payDeadline).getTime() : (payDeadline instanceof Date ? payDeadline.getTime() : Number(payDeadline));
+    return deadline > 0 && deadline <= Date.now();
+  },
+
+  _startCountdownTick() {
+    if (this._countdownTimer) clearInterval(this._countdownTimer);
+    const hasUnpaid = this.data.allOrders.some(o => o.orderStatus === 'unpaid' && o.payDeadline);
+    if (!hasUnpaid) return;
+
+    this._countdownTimer = setInterval(() => {
+      const allOrders = this.data.allOrders.map(item => {
+        if (item.orderStatus !== 'unpaid' || !item.payDeadline) return item;
+        const expired = this._isCountdownExpired(item.payDeadline);
+        // 超时自动取消
+        if (expired && item.orderStatus === 'unpaid') {
+          this._autoCancelExpired(item._id);
+        }
+        return {
+          ...item,
+          countdownText: this._buildCountdownText(item.payDeadline),
+          countdownExpired: expired,
+        };
+      });
+      this.setData({ allOrders });
+      this.applyFilter();
+    }, 1000);
+  },
+
+  async _autoCancelExpired(orderId) {
+    try {
+      const db = wx.cloud.database();
+      const order = this.data.allOrders.find(o => o._id === orderId);
+      await db.collection('user_orders').doc(orderId).update({
+        data: { orderStatus: 'cancelled', updateTime: db.serverDate() },
+      });
+      // 寄养订单取消时重置宠物状态
+      if (order && order.category === 'foster' && order.petId) {
+        try {
+          await db.collection('pets').doc(order.petId).update({
+            data: { petStatus: '', updateTime: db.serverDate() },
+          });
+        } catch (petErr) { /* ignore */ }
+      }
+      this.loadOrders();
+    } catch (e) { /* ignore */ }
+  },
+
+  // 虚拟付款
+  onPayOrder(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({ url: `/pages/payment/payment?id=${id}` });
+  },
+
+  // 订单详情
+  onViewDetail(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({ url: `/pages/order-detail/order-detail?id=${id}` });
+  },
+
+  onOrderTap(e) {
+    const id = e.currentTarget.dataset.id;
+    const order = this.data.allOrders.find(o => o._id === id);
+    if (!order) return;
+    // 待付款订单点击跳转支付页
+    if (order.orderStatus === 'unpaid') {
+      wx.navigateTo({ url: `/pages/payment/payment?id=${id}` });
+      return;
+    }
+    wx.navigateTo({ url: `/pages/order-detail/order-detail?id=${id}` });
+  },
+
+  onImageError(e) {
+    const idx = e.currentTarget.dataset.idx;
+    const orders = this.data.filteredOrders;
+    if (orders[idx]) {
+      orders[idx] = { ...orders[idx], _imgError: true };
+      this.setData({ filteredOrders: orders });
+    }
+  },
+
+  // 确认完成
   onConfirmComplete(e) {
     const id = e.currentTarget.dataset.id;
     const category = e.currentTarget.dataset.category || '';
@@ -173,6 +324,7 @@ Page({
     });
   },
 
+  // 评价
   openReview(e) {
     const id = e.currentTarget.dataset.id;
     this.setData({ showReview: true, reviewOrderId: id, reviewRating: 5, reviewContent: '' });
@@ -211,40 +363,5 @@ Page({
     } finally {
       this.setData({ submittingReview: false });
     }
-  },
-
-  _formatTime(t) {
-    if (!t) return '';
-    const d = typeof t === 'string' ? new Date(t) : (t instanceof Date ? t : new Date(t));
-    if (isNaN(d.getTime())) return '';
-    const y = d.getFullYear();
-    const m = String(d.getMonth() + 1).padStart(2, '0');
-    const day = String(d.getDate()).padStart(2, '0');
-    return `${y}-${m}-${day}`;
-  },
-
-  _buildPetInfoText(petInfo) {
-    if (!petInfo) return '';
-    const species = petInfo.species || '';
-    const age = petInfo.age ? `${petInfo.age}岁` : '';
-    if (species && age) return `${species} · ${age}`;
-    return species || age || '';
-  },
-
-  _buildLeaveRemainText(leaveTimeMs) {
-    const ms = Number(leaveTimeMs) || 0;
-    if (!ms) return '';
-    const diff = ms - Date.now();
-    if (diff <= 0) return '已离开（待机构确认）';
-    const totalHours = Math.ceil(diff / (1000 * 60 * 60));
-    const days = Math.floor(totalHours / 24);
-    const hours = totalHours % 24;
-    if (days > 0) return `还有${days}天${hours}小时离开`;
-    return `还有${hours}小时离开`;
-  },
-
-  _isLeaveExpired(leaveTimeMs) {
-    const ms = Number(leaveTimeMs) || 0;
-    return ms > 0 && ms <= Date.now();
   },
 });

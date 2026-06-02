@@ -1,0 +1,230 @@
+<!-- pages/order-detail/order-detail.wxml -->
+
+<!-- 自定义导航栏 -->
+<view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+  <view class="nav-bar__inner">
+    <view class="nav-bar__back" bindtap="onGoBack">
+      <van-icon name="arrow-left" size="40rpx" color="#fff" />
+    </view>
+    <text class="nav-bar__title">订单详情</text>
+    <view class="nav-bar__right"></view>
+  </view>
+</view>
+
+<!-- 加载中 -->
+<view class="loading-wrap" wx:if="{{loading}}" style="padding-top: {{ navBarHeight + 100 }}px;">
+  <van-loading type="spinner" color="#FF9800" size="48rpx" />
+</view>
+
+<view class="detail-page" wx:if="{{!loading && order}}" style="padding-top: {{ navBarHeight }}px;">
+
+  <!-- 状态头部 -->
+  <view class="status-header" style="background: {{order.statusConfig.bg}};">
+    <view class="status-header__icon">
+      <van-icon
+        name="{{order.orderStatus === 'completed' ? 'passed' : order.orderStatus === 'cancelled' ? 'close' : order.orderStatus === 'unpaid' ? 'clock-o' : 'info-o'}}"
+        size="56rpx"
+        color="{{order.statusConfig.color}}"
+      />
+    </view>
+    <text class="status-header__label" style="color: {{order.statusConfig.color}};">{{order.statusConfig.label}}</text>
+    <text class="status-header__service">{{order.serviceName}}</text>
+    <!-- 付款倒计时 -->
+    <view class="status-header__countdown" wx:if="{{order.orderStatus === 'unpaid' && order.countdownText}}">
+      <van-icon name="clock-o" size="26rpx" color="#E53935" />
+      <text class="status-header__countdown-text {{order.countdownExpired ? 'countdown-expired' : ''}}">{{order.countdownText}}</text>
+    </view>
+  </view>
+
+  <!-- 宠物信息卡片 -->
+  <view class="section-card">
+    <view class="section-card__header">
+      <van-icon name="friends-o" size="32rpx" color="#FF9800" />
+      <text class="section-card__title">宠物信息</text>
+    </view>
+    <view class="pet-row">
+      <image
+        class="pet-row__avatar"
+        src="{{order.petInfo.photo || '/static/pet/logo.png'}}"
+        mode="aspectFill"
+      />
+      <view class="pet-row__info">
+        <text class="pet-row__name">{{order.petName || '-'}}</text>
+        <view class="pet-row__meta">
+          <text wx:if="{{order.petInfo.species}}">{{order.petInfo.species}}</text>
+          <text wx:if="{{order.petInfo.age}}"> · {{order.petInfo.age}}岁</text>
+          <text wx:if="{{order.genderText}}"> · {{order.genderText}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 机构信息卡片 -->
+  <view class="section-card">
+    <view class="section-card__header">
+      <van-icon name="shop-o" size="32rpx" color="#FF9800" />
+      <text class="section-card__title">机构信息</text>
+    </view>
+    <view class="info-rows">
+      <view class="info-row">
+        <text class="info-row__label">机构名称</text>
+        <text class="info-row__value">{{order.agencyName || '-'}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-row__label">服务分类</text>
+        <text class="info-row__value">{{order.categoryText || '-'}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-row__label">服务名称</text>
+        <text class="info-row__value">{{order.serviceName || '-'}}</text>
+      </view>
+    </view>
+    <!-- 服务图片 -->
+    <view class="service-images" wx:if="{{order.images.length > 0}}">
+      <image
+        class="service-images__item"
+        wx:for="{{order.images}}"
+        wx:key="*this"
+        src="{{item}}"
+        mode="aspectFill"
+        bindtap="previewImg"
+        data-src="{{item}}"
+        data-list="{{order.images}}"
+      />
+    </view>
+  </view>
+
+  <!-- 费用明细卡片 -->
+  <view class="section-card">
+    <view class="section-card__header">
+      <van-icon name="balance-o" size="32rpx" color="#FF9800" />
+      <text class="section-card__title">费用明细</text>
+    </view>
+    <view class="info-rows">
+      <view class="info-row" wx:if="{{order.price}}">
+        <text class="info-row__label">服务价格</text>
+        <text class="info-row__value info-row__value--price">¥{{order.price}}/{{order.unit || '次'}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.checkinDate}}">
+        <text class="info-row__label">入住日期</text>
+        <text class="info-row__value">{{order.checkinDate}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.stayDays > 1}}">
+        <text class="info-row__label">寄养天数</text>
+        <text class="info-row__value">{{order.stayDays}}天</text>
+      </view>
+      <view class="info-row" wx:if="{{order.checkoutDate}}">
+        <text class="info-row__label">离店日期</text>
+        <text class="info-row__value">{{order.checkoutDate}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-row__label">联系电话</text>
+        <text class="info-row__value">{{order.phone || '-'}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.remark}}">
+        <text class="info-row__label">备注</text>
+        <text class="info-row__value">{{order.remark}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 支付信息卡片 -->
+  <view class="section-card">
+    <view class="section-card__header">
+      <van-icon name="bill-o" size="32rpx" color="#FF9800" />
+      <text class="section-card__title">订单信息</text>
+    </view>
+    <view class="info-rows">
+      <view class="info-row">
+        <text class="info-row__label">订单编号</text>
+        <text class="info-row__value info-row__value--mono">{{order._id}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-row__label">下单时间</text>
+        <text class="info-row__value">{{order.createTimeStr}}</text>
+      </view>
+      <view class="info-row" wx:if="{{order.updateTimeStr && order.updateTimeStr !== order.createTimeStr}}">
+        <text class="info-row__label">更新时间</text>
+        <text class="info-row__value">{{order.updateTimeStr}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-row__label">订单状态</text>
+        <text class="info-row__value" style="color: {{order.statusConfig.color}};">{{order.statusConfig.label}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 评价信息卡片 -->
+  <view class="section-card" wx:if="{{order.review}}">
+    <view class="section-card__header">
+      <van-icon name="comment-o" size="32rpx" color="#FF9800" />
+      <text class="section-card__title">我的评价</text>
+    </view>
+    <view class="review-area">
+      <view class="review-area__stars">
+        <van-icon wx:for="{{order.review.ratingArr}}" wx:for-index="si" wx:key="si" name="star" size="32rpx" color="#FF9800" />
+      </view>
+      <text class="review-area__content">{{order.review.content}}</text>
+    </view>
+  </view>
+
+  <!-- 底部操作按钮 -->
+  <view class="action-bar" wx:if="{{order.orderStatus === 'unpaid' || order.orderStatus === 'to_confirm' || (order.orderStatus === 'completed' && !order.review)}}">
+    <van-button
+      wx:if="{{order.orderStatus === 'unpaid' && !order.countdownExpired}}"
+      round
+      block
+      type="primary"
+      color="linear-gradient(135deg, #FF9800, #FFB74D)"
+      bindtap="onPay"
+    >立即付款</van-button>
+    <van-button
+      wx:if="{{order.orderStatus === 'to_confirm'}}"
+      round
+      block
+      type="primary"
+      color="linear-gradient(135deg, #FF9800, #FFB74D)"
+      bindtap="onConfirmComplete"
+    >{{order.category === 'foster' ? '确认取回' : '确认完成'}}</van-button>
+    <van-button
+      wx:if="{{order.orderStatus === 'completed' && !order.review}}"
+      round
+      block
+      plain
+      type="warning"
+      bindtap="openReview"
+    >评价服务</van-button>
+  </view>
+
+</view>
+
+<!-- 空状态 -->
+<view class="empty-state" wx:if="{{!loading && !order}}">
+  <van-icon name="warn-o" size="80rpx" color="#F0E6D8" />
+  <text class="empty-state__text">订单不存在</text>
+</view>
+
+<!-- 评价弹窗 -->
+<van-popup show="{{showReview}}" position="bottom" round bind:close="closeReview">
+  <view class="review-popup">
+    <view class="review-popup__header">
+      <text class="review-popup__title">评价服务</text>
+      <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeReview" />
+    </view>
+    <view class="review-popup__rating">
+      <text class="review-popup__label">服务评分</text>
+      <van-rate value="{{reviewRating}}" bind:change="onRatingChange" size="40rpx" color="#FF9800" void-color="#F0E6D8" />
+    </view>
+    <view class="review-popup__field">
+      <textarea class="review-popup__textarea" placeholder="请输入您的评价..." value="{{reviewContent}}" bindinput="onReviewContentChange" />
+    </view>
+    <van-button
+      type="primary"
+      block
+      round
+      loading="{{submittingReview}}"
+      color="linear-gradient(135deg, #FF9800, #FFB74D)"
+      bindtap="submitReview"
+    >提交评价</van-button>
+  </view>
+</van-popup>

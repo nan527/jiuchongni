@@ -3,12 +3,9 @@ const authService = require('../../services/authService');
 
 const STATUS_CONFIG = {
   agency_foster:   { label: '寄养中',   color: '#FF9800', bg: '#FFF3E0' },
-  pending_adopt:   { label: '待领养',   color: '#2E7D32', bg: '#E8F5E9' },
   pending_foster:  { label: '待寄养',   color: '#E65100', bg: '#FFF3E0' },
   waiting_pickup:  { label: '待取回',   color: '#EF6C00', bg: '#FFF8E1' },
   other_foster:    { label: '他人寄养', color: '#1565C0', bg: '#E3F2FD' },
-  adopted_in:      { label: '领养入',   color: '#2E7D32', bg: '#E8F5E9' },
-  adopted_out:     { label: '已送养',   color: '#C2185B', bg: '#FCE4EC' },
 };
 
 const HEALTH_TYPE_LABEL = {
@@ -38,9 +35,21 @@ Page({
     fileList: [],
     photoUrl: '',
     saving: false,
+    statusBarHeight: 0,
+    navBarHeight: 0,
+  },
+
+  onGoBack() {
+    wx.navigateBack();
   },
 
   async onLoad(options) {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+
     const { id } = options;
     const userInfo = await authService.checkLogin();
     if (!userInfo) {

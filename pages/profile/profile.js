@@ -16,12 +16,25 @@ Page({
     nickname: '',
     email: '',
     phone: '',
+    address: '',
     bio: '',
     saving: false,
     _id: '',
+    statusBarHeight: 0,
+    navBarHeight: 0,
+  },
+
+  onGoBack() {
+    wx.navigateBack();
   },
 
   async onLoad() {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+
     const userInfo = await authService.checkLogin();
     if (!userInfo) {
       wx.navigateBack();
@@ -33,6 +46,7 @@ Page({
       nickname: userInfo.nickname || '',
       email: userInfo.email || '',
       phone: userInfo.phone || '',
+      address: userInfo.address || '',
       bio: userInfo.bio || '',
     });
   },
@@ -69,10 +83,11 @@ Page({
     });
   },
 
-  onNicknameChange(e) { this.setData({ nickname: e.detail }); },
-  onEmailChange(e) { this.setData({ email: e.detail }); },
-  onPhoneChange(e) { this.setData({ phone: e.detail }); },
-  onBioChange(e) { this.setData({ bio: e.detail }); },
+  onNicknameChange(e) { this.setData({ nickname: e.detail.value }); },
+  onEmailChange(e) { this.setData({ email: e.detail.value }); },
+  onPhoneChange(e) { this.setData({ phone: e.detail.value }); },
+  onAddressChange(e) { this.setData({ address: e.detail.value }); },
+  onBioChange(e) { this.setData({ bio: e.detail.value }); },
 
   /** 保存资料 */
   async saveProfile() {
@@ -90,6 +105,7 @@ Page({
         nickname: this.data.nickname.trim(),
         email: this.data.email.trim(),
         phone: this.data.phone.trim(),
+        address: this.data.address.trim(),
         bio: this.data.bio.trim(),
       };
 

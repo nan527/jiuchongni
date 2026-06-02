@@ -5,19 +5,37 @@
   background: #FFF8F0;
 }
 
-/* ===== 渐变头部 ===== */
-.page-header {
-  background: linear-gradient(135deg, #FF9800, #FFB74D);
-  padding: 20rpx 32rpx 24rpx;
+/* ===== 固定头部 ===== */
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #FF9800;
 }
 
-.page-header__title {
-  font-size: 40rpx;
-  font-weight: 700;
-  color: #fff;
+.nav-bar__inner {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 16rpx;
+}
+
+.nav-bar__back {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-bar__right {
+  width: 72rpx;
 }
 
 /* ===== 状态筛选 ===== */
+
 .status-scroll {
   white-space: nowrap;
   padding: 16rpx 32rpx;
@@ -53,7 +71,7 @@
 
 /* ===== 订单列表 ===== */
 .order-list {
-  padding: 20rpx 32rpx;
+  padding: 32rpx 32rpx 20rpx;
   display: flex;
   flex-direction: column;
   gap: 20rpx;
@@ -85,11 +103,6 @@
 .badge-agency {
   background: #FFF3E0;
   color: #E65100;
-}
-
-.badge-personal {
-  background: #E8F5E9;
-  color: #2E7D32;
 }
 
 .o-card__status {
@@ -171,13 +184,40 @@
   margin-top: 6rpx;
 }
 
+/* ===== 付款倒计时 ===== */
+.o-card__countdown {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 24rpx;
+  background: #FFF8E1;
+  border-top: 1rpx solid #F0E6D8;
+}
+
+.o-card__countdown-text {
+  font-size: 24rpx;
+  color: #EF6C00;
+  font-weight: 500;
+}
+
+.o-card__countdown-text--expired {
+  color: #E53935;
+}
+
 /* ===== 操作按钮 ===== */
 .o-card__actions {
-  display: flex;
-  justify-content: flex-end;
+  text-align: right;
   padding: 12rpx 24rpx 18rpx;
   border-top: 1rpx solid #F0E6D8;
-  gap: 16rpx;
+}
+
+.o-card__btn {
+  display: inline-block;
+  margin-left: 16rpx;
+}
+
+.o-card__btn:first-child {
+  margin-left: 0;
 }
 
 /* ===== 评价展示 ===== */

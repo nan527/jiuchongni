@@ -1,7 +1,5 @@
 {
-  "navigationBarTitleText": "机构详情",
-  "navigationBarBackgroundColor": "#FF9800",
-  "navigationBarTextStyle": "white",
+  "navigationStyle": "custom",
   "usingComponents": {
     "van-icon": "/miniprogram_npm/@vant/weapp/icon/index",
     "van-tag": "/miniprogram_npm/@vant/weapp/tag/index",

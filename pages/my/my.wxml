@@ -1,5 +1,14 @@
 <!-- pages/my/my.wxml -->
-<view class="my-page">
+<view class="my-page" style="--nav-height: {{ navBarHeight }}px;">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__left"></view>
+      <text class="nav-bar__title">个人中心</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
 
   <!-- 渐变头部 -->
   <view class="page-header" bindtap="handleHeaderTap">
@@ -32,17 +41,12 @@
         <text class="stats-card__num">{{orderCount}}</text>
         <text class="stats-card__label">历史订单</text>
       </view>
-      <view class="stats-card__divider"></view>
-      <view class="stats-card__item" bindtap="toMyPosts">
-        <text class="stats-card__num">{{postCount}}</text>
-        <text class="stats-card__label">我的帖子</text>
-      </view>
     </view>
   </view>
 
   <!-- 未登录提示 -->
   <view class="login-hint" wx:else bindtap="handleLogin">
-    <text class="login-hint__text">登录查看您的宠物、订单和帖子数据</text>
+    <text class="login-hint__text">登录查看您的宠物和订单数据</text>
     <van-icon name="arrow" size="28rpx" color="#FF9800" />
   </view>
 
@@ -56,82 +60,126 @@
       </view>
     </view>
     <view class="order-card__grid">
+      <!-- 待付款 -->
+      <view class="order-card__item" bindtap="toOrders" data-status="unpaid">
+        <view class="order-card__icon-wrap">
+          <view class="order-card__icon">
+            <van-icon name="balance-o" size="40rpx" color="#FF9800" />
+          </view>
+          <view class="order-card__badge" wx:if="{{unpaidNew}}">{{unpaidCount > 99 ? '99+' : unpaidCount}}</view>
+        </view>
+        <text class="order-card__item-label">待付款</text>
+      </view>
       <!-- 待接单 -->
       <view class="order-card__item" bindtap="toOrders" data-status="pending">
         <view class="order-card__icon-wrap">
-          <view class="order-card__icon order-card__icon--orange">
-            <van-icon name="clock-o" size="40rpx" color="#EF6C00" />
+          <view class="order-card__icon">
+            <van-icon name="clock-o" size="40rpx" color="#FF9800" />
           </view>
           <view class="order-card__badge" wx:if="{{pendingNew}}">{{pendingCount > 99 ? '99+' : pendingCount}}</view>
         </view>
         <text class="order-card__item-label">待接单</text>
       </view>
-      <!-- 进行中 -->
-      <view class="order-card__item" bindtap="toOrders" data-status="active">
-        <view class="order-card__icon-wrap">
-          <view class="order-card__icon order-card__icon--blue">
-            <van-icon name="logistics" size="40rpx" color="#1565C0" />
-          </view>
-          <view class="order-card__badge" wx:if="{{inProgressNew}}">{{inProgressCount > 99 ? '99+' : inProgressCount}}</view>
-        </view>
-        <text class="order-card__item-label">进行中</text>
-      </view>
       <!-- 待确认 -->
       <view class="order-card__item" bindtap="toOrders" data-status="to_confirm">
         <view class="order-card__icon-wrap">
-          <view class="order-card__icon order-card__icon--red">
-            <van-icon name="passed" size="40rpx" color="#E65100" />
+          <view class="order-card__icon">
+            <van-icon name="passed" size="40rpx" color="#FF9800" />
           </view>
           <view class="order-card__badge" wx:if="{{toConfirmNew}}">{{toConfirmCount > 99 ? '99+' : toConfirmCount}}</view>
         </view>
         <text class="order-card__item-label">待确认</text>
       </view>
-      <!-- 已完成 -->
-      <view class="order-card__item" bindtap="toOrders" data-status="completed">
+      <!-- 待评价 -->
+      <view class="order-card__item" bindtap="toOrders" data-status="to_review">
         <view class="order-card__icon-wrap">
-          <view class="order-card__icon order-card__icon--green">
-            <van-icon name="star-o" size="40rpx" color="#2E7D32" />
+          <view class="order-card__icon">
+            <van-icon name="comment-o" size="40rpx" color="#FF9800" />
           </view>
-          <view class="order-card__badge" wx:if="{{completedNew}}">{{completedCount > 99 ? '99+' : completedCount}}</view>
+          <view class="order-card__badge" wx:if="{{toReviewNew}}">{{toReviewCount > 99 ? '99+' : toReviewCount}}</view>
         </view>
-        <text class="order-card__item-label">已完成</text>
+        <text class="order-card__item-label">待评价</text>
       </view>
     </view>
   </view>
 
-  <!-- 常用功能卡片 -->
-  <view class="func-card">
-    <view class="section-header">
-      <text class="section-header__title">常用功能</text>
+  <!-- 宠物档案卡片 -->
+  <view class="section-card" wx:if="{{userInfo}}">
+    <view class="section-card__header">
+      <text class="section-card__title">宠物档案</text>
+      <view class="section-card__more" bindtap="toPetArchive">
+        <text class="section-card__more-text">查看详情</text>
+        <van-icon name="arrow" size="24rpx" color="#FF9800" />
+      </view>
     </view>
-    <view class="func-card__grid">
-      <view class="func-card__item" bindtap="toPetArchive">
-        <view class="func-card__icon func-card__icon--orange">
-          <van-icon name="friends-o" size="44rpx" color="#F57C00" />
-        </view>
-        <text class="func-card__name">宠物档案</text>
-        <text class="func-card__desc">管理宠物信息</text>
+    <view class="section-card__body">
+      <view wx:if="{{petLoading}}" class="card-loading">
+        <van-loading type="spinner" color="#FF9800" size="36rpx" />
       </view>
-      <view class="func-card__item" bindtap="toFosterCenter">
-        <view class="func-card__icon func-card__icon--green">
-          <van-icon name="shop-o" size="44rpx" color="#2E7D32" />
-        </view>
-        <text class="func-card__name">寄养中心</text>
-        <text class="func-card__desc">管理寄养领养信息</text>
+      <view wx:elif="{{!firstPet}}" class="card-empty">
+        <text class="card-empty__text">暂无宠物档案</text>
       </view>
-      <view class="func-card__item" bindtap="toHealthRemind">
-        <view class="func-card__icon func-card__icon--purple">
-          <van-icon name="like-o" size="44rpx" color="#7B1FA2" />
+      <view wx:else class="pet-preview">
+        <view class="pet-preview__avatar">
+          <image wx:if="{{firstPet.photo}}" class="pet-preview__avatar-img" src="{{firstPet.photo}}" mode="aspectFill" />
+          <van-icon wx:else name="friends-o" size="52rpx" color="#FF9800" />
         </view>
-        <text class="func-card__name">健康管理</text>
-        <text class="func-card__desc">疫苗体重记录</text>
+        <view class="pet-preview__info">
+          <view class="pet-preview__name-row">
+            <text class="pet-preview__name">{{firstPet.name}}</text>
+            <view wx:if="{{firstPet.statusLabel}}" class="pet-preview__status" style="background:{{firstPet.statusBg}};color:{{firstPet.statusColor}};">
+              {{firstPet.statusLabel}}
+            </view>
+          </view>
+          <text class="pet-preview__detail">{{firstPet.species}}{{firstPet.age ? ' · ' + firstPet.age + '岁' : ''}}</text>
+          <text wx:if="{{firstPet.character}}" class="pet-preview__char">{{firstPet.character}}</text>
+        </view>
       </view>
-      <view class="func-card__item" bindtap="toMyPosts">
-        <view class="func-card__icon func-card__icon--blue">
-          <van-icon name="comment-o" size="44rpx" color="#1565C0" />
+    </view>
+  </view>
+
+  <!-- 健康管理卡片 -->
+  <view class="section-card" wx:if="{{userInfo}}">
+    <view class="section-card__header">
+      <text class="section-card__title">健康管理</text>
+      <view class="section-card__more" bindtap="toHealthRemind">
+        <text class="section-card__more-text">查看详情</text>
+        <van-icon name="arrow" size="24rpx" color="#FF9800" />
+      </view>
+    </view>
+    <view class="section-card__body">
+      <view wx:if="{{healthLoading}}" class="card-loading">
+        <van-loading type="spinner" color="#FF9800" size="36rpx" />
+      </view>
+      <view wx:elif="{{!firstPet}}" class="card-empty">
+        <text class="card-empty__text">暂无宠物档案</text>
+      </view>
+      <view wx:else class="health-brief">
+        <view class="health-brief__stats">
+          <view class="health-brief__stat">
+            <text class="health-brief__value">{{healthBrief.latestWeight || '-'}}</text>
+            <text class="health-brief__unit">kg</text>
+            <text class="health-brief__trend" wx:if="{{healthBrief.weightTrend === 'up'}}">↑</text>
+            <text class="health-brief__trend health-brief__trend--down" wx:if="{{healthBrief.weightTrend === 'down'}}">↓</text>
+            <text class="health-brief__label">体重</text>
+          </view>
+          <view class="health-brief__divider"></view>
+          <view class="health-brief__stat">
+            <text class="health-brief__value">{{healthBrief.lastVaccine || '未记录'}}</text>
+            <text class="health-brief__label">上次疫苗</text>
+          </view>
+          <view class="health-brief__divider"></view>
+          <view class="health-brief__stat">
+            <text class="health-brief__value">{{healthBrief.lastDeworming || '未记录'}}</text>
+            <text class="health-brief__label">上次驱虫</text>
+          </view>
         </view>
-        <text class="func-card__name">我的帖子</text>
-        <text class="func-card__desc">查看发布内容</text>
+        <view class="health-brief__reminders" wx:if="{{healthBrief.reminders.length > 0}}">
+          <view class="health-brief__reminder {{item.isOverdue ? 'health-brief__reminder--overdue' : ''}}" wx:for="{{healthBrief.reminders}}" wx:key="index">
+            <van-icon name="warning-o" size="26rpx" color="{{item.isOverdue ? '#E53935' : '#FF9800'}}" />
+            <text class="health-brief__reminder-text">{{item.title}}</text>
+          </view>
+        </view>
       </view>
     </view>
   </view>
@@ -142,17 +190,6 @@
       <text class="section-header__title">更多工具</text>
     </view>
     <view class="tool-card__list">
-      <view class="tool-card__item" bindtap="toForum">
-        <view class="tool-card__icon tool-card__icon--yellow">
-          <van-icon name="chat-o" size="36rpx" color="#F57F17" />
-        </view>
-        <view class="tool-card__info">
-          <text class="tool-card__name">宠物社区</text>
-          <text class="tool-card__desc">交流养宠经验</text>
-        </view>
-        <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
-      </view>
-      <view class="tool-card__divider"></view>
       <view class="tool-card__item" bindtap="toCustomerService">
         <view class="tool-card__icon tool-card__icon--blue">
           <van-icon name="service-o" size="36rpx" color="#1565C0" />

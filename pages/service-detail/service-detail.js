@@ -1,13 +1,7 @@
 // pages/service-detail/service-detail.js
 const authService = require('../../services/authService');
-
-const CAT_TITLE_MAP = {
-  foster: '宠物寄养',
-  grooming: '美容洗护',
-  medical: '医疗健康',
-  door: '上门服务',
-  extra: '商品增值',
-};
+const { resolveTempUrls } = require('../../utils/fileHelper');
+const { CAT_TITLE_MAP, formatDate } = require('../../utils/helpers');
 
 Page({
   data: {
@@ -28,9 +22,21 @@ Page({
       cageDesc: '',
     },
     submitting: false,
+    statusBarHeight: 0,
+    navBarHeight: 0,
+  },
+
+  onGoBack() {
+    wx.navigateBack();
   },
 
   async onLoad(options) {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+
     const now = new Date();
     const y = now.getFullYear();
     const m = String(now.getMonth() + 1).padStart(2, '0');
@@ -48,6 +54,12 @@ Page({
       const db = wx.cloud.database();
       const res = await db.collection('agency_services').doc(id).get();
       const svc = res.data;
+      // 保留原始 cloud:// ID 用于存储，临时 URL 仅用于当前页面显示
+      const rawImages = Array.isArray(svc.images) ? [...svc.images] : [];
+      if (rawImages.length) {
+        svc.images = await resolveTempUrls(rawImages);
+      }
+      this._rawImages = rawImages;
       this.setData({
         svc,
         catTitle: CAT_TITLE_MAP[svc.category] || '服务',
@@ -177,11 +189,13 @@ Page({
         ? (new Date(checkinDate).getTime() + days * 24 * 60 * 60 * 1000)
         : 0;
       const checkoutDate = isFoster
-        ? this._formatDate(new Date(leaveTimeMs))
+        ? formatDate(new Date(leaveTimeMs))
         : '';
       const selectedPet = this.data.myPets.find(p => p._id === selectedPetId) || {};
 
-      await db.collection('user_orders').add({
+      const payDeadline = new Date(Date.now() + 15 * 60 * 1000);
+
+      const orderRes = await db.collection('user_orders').add({
         data: {
           ownerId: userInfo._id,
           orderType: 'agency',
@@ -192,7 +206,7 @@ Page({
           agencyName: s.agencyName || '',
           price: s.price,
           unit: s.unit,
-          images: s.images || [],
+          images: this._rawImages || [],
           petId: selectedPetId,
           petName: petName.trim(),
           petInfo: {
@@ -207,39 +221,19 @@ Page({
           stayDays: days,
           checkoutDate,
           leaveTimeMs,
-          orderStatus: 'pending',
+          orderStatus: 'unpaid',
+          payDeadline,
           createTime: db.serverDate(),
         },
       });
 
-      if (isFoster) {
-        try {
-          await db.collection('pets').doc(selectedPetId).update({
-            data: {
-              petStatus: 'pending_foster',
-              updateTime: db.serverDate(),
-            },
-          });
-        } catch (e) {
-          console.warn('[ServiceDetail] update pet status pending_foster failed', e);
-        }
-      }
-
-      wx.showToast({ title: '下单成功', icon: 'success' });
-      setTimeout(() => wx.navigateBack(), 1000);
+      // 寄养宠物状态在付款后再更新，此处不设置
+      wx.redirectTo({ url: `/pages/payment/payment?id=${orderRes._id}` });
     } catch (e) {
       console.error('[ServiceDetail] order', e);
       wx.showToast({ title: '下单失败', icon: 'none' });
     } finally {
       this.setData({ submitting: false });
     }
-  },
-
-  _formatDate(date) {
-    if (!(date instanceof Date) || Number.isNaN(date.getTime())) return '';
-    const y = date.getFullYear();
-    const m = String(date.getMonth() + 1).padStart(2, '0');
-    const d = String(date.getDate()).padStart(2, '0');
-    return `${y}-${m}-${d}`;
   },
 });

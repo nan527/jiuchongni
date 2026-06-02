@@ -139,3 +139,4 @@ const res = await db.collection('pets')
 - [ ] 布局是否测试了行内 style 作为 fallback？
 - [ ] 图片 `mode` 是否符合约定？
 - [ ] 是否修改了 `constants/index.js` 中的状态常量？（如有，同步更新所有引用处）
+pages/pet-detail/pet-detail

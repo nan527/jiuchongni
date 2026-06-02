@@ -1,62 +1,105 @@
 <!-- pages/profile/profile.wxml -->
-<view class="profile-page">
+<view class="profile-page" style="--nav-height: {{ navBarHeight }}px;">
 
-  <!-- 当前头像 -->
-  <view class="avatar-section">
-    <image class="current-avatar" src="{{ avatar }}" mode="aspectFill"></image>
-    <text class="avatar-hint">点击下方头像更换</text>
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff"></van-icon>
+      </view>
+      <text class="nav-bar__title">编辑个人资料</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
+  <!-- 顶部区域 -->
+  <view class="header">
+    <view class="header-bg"></view>
+    <view class="header-content">
+      <view class="avatar-wrap" bindtap="onChooseCustomAvatar">
+        <image class="avatar-img" src="{{ avatar }}" mode="aspectFill"></image>
+        <view class="avatar-badge">
+          <van-icon name="photograph" size="28rpx" color="#fff"></van-icon>
+        </view>
+      </view>
+      <text class="header-name">{{ nickname || '未设置昵称' }}</text>
+      <text class="header-hint">点击头像可自定义上传</text>
+    </view>
   </view>
 
   <!-- 预设头像选择 -->
-  <view class="avatar-picker">
-    <view
-      wx:for="{{ avatarList }}"
-      wx:key="*this"
-      class="avatar-option {{ avatar === item ? 'avatar-option--active' : '' }}"
-      data-src="{{ item }}"
-      bindtap="onSelectAvatar"
-    >
-      <image class="avatar-option__img" src="{{ item }}" mode="aspectFill"></image>
-    </view>
-    <!-- 自定义上传 -->
-    <view class="avatar-option avatar-option--upload" bindtap="onChooseCustomAvatar">
-      <van-icon name="photograph" size="40rpx" color="#999"></van-icon>
+  <view class="card avatar-card">
+    <view class="card-title">选择头像</view>
+    <view class="avatar-list">
+      <view
+        wx:for="{{ avatarList }}"
+        wx:key="*this"
+        class="avatar-item {{ avatar === item ? 'avatar-item--active' : '' }}"
+        data-src="{{ item }}"
+        bindtap="onSelectAvatar"
+      >
+        <image class="avatar-item__img" src="{{ item }}" mode="aspectFill"></image>
+        <view class="avatar-item__check" wx:if="{{ avatar === item }}">
+          <van-icon name="success" size="24rpx" color="#fff"></van-icon>
+        </view>
+      </view>
     </view>
   </view>
 
-  <!-- 个人信息表单 -->
-  <van-cell-group title="基本信息" inset>
-    <van-field
-      label="昵称"
-      placeholder="请输入昵称"
-      value="{{ nickname }}"
-      bind:change="onNicknameChange"
-      required
-    ></van-field>
-    <van-field
-      label="邮箱"
-      placeholder="请输入邮箱地址"
-      value="{{ email }}"
-      bind:change="onEmailChange"
-      type="text"
-    ></van-field>
-    <van-field
-      label="手机号"
-      placeholder="请输入手机号码"
-      value="{{ phone }}"
-      bind:change="onPhoneChange"
-      type="digit"
-      maxlength="{{ 11 }}"
-    ></van-field>
-    <van-field
-      label="个性签名"
-      placeholder="介绍一下自己吧"
-      value="{{ bio }}"
-      bind:change="onBioChange"
-      type="textarea"
-      autosize
-    ></van-field>
-  </van-cell-group>
+  <!-- 基本信息 -->
+  <view class="card form-card">
+    <view class="card-title">基本信息</view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>昵称</text>
+        <text class="field-required">*</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="请输入昵称" value="{{ nickname }}" bindinput="onNicknameChange" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>手机号</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="请输入手机号" value="{{ phone }}" bindinput="onPhoneChange" type="digit" maxlength="11" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>邮箱</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="请输入邮箱" value="{{ email }}" bindinput="onEmailChange" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>地址</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="请输入所在地址" value="{{ address }}" bindinput="onAddressChange" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 个性签名 -->
+  <view class="card form-card">
+    <view class="card-title">个性签名</view>
+    <view class="textarea-wrap">
+      <textarea class="field-textarea" placeholder="介绍一下自己吧…" value="{{ bio }}" bindinput="onBioChange" auto-height maxlength="200" />
+      <text class="textarea-count">{{ bio.length || 0 }}/200</text>
+    </view>
+  </view>
 
   <!-- 保存按钮 -->
   <view class="save-area">
