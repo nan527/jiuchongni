@@ -7,6 +7,16 @@ Page({
     totalCount: 0,
     pendingCount: 0,
     approvedCount: 0,
+    statusBarHeight: 0,
+    navBarHeight: 0,
+  },
+
+  onLoad() {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
   },
 
   async onShow() {

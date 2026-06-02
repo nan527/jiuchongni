@@ -5,10 +5,32 @@
   padding-bottom: env(safe-area-inset-bottom);
 }
 
+/* ===== 自定义导航栏 ===== */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+}
+
+.nav-bar__inner {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 16rpx;
+}
+
+.nav-bar__left,
+.nav-bar__right {
+  width: 72rpx;
+}
+
 /* ===== 顶部管理员卡片 ===== */
 .admin-header {
   background: linear-gradient(135deg, #FF9800, #FFB74D);
-  padding: 100rpx 48rpx 60rpx;
+  padding: 40rpx 48rpx 60rpx;
 }
 
 .admin-header__content {

@@ -12,6 +12,7 @@
     "pages/agency/agency",
     "pages/admin/admin",
     "pages/admin/audit",
+    "pages/admin/audit-detail",
     "pages/admin/agencies",
     "pages/admin/dashboard",
     "pages/my/my",
@@ -27,7 +28,6 @@
     "pages/agency-orders/agency-orders",
     "pages/agency-revenue/agency-revenue",
     "pages/agency-reviews/agency-reviews",
-    "pages/adoption-review/adoption-review",
     "pages/agency-pets/agency-pets",
     "pages/agency-posts/agency-posts"
   ],

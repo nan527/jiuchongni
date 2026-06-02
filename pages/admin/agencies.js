@@ -6,6 +6,20 @@ Page({
     loading: true,
     agencyList: [],
     searchVal: '',
+    statusBarHeight: 0,
+    navBarHeight: 0,
+  },
+
+  onLoad() {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+  },
+
+  onGoBack() {
+    wx.navigateBack();
   },
 
   onShow() {

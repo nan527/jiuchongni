@@ -4,6 +4,7 @@ const authService = require('../../services/authService');
 Page({
   data: {
     loading: true,
+    activeTab: 0,
     totalAgencies: 0,
     approvedAgencies: 0,
     pendingAgencies: 0,
@@ -14,6 +15,27 @@ Page({
     typeDistribution: [],
     recentAgencies: [],
     cleaning: false,
+    statusBarHeight: 0,
+    navBarHeight: 0,
+    // 收入统计
+    revenueLoading: false,
+    totalRevenue: 0,
+    avgOrderPrice: 0,
+    completedOrders: 0,
+    orderStatusList: [],
+    orderCategoryList: [],
+  },
+
+  onLoad() {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+  },
+
+  onGoBack() {
+    wx.navigateBack();
   },
 
   onShow() {
@@ -30,18 +52,25 @@ Page({
     this.loadDashboard();
   },
 
+  onTabChange(e) {
+    const idx = e.detail.index;
+    this.setData({ activeTab: idx });
+    if (idx === 3 && !this.data.revenueLoading && this.data.totalRevenue === 0) {
+      this.loadRevenueData();
+    }
+  },
+
   async loadDashboard() {
     this.setData({ loading: true });
     const db = wx.cloud.database();
     const _ = db.command;
 
     try {
-      // 并行查询所有数据
       const [agencyTotal, agencyApproved, agencyPending, agencyRejected, userTotal, orderTotal, serviceTotal] = await Promise.all([
-        db.collection('users').where({ role: 'agency' }).count().catch(() => ({ total: 0 })),
-        db.collection('users').where({ role: 'agency', auditStatus: 'approved' }).count().catch(() => ({ total: 0 })),
-        db.collection('users').where({ role: 'agency', auditStatus: 'pending' }).count().catch(() => ({ total: 0 })),
-        db.collection('users').where({ role: 'agency', auditStatus: 'rejected' }).count().catch(() => ({ total: 0 })),
+        db.collection('agency_profiles').count().catch(() => ({ total: 0 })),
+        db.collection('agency_profiles').where({ auditStatus: 'approved' }).count().catch(() => ({ total: 0 })),
+        db.collection('agency_profiles').where({ auditStatus: 'pending' }).count().catch(() => ({ total: 0 })),
+        db.collection('agency_profiles').where({ auditStatus: 'rejected' }).count().catch(() => ({ total: 0 })),
         db.collection('users').where({ role: 'pet_owner' }).count().catch(() => ({ total: 0 })),
         db.collection('user_orders').count().catch(() => ({ total: 0 })),
         db.collection('agency_services').count().catch(() => ({ total: 0 })),
@@ -88,6 +117,96 @@ Page({
       this.setData({ loading: false });
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
+  },
+
+  // 懒加载收入统计数据
+  async loadRevenueData() {
+    this.setData({ revenueLoading: true });
+    const db = wx.cloud.database();
+    const _ = db.command;
+
+    try {
+      // 分批获取所有订单以聚合金额（云数据库每次最多100条）
+      let allOrders = [];
+      let hasMore = true;
+      let lastId = null;
+      while (hasMore) {
+        let query = db.collection('user_orders').orderBy('_id', 'asc').limit(100);
+        if (lastId) query = query.where({ _id: _.gt(lastId) });
+        const res = await query.get();
+        const orders = res.data || [];
+        allOrders = allOrders.concat(orders);
+        if (orders.length > 0) lastId = orders[orders.length - 1]._id;
+        if (orders.length < 100) hasMore = false;
+      }
+
+      // 统计收入
+      const completedOrders = allOrders.filter((o) => o.orderStatus === 'completed');
+      const totalRevenue = completedOrders.reduce((sum, o) => sum + (o.price || 0), 0);
+      const avgOrderPrice = completedOrders.length > 0 ? Math.round(totalRevenue / completedOrders.length) : 0;
+
+      // 订单状态分布
+      const STATUS_MAP = {
+        unpaid: '待付款',
+        pending: '待确认',
+        confirmed: '已确认',
+        in_progress: '进行中',
+        to_confirm: '待确认完成',
+        to_review: '待评价',
+        completed: '已完成',
+        cancelled: '已取消',
+      };
+      const statusCounts = {};
+      allOrders.forEach((o) => {
+        const s = o.orderStatus || 'unknown';
+        statusCounts[s] = (statusCounts[s] || 0) + 1;
+      });
+      const orderStatusList = Object.keys(STATUS_MAP).map((key) => ({
+        key,
+        label: STATUS_MAP[key],
+        count: statusCounts[key] || 0,
+      })).filter((item) => item.count > 0);
+      const maxStatusCount = Math.max(...orderStatusList.map((d) => d.count), 1);
+      orderStatusList.forEach((d) => { d.percent = Math.round((d.count / maxStatusCount) * 100); });
+
+      // 订单分类分布
+      const CATEGORY_MAP = {
+        foster: '寄养',
+        grooming: '美容洗护',
+        medical: '医疗健康',
+        door: '上门服务',
+        extra: '商品增值',
+      };
+      const catCounts = {};
+      allOrders.forEach((o) => {
+        const c = o.category || 'other';
+        catCounts[c] = (catCounts[c] || 0) + 1;
+      });
+      const orderCategoryList = Object.keys(CATEGORY_MAP).map((key) => ({
+        key,
+        label: CATEGORY_MAP[key],
+        count: catCounts[key] || 0,
+      })).filter((item) => item.count > 0);
+      const maxCatCount = Math.max(...orderCategoryList.map((d) => d.count), 1);
+      orderCategoryList.forEach((d) => { d.percent = Math.round((d.count / maxCatCount) * 100); });
+
+      this.setData({
+        revenueLoading: false,
+        totalRevenue,
+        avgOrderPrice,
+        completedOrders: completedOrders.length,
+        orderStatusList,
+        orderCategoryList,
+      });
+    } catch (err) {
+      console.error('[Dashboard] loadRevenueData', err);
+      this.setData({ revenueLoading: false });
+      wx.showToast({ title: '收入数据加载失败', icon: 'none' });
+    }
+  },
+
+  goAudit() {
+    wx.navigateTo({ url: '/pages/admin/audit' });
   },
 
   cleanupData() {

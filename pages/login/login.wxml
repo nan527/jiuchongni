@@ -1,5 +1,16 @@
 <!-- pages/login/login.wxml -->
-<view class="container">
+<view class="container" style="padding-top: {{ navBarHeight + 10 }}px;">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__left" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="36rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">欢迎登录</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
 
   <!-- Logo 区域 -->
   <view class="header">

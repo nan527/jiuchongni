@@ -17,12 +17,16 @@ exports.main = async (event, context) => {
       return await analyzeHealth(event);
     case 'get_openid':
       return { success: true, openid: cloud.getWXContext().OPENID };
+    case 'find_user_by_openid':
+      return await findUserByOpenid(event);
     case 'delete_agency':
       return await deleteAgency(event);
     case 'get_file_urls':
       return await getFileUrls(event);
     case 'cleanup_orphaned_agencies':
       return await cleanupOrphanedAgencies();
+    case 'update_agency_audit':
+      return await updateAgencyAudit(event);
     case 'migrate_ownerid':
       return await migrateOwnerId(event);
     default:
@@ -271,6 +275,27 @@ async function cleanupOrphanedAgencies() {
 }
 
 /**
+ * 管理员审核机构（更新 users + agency_profiles 的 auditStatus）
+ */
+async function updateAgencyAudit(event) {
+  const { userId, profileId, status } = event;
+  if (!userId || !status) return { success: false, msg: '参数缺失' };
+  const db = cloud.database();
+  try {
+    await db.collection('users').doc(userId).update({ data: { auditStatus: status } });
+    if (profileId) {
+      await db.collection('agency_profiles').doc(profileId).update({
+        data: { auditStatus: status, updateTime: db.serverDate() },
+      });
+    }
+    return { success: true };
+  } catch (err) {
+    console.error('[updateAgencyAudit] 失败', err);
+    return { success: false, msg: err.message };
+  }
+}
+
+/**
  * 将 cloud:// 文件 ID 转为临时 HTTP URL（管理员权限，不受创建者限制）
  * @param {Object} event - { fileIDs: string[] }
  */
@@ -287,5 +312,21 @@ async function getFileUrls(event) {
   } catch (err) {
     console.error('[getFileUrls] 转换失败', err);
     return { success: false, msg: err.message, urls: fileIDs };
+  }
+}
+
+/**
+ * 根据 openid 查询该用户所有角色的账号（管理员权限，不受安全规则限制）
+ * @param {Object} event - { role?: string } 可选，指定角色
+ */
+async function findUserByOpenid(event) {
+  const db = cloud.database();
+  const openid = cloud.getWXContext().OPENID;
+  try {
+    const res = await db.collection('users').where({ _openid: openid }).get();
+    return { success: true, accounts: res.data || [], openid };
+  } catch (err) {
+    console.error('[findUserByOpenid] 查询失败', err);
+    return { success: false, msg: err.message, accounts: [], openid };
   }
 }

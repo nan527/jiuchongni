@@ -1,5 +1,17 @@
 <!-- pages/admin/audit.wxml -->
-<view class="audit-page">
+<view class="audit-page" style="padding-top: {{ navBarHeight + 10 }}px;">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__left" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="36rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">机构审核</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
   <van-tabs active="{{ activeTab }}" color="#FF9800" line-width="60rpx" bind:change="onTabChange">
     <van-tab title="待审核">
       <van-loading wx:if="{{ loading }}" vertical style="padding: 80rpx 0; text-align: center;">加载中...</van-loading>
@@ -9,7 +21,7 @@
         <text class="empty-text">暂无待审核机构</text>
       </view>
 
-      <view wx:for="{{ pendingList }}" wx:key="userId" class="audit-card">
+      <view wx:for="{{ pendingList }}" wx:key="userId" class="audit-card" bindtap="goDetail" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}">
         <view class="audit-card__header">
           <text class="audit-card__name">{{ item.profile.orgName || '未命名机构' }}</text>
           <van-tag wx:if="{{ item.auditStatus === 'pending' }}" type="warning" round size="medium">待审核</van-tag>
@@ -30,13 +42,13 @@
         </view>
 
         <view class="audit-card__actions">
-          <view class="action-btn action-btn--reject" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" bindtap="reject">
+          <view class="action-btn action-btn--reject" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="reject">
             <van-icon name="close" size="28rpx" />驳回
           </view>
-          <view class="action-btn action-btn--approve" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" bindtap="approve">
+          <view class="action-btn action-btn--approve" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="approve">
             <van-icon name="passed" size="28rpx" />通过
           </view>
-          <view class="action-btn action-btn--delete" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" bindtap="deleteAgency">
+          <view class="action-btn action-btn--delete" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="deleteAgency">
             <van-icon name="delete" size="28rpx" />删除
           </view>
         </view>
@@ -49,7 +61,7 @@
         <text class="empty-text">暂无审核记录</text>
       </view>
 
-      <view wx:for="{{ historyList }}" wx:key="userId" class="history-card">
+      <view wx:for="{{ historyList }}" wx:key="userId" class="history-card" bindtap="goDetail" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}">
         <view class="history-card__header">
           <text class="history-card__name">{{ item.profile.orgName || '未命名机构' }}</text>
           <van-tag wx:if="{{ item.auditStatus === 'approved' }}" type="success" round size="medium">已通过</van-tag>
@@ -63,7 +75,7 @@
           <text class="info-row"><text class="info-key">地址</text><text class="info-val">{{ item.profile.region || '' }} {{ item.profile.detailAddress || '' }}</text></text>
         </view>
         <view class="history-card__actions">
-          <view class="action-btn action-btn--delete" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" bindtap="deleteAgency">
+          <view class="action-btn action-btn--delete" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="deleteAgency">
             <van-icon name="delete" size="28rpx" />删除
           </view>
         </view>

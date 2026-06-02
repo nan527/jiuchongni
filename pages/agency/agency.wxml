@@ -28,6 +28,9 @@
     <van-button round type="primary" color="#FF9800" block bindtap="toRegister">
       {{ auditStatus === 'rejected' ? '重新注册机构' : '注册机构' }}
     </van-button>
+    <view class="logout-link" bindtap="handleLogout">
+      <text class="logout-link__text">退出当前账号</text>
+    </view>
   </view>
 
   <!-- ========== 审核通过后的功能界面（带底部标签切换） ========== -->

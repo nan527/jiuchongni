@@ -52,13 +52,15 @@ const authService = {
           try {
             const fresh = await withTimeout(
               getDB().collection('users').doc(cached._id).get(),
-              5000
+              10000
             );
             if (fresh.data && fresh.data.auditStatus !== cached.auditStatus) {
               cached.auditStatus = fresh.data.auditStatus;
               this._cacheUser(cached);
             }
-          } catch (e) { /* 查询失败则使用缓存 */ }
+          } catch (e) {
+            console.warn('[Auth] 审核状态查询失败，使用缓存值', e);
+          }
         }
         this._syncToGlobal(cached);
         return cached;
@@ -336,23 +338,22 @@ const authService = {
     wx.showLoading({ title: '登录中…', mask: true });
 
     try {
-      // 按 openid + role 查询该角色的账号（取最新的）
-      let existing = { data: [] };
-      try {
-        existing = await withTimeout(
-          getDB().collection('users').where({ _openid: '{openid}', role }).orderBy('createTime', 'desc').limit(1).get(),
-          8000
-        );
-      } catch (queryErr) {
-        if (isTimeoutError(queryErr)) {
-          console.warn('[AuthService] 查询超时', queryErr.message);
-        } else {
-          throw queryErr;
-        }
-      }
+      // 通过云函数查询该 openid 下所有账号（绕过客户端安全规则限制）
+      const findRes = await withTimeout(
+        wx.cloud.callFunction({ name: 'ai_handler', data: { action: 'find_user_by_openid' } }),
+        10000
+      );
+      const allAccounts = (findRes.result && findRes.result.accounts) || [];
 
-      if (existing.data.length > 0) {
-        const userInfo = existing.data[0];
+      // 1. 找到匹配角色的账号 → 直接登录
+      const matched = allAccounts.filter((u) => u.role === role);
+      if (matched.length > 0) {
+        // 取最新的
+        const userInfo = matched.sort((a, b) => {
+          const ta = a.createTime ? new Date(a.createTime).getTime() : 0;
+          const tb = b.createTime ? new Date(b.createTime).getTime() : 0;
+          return tb - ta;
+        })[0];
         try {
           await withTimeout(
             getDB().collection('users').doc(userInfo._id).update({
@@ -368,9 +369,22 @@ const authService = {
         return userInfo;
       }
 
-      wx.hideLoading();
+      // 2. 该 openid 下有其他角色账号 → 不创建，提示用户切换角色
+      if (allAccounts.length > 0) {
+        wx.hideLoading();
+        const ROLE_NAMES = { pet_owner: '宠物主人', agency: '寄养机构', admin: '管理员' };
+        const existedRoles = allAccounts.map((u) => ROLE_NAMES[u.role] || u.role);
+        const uniqueRoles = [...new Set(existedRoles)];
+        wx.showModal({
+          title: '账号已存在',
+          content: `你已有「${uniqueRoles.join('、')}」账号，请选择对应角色登录`,
+          showCancel: false,
+        });
+        return null;
+      }
 
-      // 角色不存在 → 自动创建（机构无 agencyProfileId，进入页面后功能锁定）
+      // 3. 该 openid 下没有任何账号 → 创建新账号
+      wx.hideLoading();
       const roleInfo = ROLE_INFO[role] || ROLE_INFO[ROLES.PET_OWNER];
       wx.showLoading({ title: '注册中…', mask: true });
       const newUser = {

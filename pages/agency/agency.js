@@ -38,7 +38,9 @@ Page({
             const STORAGE_KEYS = require('../../constants/index').STORAGE_KEYS;
             wx.setStorageSync(STORAGE_KEYS.USER_INFO, userInfo);
           }
-        } catch (e) { /* 查询失败则使用缓存 */ }
+        } catch (e) {
+          console.warn('[Agency] 查询审核状态失败，使用缓存值', e);
+        }
       }
 
       const isLocked = !isRegistered || auditStatus !== 'approved';

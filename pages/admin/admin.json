@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "平台管理中心",
+  "navigationStyle": "custom",
   "usingComponents": {
     "van-icon": "@vant/weapp/icon/index",
     "van-button": "@vant/weapp/button/index"
