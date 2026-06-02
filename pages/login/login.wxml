@@ -79,39 +79,7 @@
     </view>
 
     <text class="admin-entry" bindtap="showAdminLogin">管理员登录</text>
-    <text class="admin-entry" bindtap="showAgencyLogin" style="margin-top:12rpx;">机构账号密码登录</text>
   </view>
-
-  <!-- 机构账号登录弹窗 -->
-  <van-popup show="{{ showAgency }}" position="center" round bind:close="closeAgencyLogin" custom-style="width:85vw;overflow:hidden;">
-    <view class="admin-popup">
-      <view class="admin-popup__header">
-        <van-icon name="shop-o" size="48rpx" color="#FF9800" />
-        <text class="admin-popup__title">机构账号登录</text>
-      </view>
-      <view class="admin-popup__form">
-        <view class="admin-popup__row">
-          <text class="admin-popup__label">账号</text>
-          <input class="admin-popup__input" placeholder="请输入机构账号" value="{{ agencyAccount }}" bindinput="onAgencyAccountChange" />
-        </view>
-        <view class="admin-popup__divider"></view>
-        <view class="admin-popup__row">
-          <text class="admin-popup__label">密码</text>
-          <input class="admin-popup__input" placeholder="请输入密码" password value="{{ agencyPassword }}" bindinput="onAgencyPasswordChange" />
-        </view>
-      </view>
-      <view class="admin-popup__btns">
-        <view class="admin-popup__btn admin-popup__btn--cancel" bindtap="closeAgencyLogin">取消</view>
-        <view class="admin-popup__btn admin-popup__btn--confirm" bindtap="agencyLogin">
-          <text wx:if="{{ !agencyLogging }}">登 录</text>
-          <van-loading wx:else size="28rpx" color="#fff" />
-        </view>
-      </view>
-      <view class="admin-popup__forgot">
-        <text class="forgot-password" bindtap="resetPassword">忘记密码？重置为 123456</text>
-      </view>
-    </view>
-  </van-popup>
 
   <!-- 管理员登录弹窗 -->
   <van-popup show="{{ showAdmin }}" position="center" round bind:close="closeAdminLogin" custom-style="width:85vw;overflow:hidden;">

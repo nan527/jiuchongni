@@ -302,34 +302,6 @@
   color: #bbb;
 }
 
-.admin-popup__forgot {
-  text-align: center;
-  padding: 16rpx 32rpx 32rpx;
-}
-
-.forgot-password {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.forgot-password:active {
-  color: #FF9800;
-}
-
-.admin-popup__forgot {
-  text-align: center;
-  padding: 16rpx 32rpx 32rpx;
-}
-
-.forgot-password {
-  font-size: 24rpx;
-  color: #999;
-}
-
-.forgot-password:active {
-  color: #FF9800;
-}
-
 .agreement__link {
   font-size: 24rpx;
   color: #FF9800;

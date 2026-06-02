@@ -18,11 +18,6 @@ Page({
     adminAccount: '',
     adminPassword: '',
     adminLogging: false,
-    // 机构账号登录
-    showAgency: false,
-    agencyAccount: '',
-    agencyPassword: '',
-    agencyLogging: false,
   },
 
   onLoad() {
@@ -125,91 +120,6 @@ Page({
       wx.showToast({ title: msg, icon: 'none' });
     } finally {
       this.setData({ adminLogging: false });
-    }
-  },
-
-  // ====== 机构账号登录 ======
-
-  showAgencyLogin() {
-    this.setData({ showAgency: true, agencyAccount: '', agencyPassword: '' });
-  },
-
-  closeAgencyLogin() {
-    this.setData({ showAgency: false });
-  },
-
-  onAgencyAccountChange(e) {
-    this.setData({ agencyAccount: e.detail.value });
-  },
-
-  onAgencyPasswordChange(e) {
-    this.setData({ agencyPassword: e.detail.value });
-  },
-
-  async resetPassword() {
-    const account = this.data.agencyAccount.trim();
-    if (!account) {
-      wx.showToast({ title: '请先输入账号', icon: 'none' });
-      return;
-    }
-    wx.showModal({
-      title: '确认重置',
-      content: `将账号「${account}」的密码重置为 123456？`,
-      success: async (res) => {
-        if (!res.confirm) return;
-        wx.showLoading({ title: '重置中...' });
-        try {
-          await wx.cloud.callFunction({
-            name: 'ai_handler',
-            data: { action: 'reset_password', account, newPassword: '123456' },
-          });
-          wx.hideLoading();
-          wx.showToast({ title: '密码已重置为 123456', icon: 'success' });
-          this.setData({ agencyPassword: '123456' });
-        } catch (err) {
-          wx.hideLoading();
-          console.error('[Login] resetPassword error', err);
-          wx.showToast({ title: '重置失败', icon: 'none' });
-        }
-      },
-    });
-  },
-
-  async agencyLogin() {
-    const { agencyAccount, agencyPassword } = this.data;
-    if (!agencyAccount.trim() || !agencyPassword.trim()) {
-      return wx.showToast({ title: '请输入账号和密码', icon: 'none' });
-    }
-    if (this.data.agencyLogging) return;
-    this.setData({ agencyLogging: true });
-
-    try {
-      const userInfo = await authService.loginWithAccount('agency', agencyAccount, agencyPassword);
-      // 绑定微信号（云函数）
-      try {
-        await wx.cloud.callFunction({
-          name: 'ai_handler',
-          data: { action: 'bind_wechat', userId: userInfo._id },
-        });
-      } catch (e) {
-        console.warn('[Login] 绑定微信号失败', e);
-      }
-
-      try { wx.removeStorageSync('jcn_logged_out'); } catch (e) { /* ignore */ }
-
-      this.setData({ showAgency: false });
-      wx.showToast({ title: '登录成功', icon: 'success' });
-      setTimeout(() => {
-        authService.navigateByRole(userInfo.role);
-      }, 800);
-    } catch (err) {
-      const code = err.message;
-      let msg = '登录失败';
-      if (code === 'ACCOUNT_OR_PASSWORD_INCORRECT') msg = '账号或密码错误';
-      if (code === 'EMPTY_ACCOUNT_OR_PASSWORD') msg = '请输入账号和密码';
-      wx.showToast({ title: msg, icon: 'none' });
-    } finally {
-      this.setData({ agencyLogging: false });
     }
   },
 
