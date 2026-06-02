@@ -39,6 +39,11 @@ Page({
     avgRatingRound: 0,
     good: 0,
     ratingDist: [],
+    // 回复
+    showReplyPopup: false,
+    replyOrderId: '',
+    replyContent: '',
+    replySaving: false,
   },
 
   _allOrders: [],
@@ -202,6 +207,64 @@ Page({
       good: goodRate,
       ratingDist,
     });
+  },
+
+  // ====== 回复评价 ======
+
+  openReplyPopup(e) {
+    const id = e.currentTarget.dataset.id;
+    const order = this._allOrders.find(o => o._id === id);
+    const existingReply = (order && order.review && order.review.reply) || '';
+    this.setData({
+      showReplyPopup: true,
+      replyOrderId: id,
+      replyContent: existingReply,
+    });
+  },
+
+  closeReplyPopup() {
+    this.setData({
+      showReplyPopup: false,
+      replyOrderId: '',
+      replyContent: '',
+    });
+  },
+
+  onReplyInput(e) {
+    this.setData({ replyContent: e.detail.value });
+  },
+
+  async submitReply() {
+    const content = this.data.replyContent.trim();
+    if (!content) {
+      wx.showToast({ title: '请输入回复内容', icon: 'none' });
+      return;
+    }
+    if (this.data.replySaving) return;
+    this.setData({ replySaving: true });
+
+    try {
+      const db = wx.cloud.database();
+      await db.collection('user_orders').doc(this.data.replyOrderId).update({
+        data: { 'review.reply': content },
+      });
+
+      // 更新本地数据
+      const order = this._allOrders.find(o => o._id === this.data.replyOrderId);
+      if (order) {
+        if (!order.review) order.review = {};
+        order.review.reply = content;
+      }
+
+      wx.showToast({ title: '回复成功', icon: 'success' });
+      this.closeReplyPopup();
+      this._applyFilters();
+    } catch (err) {
+      console.error('[Reviews] reply error', err);
+      wx.showToast({ title: '回复失败', icon: 'none' });
+    } finally {
+      this.setData({ replySaving: false });
+    }
   },
 
   _formatTime(t) {

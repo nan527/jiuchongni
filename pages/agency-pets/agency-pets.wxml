@@ -1,0 +1,105 @@
+<view class="ap-page">
+
+  <!-- 笼位概览导航条 -->
+  <view class="cage-bar" wx:if="{{ totalCages > 0 }}">
+    <view class="cage-bar__item">
+      <text class="cage-bar__num">{{ totalCages }}</text>
+      <text class="cage-bar__label">总笼位</text>
+    </view>
+    <view class="cage-bar__divider"></view>
+    <view class="cage-bar__item">
+      <text class="cage-bar__num">{{ occupiedCages }}</text>
+      <text class="cage-bar__label">已占用</text>
+    </view>
+    <view class="cage-bar__divider"></view>
+    <view class="cage-bar__item">
+      <text class="cage-bar__num">{{ availableCages }}</text>
+      <text class="cage-bar__label">空闲</text>
+    </view>
+  </view>
+
+  <!-- 筛选行 -->
+  <view class="filter-row" wx:if="{{ totalCages > 0 }}">
+    <view class="filter-chip {{ activeFilter === 'all' ? 'filter-chip--active' : '' }}" data-filter="all" bindtap="onFilterChange">
+      全部 {{ cages.length }}
+    </view>
+    <view class="filter-chip {{ activeFilter === 'occupied' ? 'filter-chip--active' : '' }}" data-filter="occupied" bindtap="onFilterChange">
+      占用 {{ occupiedCages }}
+    </view>
+    <view class="filter-chip {{ activeFilter === 'available' ? 'filter-chip--active' : '' }}" data-filter="available" bindtap="onFilterChange">
+      空闲 {{ availableCages }}
+    </view>
+  </view>
+
+  <!-- 笼位网格 -->
+  <view class="cage-grid" wx:if="{{ filteredCages.length > 0 }}">
+    <view
+      class="cage-card {{ item.occupied ? 'cage-card--occupied' : 'cage-card--free' }}"
+      wx:for="{{ filteredCages }}"
+      wx:key="cageNumber"
+      data-order="{{ item.order }}"
+      bindtap="onCageTap"
+    >
+      <!-- 已占用 -->
+      <block wx:if="{{ item.occupied }}">
+        <view class="cage-card__header">
+          <text class="cage-card__number">#{{ item.cageNumber }}</text>
+          <text class="cage-card__badge cage-card__badge--occupied">占用中</text>
+        </view>
+        <view class="cage-card__body">
+          <image class="cage-card__avatar" src="{{ item.order.petInfo.photo || '/static/pet/logo.png' }}" mode="aspectFill" />
+          <text class="cage-card__name">{{ item.order.petName || '未命名' }}</text>
+          <text class="cage-card__meta" wx:if="{{ item.order.petInfo.species || item.order.petInfo.age }}">{{ item.order.petInfo.species }}{{ item.order.petInfo.age ? ' · ' + item.order.petInfo.age + '岁' : '' }}</text>
+          <text class="cage-card__date" wx:if="{{ item.order.checkinDate }}">入住: {{ item.order.checkinDate }}</text>
+        </view>
+        <view class="cage-card__action" data-id="{{ item.order._id }}" data-cage="{{ item.cageNumber }}" data-order="{{ item.order }}" bindtap="onMoveTap">
+          <text class="cage-card__move-btn">↔ 移动</text>
+        </view>
+      </block>
+
+      <!-- 空闲 -->
+      <block wx:else>
+        <view class="cage-card__free-icon">
+          <van-icon name="circle" size="28rpx" color="#ccc"></van-icon>
+        </view>
+        <text class="cage-card__free-number">#{{ item.cageNumber }}</text>
+        <text class="cage-card__free-text">空闲</text>
+      </block>
+    </view>
+  </view>
+
+  <!-- 空状态：未设置笼位 -->
+  <view class="empty-page" wx:elif="{{ !loading }}">
+    <image class="empty-icon" src="/static/pet/logo.png" mode="aspectFit" />
+    <text class="empty-title">暂未设置笼位信息</text>
+    <text class="empty-desc">请先在机构资料中设置笼位总数，\n以便管理宠物寄养。</text>
+    <van-button round type="primary" color="#FF9800" size="small" bindtap="toEditAgency">去设置</van-button>
+  </view>
+
+  <!-- 加载状态 -->
+  <view class="empty-page" wx:elif="{{ loading }}">
+    <van-loading size="48rpx" color="#FF9800"></van-loading>
+    <text class="empty-desc" style="margin-top: 20rpx;">加载中...</text>
+  </view>
+
+  <!-- 移动笼位弹窗 -->
+  <view class="popup-overlay" wx:if="{{ showMovePopup }}" bindtap="closeMovePopup"></view>
+  <view class="popup-panel" wx:if="{{ showMovePopup }}">
+    <view class="popup-header">
+      <text class="popup-title">移动「{{ movePetName }}」到</text>
+      <text class="popup-close" bindtap="closeMovePopup">✕</text>
+    </view>
+    <view class="popup-body">
+      <block wx:for="{{ moveTargetList }}" wx:key="*this">
+        <view class="popup-cage-item" data-cage="{{ item }}" bindtap="onMoveTargetTap">
+          <text class="popup-cage-number">{{ item }} 号笼</text>
+          <text class="popup-cage-status">空闲</text>
+        </view>
+      </block>
+      <view class="popup-empty" wx:if="{{ moveTargetList.length === 0 }}">
+        <text class="empty-text">暂无可用的空闲笼位</text>
+      </view>
+    </view>
+  </view>
+
+</view>

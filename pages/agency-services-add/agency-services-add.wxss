@@ -66,20 +66,35 @@
   justify-content: space-between;
   background: #fff;
   border-radius: 16rpx;
-  padding: 24rpx 28rpx;
-  border: 3rpx solid transparent;
+  padding: 20rpx 24rpx;
+  border: 3rpx solid #e8e8e8;
   box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
 }
 
 .tpl-item.tpl-active {
   border-color: #FF9800;
   background: #FFF8E1;
+  border-left-width: 10rpx;
+  padding-left: 18rpx;
+}
+
+.tpl-left {
+  display: flex;
+  align-items: center;
+  flex: 1;
+  min-width: 0;
+}
+
+.tpl-info {
+  display: flex;
+  flex-direction: column;
+  margin-left: 16rpx;
+  min-width: 0;
 }
 
 .tpl-name {
   font-size: 28rpx;
   color: #333;
-  flex: 1;
 }
 
 .tpl-active .tpl-name {
@@ -90,22 +105,75 @@
 .tpl-unit {
   font-size: 22rpx;
   color: #999;
-  margin-left: 16rpx;
+  margin-top: 4rpx;
+}
+
+.tpl-price-input {
+  width: 120rpx;
+  height: 56rpx;
+  background: #fff;
+  border: 2rpx solid #FFE0B2;
+  border-radius: 12rpx;
+  padding: 0 16rpx;
+  font-size: 26rpx;
+  color: #E65100;
+  text-align: center;
+  flex-shrink: 0;
+  margin-left: 12rpx;
+}
+
+.tpl-custom {
+  justify-content: space-between;
+  margin-top: 8rpx;
+}
+
+.tpl-custom .tpl-unit {
+  color: #FF9800;
   flex-shrink: 0;
 }
 
-/* 价格提示 */
-.price-hint {
-  display: flex;
-  align-items: center;
-  padding: 16rpx 24rpx;
-  margin-top: 12rpx;
+/* 已选计数 */
+.tpl-count {
+  display: inline-block;
+  background: #FF9800;
+  color: #fff;
+  font-size: 22rpx;
+  padding: 2rpx 14rpx;
+  border-radius: 999rpx;
+  margin-left: 12rpx;
 }
 
-.price-hint-text {
-  font-size: 24rpx;
-  color: #F57C00;
-  margin-left: 8rpx;
+/* 按下反馈 */
+.tpl-hover {
+  background: #f0ebe3;
+}
+
+/* 选中/未选圆圈 */
+.tpl-unchecked {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  border: 4rpx solid #d0d0d0;
+  box-sizing: border-box;
+  flex-shrink: 0;
+}
+
+.tpl-checked {
+  width: 32rpx;
+  height: 32rpx;
+  border-radius: 50%;
+  background: #FF9800;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.tpl-checked-text {
+  color: #fff;
+  font-size: 20rpx;
+  font-weight: 700;
+  line-height: 1;
 }
 
 /* 价格后缀插槽 */

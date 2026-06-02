@@ -86,137 +86,6 @@
   color: #fff;
 }
 
-/* ===== 数据统计条 ===== */
-.stats-bar {
-  margin: -36rpx 24rpx 0;
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 28rpx 24rpx;
-  display: flex;
-  align-items: center;
-  justify-content: space-around;
-  position: relative;
-  z-index: 2;
-  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.06);
-}
-
-.stats-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
-}
-
-.stats-num {
-  font-size: 40rpx;
-  font-weight: 800;
-  color: #333;
-}
-
-.stats-label {
-  font-size: 22rpx;
-  color: #999;
-  margin-top: 6rpx;
-}
-
-.stats-divider {
-  width: 1rpx;
-  height: 48rpx;
-  background: #eee;
-}
-
-.stats-edit-icon {
-  width: 44rpx;
-  height: 44rpx;
-}
-
-/* ===== 运营管理 ===== */
-.ops-card {
-  margin: 0 24rpx;
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 28rpx 16rpx 12rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.04);
-}
-
-.ops-grid {
-  display: flex;
-  flex-wrap: wrap;
-}
-
-.ops-item {
-  width: 33.33%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  margin-bottom: 24rpx;
-}
-
-.ops-icon-wrap {
-  width: 84rpx;
-  height: 84rpx;
-  border-radius: 24rpx;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  margin-bottom: 12rpx;
-}
-
-.ops-bg-orange  { background: #FFF3E0; }
-.ops-bg-blue    { background: #E3F2FD; }
-.ops-bg-green   { background: #E8F5E9; }
-.ops-bg-red     { background: #FFEBEE; }
-.ops-bg-purple  { background: #F3E5F5; }
-.ops-bg-amber   { background: #FFF8E1; }
-
-.ops-label {
-  font-size: 26rpx;
-  font-weight: 600;
-  color: #333;
-}
-
-.ops-desc {
-  font-size: 20rpx;
-  color: #bbb;
-  margin-top: 4rpx;
-}
-
-/* ===== 快捷功能 ===== */
-.section-title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #333;
-  padding: 36rpx 36rpx 20rpx;
-}
-
-.service-grid {
-  display: flex;
-  justify-content: space-around;
-  background: #fff;
-  margin: 0 24rpx;
-  border-radius: 24rpx;
-  padding: 36rpx 16rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.04);
-}
-
-.service-item {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  width: 25%;
-}
-
-.service-icon {
-  width: 56rpx;
-  height: 56rpx;
-  margin-bottom: 12rpx;
-}
-
-.service-label {
-  font-size: 24rpx;
-  color: #666;
-}
-
 /* ===== 状态提示条 ===== */
 .status-banner {
   display: flex;
@@ -253,13 +122,237 @@
   margin: 24rpx 48rpx 0;
 }
 
-/* ===== 功能锁定 ===== */
-.locked {
-  opacity: 0.4;
-  pointer-events: none;
+/* ==============================================================
+   订单状态卡片（类似用户端「我的订单」）
+   ============================================================== */
+.status-card {
+  margin: 20rpx 24rpx 0;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 24rpx 16rpx 16rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.04);
 }
 
-/* ===== 底部按钮 ===== */
-.bottom-area {
-  padding: 48rpx 48rpx 80rpx;
+.status-card__header {
+  padding: 0 8rpx 20rpx;
+}
+
+.status-card__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.status-card__grid {
+  display: flex;
+}
+
+.status-card__item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.status-card__icon-wrap {
+  position: relative;
+}
+
+.status-card__icon {
+  width: 88rpx;
+  height: 88rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.status-card__icon--orange { background: #FFF3E0; }
+.status-card__icon--blue   { background: #E3F2FD; }
+.status-card__icon--red    { background: #FFEBEE; }
+.status-card__icon--green  { background: #E8F5E9; }
+
+/* 角标红点 */
+.status-card__badge {
+  position: absolute;
+  top: -8rpx;
+  right: -12rpx;
+  background: #FF5252;
+  color: #fff;
+  font-size: 20rpx;
+  font-weight: 700;
+  min-width: 32rpx;
+  height: 32rpx;
+  line-height: 32rpx;
+  text-align: center;
+  border-radius: 32rpx;
+  padding: 0 6rpx;
+  box-sizing: border-box;
+}
+
+.status-card__label {
+  font-size: 24rpx;
+  color: #666;
+  margin-top: 12rpx;
+}
+
+/* ==============================================================
+   导航卡片（宠物管理）
+   ============================================================== */
+.nav-card {
+  margin: 20rpx 24rpx 0;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx 32rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.04);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.nav-card__left {
+  display: flex;
+  align-items: center;
+}
+
+.nav-card__icon {
+  width: 84rpx;
+  height: 84rpx;
+  border-radius: 24rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.nav-card__icon--brown { background: #EFEBE9; }
+
+.nav-card__info {
+  margin-left: 24rpx;
+}
+
+.nav-card__name {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.nav-card__desc {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.nav-card__right {
+  display: flex;
+  align-items: baseline;
+  gap: 6rpx;
+}
+
+.nav-card__count {
+  font-size: 36rpx;
+  font-weight: 800;
+  color: #FF9800;
+}
+
+.nav-card__unit {
+  font-size: 22rpx;
+  color: #999;
+  margin-right: 8rpx;
+}
+
+/* ==============================================================
+   机构信息卡片（功能列表）
+   ============================================================== */
+.func-card {
+  margin: 20rpx 24rpx 0;
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
+.func-card__header {
+  padding: 24rpx 32rpx 16rpx;
+}
+
+.func-card__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.func-card__list {
+  padding: 0 0 8rpx;
+}
+
+.func-card__item {
+  display: flex;
+  align-items: center;
+  padding: 24rpx 32rpx;
+}
+
+.func-card__icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.func-card__icon--blue   { background: #E3F2FD; }
+.func-card__icon--orange { background: #FFF3E0; }
+.func-card__icon--green  { background: #E8F5E9; }
+.func-card__icon--purple { background: #F3E5F5; }
+.func-card__icon--red    { background: #FFEBEE; }
+.func-card__icon--grey   { background: #ECEFF1; }
+
+.func-card__info {
+  flex: 1;
+  margin: 0 24rpx;
+  min-width: 0;
+}
+
+.func-card__name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.func-card__desc {
+  font-size: 22rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.func-card__divider {
+  height: 1rpx;
+  background: #f5f5f5;
+  margin: 0 32rpx;
+}
+
+/* ===== 标签内容区 ===== */
+.tab-content {
+  padding-bottom: 120rpx;
+}
+
+/* ===== 退出登录 ===== */
+.logout-area {
+  padding: 40rpx 48rpx 40rpx;
+}
+
+.logout-btn {
+  text-align: center;
+  background: #fff;
+  border-radius: 24rpx;
+  padding: 28rpx 0;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+
+.logout-btn__text {
+  font-size: 28rpx;
+  color: #FF5252;
+  font-weight: 500;
 }

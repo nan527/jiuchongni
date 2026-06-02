@@ -1,0 +1,45 @@
+<view class="ap-page">
+
+  <!-- Tab 切换 -->
+  <view class="tab-bar">
+    <view class="tab-item {{ activeTab === 'foster' ? 'tab-item--active' : '' }}" data-tab="foster" bindtap="switchTab">
+      寄养需求 {{ fosterCount ? '(' + fosterCount + ')' : '' }}
+    </view>
+    <view class="tab-item {{ activeTab === 'adopt' ? 'tab-item--active' : '' }}" data-tab="adopt" bindtap="switchTab">
+      领养需求 {{ adoptCount ? '(' + adoptCount + ')' : '' }}
+    </view>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-box" wx:if="{{ loading }}">
+    <van-loading size="48rpx" color="#FF9800"></van-loading>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-box" wx:elif="{{ postList.length === 0 }}">
+    <van-icon name="notes-o" size="80rpx" color="#ddd"></van-icon>
+    <text class="empty-text">暂无公开的{{ activeTab === 'foster' ? '寄养' : '领养' }}需求</text>
+  </view>
+
+  <!-- 帖子列表 -->
+  <view class="post-list" wx:else>
+    <view class="post-card" wx:for="{{ postList }}" wx:key="_id">
+      <view class="post-card__body">
+        <image class="post-card__img" src="{{ item.images && item.images[0] || '/static/pet/logo.png' }}" mode="aspectFill" />
+        <view class="post-card__info">
+          <text class="post-card__name">{{ item.petName }}</text>
+          <text class="post-card__breed" wx:if="{{ item.breed }}">{{ item.breed }}{{ item.age ? ' · ' + item.age + '岁' : '' }}</text>
+          <text class="post-card__date" wx:if="{{ item.startDate && item.endDate }}">{{ item.startDate }} ~ {{ item.endDate }}</text>
+          <text class="post-card__desc" wx:if="{{ item.description }}">{{ item.description }}</text>
+          <text class="post-card__contact" wx:if="{{ item.location }}">📍 {{ item.location }}</text>
+        </view>
+      </view>
+      <view class="post-card__footer">
+        <van-button size="small" round type="primary" color="#FF9800" data-id="{{ item._id }}" data-type="{{ activeTab }}" bindtap="onAccept">
+          接单
+        </van-button>
+      </view>
+    </view>
+  </view>
+
+</view>

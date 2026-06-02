@@ -194,6 +194,24 @@
         <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeHealthRecord" />
       </view>
 
+      <!-- 历史记录 -->
+      <view class="health-popup__history" wx:if="{{ healthHistory.length > 0 }}">
+        <text class="health-popup__history-title">历史记录</text>
+        <view class="health-popup__history-list">
+          <view class="health-popup__history-item" wx:for="{{ healthHistory }}" wx:for-index="hi" wx:key="hi">
+            <text class="health-popup__history-type">{{ item.typeLabel }}</text>
+            <text class="health-popup__history-value" wx:if="{{ item.value }}">{{ item.value }}</text>
+            <text class="health-popup__history-note" wx:if="{{ item.note }}">· {{ item.note }}</text>
+            <text class="health-popup__history-date">{{ item.dateStr }}</text>
+          </view>
+        </view>
+      </view>
+      <view class="health-popup__history" wx:elif="{{ healthHistoryLoading }}">
+        <van-loading size="28rpx" color="#FF9800" />
+      </view>
+
+      <view class="health-popup__divider" wx:if="{{ healthHistory.length > 0 }}"></view>
+
       <view class="health-popup__form">
         <view class="health-popup__field">
           <text class="health-popup__label">记录类型</text>
@@ -208,19 +226,82 @@
           </view>
         </view>
 
-        <view class="health-popup__field">
-          <text class="health-popup__label">数值</text>
-          <input class="health-popup__input" placeholder="如：3.5（体重kg）、38.5（体温℃）" type="digit" value="{{healthValue}}" bindinput="onHealthValueChange" />
+        <!-- 体重 / 体温 -->
+        <view class="health-popup__field" wx:if="{{healthType === 'weight'}}">
+          <text class="health-popup__label">体重 (kg) <text style="color:#e65100;">*</text></text>
+          <input class="health-popup__input" placeholder="请输入体重" type="digit" value="{{healthValue}}" bindinput="onHealthValueChange" />
+        </view>
+        <view class="health-popup__field" wx:if="{{healthType === 'temperature'}}">
+          <text class="health-popup__label">体温 (℃) <text style="color:#e65100;">*</text></text>
+          <input class="health-popup__input" placeholder="请输入体温" type="digit" value="{{healthValue}}" bindinput="onHealthValueChange" />
         </view>
 
-        <view class="health-popup__field">
-          <text class="health-popup__label">饮食情况</text>
-          <input class="health-popup__input" placeholder="如：猫粮 50g，饮水正常" value="{{healthFood}}" bindinput="onHealthFoodChange" />
+        <!-- 疫苗 -->
+        <block wx:if="{{healthType === 'vaccine'}}">
+          <view class="health-popup__field">
+            <text class="health-popup__label">疫苗名称 <text style="color:#e65100;">*</text></text>
+            <input class="health-popup__input" placeholder="如：猫三联、狂犬疫苗" value="{{healthVaccineName}}" bindinput="onHealthVaccineNameChange" />
+          </view>
+          <view class="health-popup__field">
+            <text class="health-popup__label">接种机构</text>
+            <input class="health-popup__input" placeholder="请输入接种机构名称" value="{{healthInstitution}}" bindinput="onHealthInstitutionChange" />
+          </view>
+          <view class="health-popup__field">
+            <text class="health-popup__label">下次接种日期</text>
+            <picker mode="date" value="{{healthNextDate}}" bindchange="onHealthNextDateChange">
+              <view class="health-popup__picker">
+                <text class="{{healthNextDate ? 'health-popup__value' : 'health-popup__placeholder'}}">{{healthNextDate || '请选择日期'}}</text>
+                <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+              </view>
+            </picker>
+          </view>
+        </block>
+
+        <!-- 驱虫 -->
+        <block wx:if="{{healthType === 'deworming'}}">
+          <view class="health-popup__field">
+            <text class="health-popup__label">驱虫药名称 <text style="color:#e65100;">*</text></text>
+            <input class="health-popup__input" placeholder="如：大宠爱、博来恩" value="{{healthMedicineName}}" bindinput="onHealthMedicineNameChange" />
+          </view>
+          <view class="health-popup__field">
+            <text class="health-popup__label">下次驱虫日期</text>
+            <picker mode="date" value="{{healthNextDate}}" bindchange="onHealthNextDateChange">
+              <view class="health-popup__picker">
+                <text class="{{healthNextDate ? 'health-popup__value' : 'health-popup__placeholder'}}">{{healthNextDate || '请选择日期'}}</text>
+                <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+              </view>
+            </picker>
+          </view>
+        </block>
+
+        <!-- 体检 -->
+        <block wx:if="{{healthType === 'checkup'}}">
+          <view class="health-popup__field">
+            <text class="health-popup__label">体检机构</text>
+            <input class="health-popup__input" placeholder="请输入体检机构名称" value="{{healthInstitution}}" bindinput="onHealthInstitutionChange" />
+          </view>
+          <view class="health-popup__field">
+            <text class="health-popup__label">体检结果</text>
+            <textarea class="health-popup__textarea" placeholder="请输入体检结果" value="{{healthCheckupResult}}" bindinput="onHealthCheckupResultChange" maxlength="500" />
+          </view>
+        </block>
+
+        <!-- 饮食 -->
+        <view class="health-popup__field" wx:if="{{healthType === 'food'}}">
+          <text class="health-popup__label">饮食情况 <text style="color:#e65100;">*</text></text>
+          <textarea class="health-popup__textarea" placeholder="如：猫粮 50g，零食少量" value="{{healthFoodIntake}}" bindinput="onHealthFoodIntakeChange" maxlength="200" />
         </view>
 
-        <view class="health-popup__field">
+        <!-- 备注内容 -->
+        <view class="health-popup__field" wx:if="{{healthType === 'note'}}">
+          <text class="health-popup__label">备注内容 <text style="color:#e65100;">*</text></text>
+          <textarea class="health-popup__textarea" placeholder="请输入备注内容" value="{{healthNote}}" bindinput="onHealthNoteChange" maxlength="500" />
+        </view>
+
+        <!-- 通用备注（非 note 类型时可加备注） -->
+        <view class="health-popup__field" wx:if="{{healthType !== 'note'}}">
           <text class="health-popup__label">备注</text>
-          <textarea class="health-popup__textarea" placeholder="其他观察记录..." value="{{healthNote}}" bindinput="onHealthNoteChange" />
+          <input class="health-popup__input" placeholder="可选备注信息" value="{{healthNote}}" bindinput="onHealthNoteChange" />
         </view>
       </view>
 
