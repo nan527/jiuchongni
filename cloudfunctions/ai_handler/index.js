@@ -25,6 +25,10 @@ exports.main = async (event, context) => {
       return await cleanupOrphanedAgencies();
     case 'migrate_ownerid':
       return await migrateOwnerId(event);
+    case 'reset_password':
+      return await resetPassword(event);
+    case 'bind_wechat':
+      return await bindWechat(event);
     default:
       return { success: false, msg: '未知操作: ' + action };
   }
@@ -287,5 +291,96 @@ async function getFileUrls(event) {
   } catch (err) {
     console.error('[getFileUrls] 转换失败', err);
     return { success: false, msg: err.message, urls: fileIDs };
+  }
+}
+
+/**
+ * 重置机构账号密码（用于忘记密码场景）
+ * @param {Object} event - { account, newPassword }
+ */
+async function resetPassword(event) {
+  const { account, newPassword } = event;
+  if (!account || !newPassword) {
+    return { success: false, msg: '缺少账号或新密码' };
+  }
+  try {
+    const db = cloud.database();
+    const res = await db.collection('users').where({ account, role: 'agency' }).limit(1).get();
+    if (!res.data.length) {
+      return { success: false, msg: '账号不存在' };
+    }
+    await db.collection('users').doc(res.data[0]._id).update({
+      data: { password: newPassword },
+    });
+    return { success: true, msg: '密码重置成功' };
+  } catch (err) {
+    console.error('[resetPassword] 失败', err);
+    return { success: false, msg: err.message };
+  }
+}
+
+/**
+ * 将当前微信 openid 绑定到指定用户（用于机构账号登录后绑定微信号）
+ * @param {Object} event - { userId }
+ */
+async function bindWechat(event) {
+  const { userId } = event || {};
+  try {
+    const openid = cloud.getWXContext().OPENID;
+    if (!openid) {
+      return { success: false, msg: '无法获取当前用户 openid' };
+    }
+    const db = cloud.database();
+    const _ = db.command;
+
+    // 如果传了 userId，直接绑定并清理
+    if (userId) {
+      await db.collection('users').doc(userId).update({
+        data: { _openid: openid },
+      });
+      // 清理同一微信号下无 agencyProfileId 的空白机构文档
+      const existing = await db.collection('users')
+        .where({ _openid: openid, role: 'agency', agencyProfileId: _.exists(false) })
+        .get();
+      for (const doc of existing.data) {
+        if (doc._id !== userId) {
+          await db.collection('users').doc(doc._id).remove();
+        }
+      }
+      return { success: true, openid };
+    }
+
+    // 没有 userId：查找当前微信下面有没有已注册的机构账号
+    const users = await db.collection('users')
+      .where({ _openid: openid, role: 'agency', agencyProfileId: _.exists(true) })
+      .limit(5)
+      .get();
+
+    if (users.data.length > 0) {
+      // 清理空白机构文档
+      const blanks = await db.collection('users')
+        .where({ _openid: openid, role: 'agency', agencyProfileId: _.exists(false) })
+        .get();
+      for (const doc of blanks.data) {
+        await db.collection('users').doc(doc._id).remove().catch(() => {});
+      }
+
+      // 返回用户列表供客户端选择
+      return {
+        success: true,
+        found: true,
+        users: users.data.map(u => ({
+          _id: u._id,
+          agencyProfileId: u.agencyProfileId,
+          auditStatus: u.auditStatus,
+          nickname: u.nickname,
+        })),
+      };
+    }
+
+    return { success: true, found: false };
+  } catch (err) {
+    console.error('[bindWechat] 失败', err);
+    return { success: false, msg: err.message };
   }
 }

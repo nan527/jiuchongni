@@ -30,6 +30,13 @@
     </van-button>
   </view>
 
+  <!-- 未审核通过时显示退出（任何已登录状态） -->
+  <view class="logout-area" wx:if="{{ isLocked && agencyInfo._id }}">
+    <view class="logout-btn" bindtap="handleLogout">
+      <text class="logout-btn__text">退出登录</text>
+    </view>
+  </view>
+
   <!-- ========== 审核通过后的功能界面（带底部标签切换） ========== -->
   <view class="tab-content" wx:if="{{ !isLocked }}">
 
@@ -39,6 +46,10 @@
       <view class="status-card">
         <view class="status-card__header">
           <text class="status-card__title">订单状态</text>
+          <view class="status-card__more" bindtap="toOpsOrders">
+            <text class="status-card__more-text">查看全部</text>
+            <van-icon name="arrow" size="24rpx" color="#FF9800" />
+          </view>
         </view>
         <view class="status-card__grid">
           <view class="status-card__item" bindtap="toOpsOrders">
@@ -80,60 +91,62 @@
         </view>
       </view>
 
-      <!-- 全部订单入口 -->
-      <view class="status-card" bindtap="toOpsOrders" style="margin-top:16rpx;">
-        <view class="func-card__item" style="padding:32rpx;">
-          <van-icon name="orders-o" size="36rpx" color="#FF9800" custom-style="margin-right:20rpx;" />
-          <text style="font-size:28rpx;color:#333;flex:1;">查看全部订单</text>
-          <text style="font-size:24rpx;color:#999;margin-right:8rpx;">共 {{ orderCount }} 单</text>
-          <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+      <!-- 待接单预览 -->
+      <view class="pending-card" wx:if="{{ pendingPreview.length > 0 }}" catchtap="toOpsOrders">
+        <view class="pending-card__header">
+          <text class="pending-card__title">待接单 <text style="font-size:22rpx;color:#999;font-weight:400;">（最新 {{ pendingPreview.length }} 单）</text></text>
+          <view class="pending-card__more">
+            <text class="pending-card__more-text">查看全部</text>
+            <van-icon name="arrow" size="22rpx" color="#FF9800" />
+          </view>
+        </view>
+        <view class="pending-card__list">
+          <view class="pending-card__item" wx:for="{{ pendingPreview }}" wx:key="_id">
+            <image class="pending-card__avatar" src="{{ item.image || '/static/pet/logo.png' }}" mode="aspectFill" />
+            <view class="pending-card__info">
+              <text class="pending-card__name">{{ item.petName }}</text>
+              <text class="pending-card__svc">{{ item.serviceName }}</text>
+            </view>
+            <view class="pending-card__right-col">
+              <text class="pending-card__price" wx:if="{{ item.price }}">¥{{ item.price }}{{ item.unit }}</text>
+              <text class="pending-card__time">{{ item.createTimeStr }}</text>
+            </view>
+          </view>
         </view>
       </view>
-
-      <!-- 寄养需求 -->
-      <view class="nav-card" bindtap="toFosterRequests" style="margin-top:16rpx;">
-        <view class="nav-card__left">
-          <view class="nav-card__icon" style="background:#E8F5E9;">
-            <van-icon name="notes-o" size="44rpx" color="#2E7D32" />
-          </view>
-          <view class="nav-card__info">
-            <text class="nav-card__name">寄养需求</text>
-            <text class="nav-card__desc">接取用户发布的寄养/领养帖</text>
-          </view>
-        </view>
-        <view class="nav-card__right">
-          <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+      <view class="pending-card pending-card--empty" wx:else catchtap="toOpsOrders" style="margin-top:16rpx;">
+        <view class="pending-card__empty-inner">
+          <text class="pending-card__empty-text">暂无待接订单</text>
+          <van-icon name="arrow" size="24rpx" color="#ccc" />
         </view>
       </view>
     </view>
 
     <!-- Tab 1: 宠物管理 -->
     <view wx:elif="{{ activeTab === 1 }}">
-      <!-- 宠物管理卡片 -->
-      <view class="nav-card" bindtap="toPetManage">
-        <view class="nav-card__left">
-          <view class="nav-card__icon nav-card__icon--brown">
-            <van-icon name="friends-o" size="44rpx" color="#5D4037" />
-          </view>
-          <view class="nav-card__info">
-            <text class="nav-card__name">宠物管理</text>
-            <text class="nav-card__desc">笼位查看 · 状态管理</text>
+      <!-- 宠物预览网格 -->
+      <view class="pet-grid-card">
+        <view class="pet-grid-card__header">
+          <text class="pet-grid-card__title">在养宠物 <text style="font-size:24rpx;color:#999;font-weight:400;">（{{ petCount }}只）</text></text>
+        </view>
+        <view class="pet-grid" wx:if="{{ previewPets.length > 0 }}">
+          <view
+            class="pet-grid__item"
+            wx:for="{{ previewPets }}"
+            wx:key="_id"
+            bindtap="toPetManage"
+          >
+            <image class="pet-grid__avatar" src="{{ item.image || '/static/pet/logo.png' }}" mode="aspectFill" />
+            <text class="pet-grid__name">{{ item.name }}</text>
+            <text class="pet-grid__species" wx:if="{{ item.species }}">{{ item.species }}</text>
           </view>
         </view>
-        <view class="nav-card__right">
-          <text class="nav-card__count">{{ petCount }}</text>
-          <text class="nav-card__unit">在养</text>
-          <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+        <view class="pet-grid-empty" wx:else>
+          <text class="pet-grid-empty__text">暂无在养宠物</text>
         </view>
-      </view>
-
-      <!-- 笼位概览快捷卡片 -->
-      <view class="status-card" bindtap="toPetManage" style="margin-top:16rpx;">
-        <view class="func-card__item" style="padding:32rpx;">
-          <van-icon name="hotel-o" size="36rpx" color="#5D4037" custom-style="margin-right:20rpx;" />
-          <text style="font-size:28rpx;color:#333;flex:1;">笼位管理</text>
-          <text style="font-size:24rpx;color:#FF9800;font-weight:600;margin-right:8rpx;">查看详情</text>
-          <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+        <view class="pet-grid-card__footer" bindtap="toPetManage">
+          <text class="pet-grid-card__more">查看全部笼位</text>
+          <van-icon name="arrow" size="24rpx" color="#FF9800" />
         </view>
       </view>
 

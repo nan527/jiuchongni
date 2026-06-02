@@ -111,8 +111,8 @@
             </view>
             <view class="ao-card__actions">
               <van-button wx:if="{{ item.orderStatus === 'confirmed' }}" size="small" round type="primary" color="#FF9800" data-id="{{ item._id }}" data-status="in_progress" bindtap="onUpdateStatus">开始服务</van-button>
-              <van-button wx:if="{{ item.orderStatus === 'in_progress' }}" size="small" round plain type="primary" color="#FF9800" data-id="{{ item._id }}" data-petid="{{ item.petId }}" data-petname="{{ item.petName }}" bindtap="openHealthRecord" custom-style="margin-right:12rpx;">录入健康</van-button>
-              <van-button wx:if="{{ item.orderStatus === 'in_progress' }}" size="small" round type="primary" color="#07c160" data-id="{{ item._id }}" data-status="to_confirm" bindtap="onUpdateStatus">完成服务</van-button>
+              <van-button wx:if="{{ item.orderStatus === 'in_progress' }}" size="small" round plain type="primary" color="#FF9800" data-id="{{ item._id }}" data-petid="{{ item.petId }}" data-petname="{{ item.petName }}" bindtap="openHealthRecord">录入健康</van-button>
+              <van-button wx:if="{{ item.orderStatus === 'in_progress' }}" size="small" round plain type="primary" color="#07c160" data-id="{{ item._id }}" data-status="to_confirm" bindtap="onUpdateStatus">完成服务</van-button>
             </view>
           </view>
         </view>

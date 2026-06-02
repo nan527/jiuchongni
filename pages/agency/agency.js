@@ -16,6 +16,8 @@ Page({
     isRegistered: false,
     auditStatus: '',
     activeTab: 0,
+    previewPets: [],
+    pendingPreview: [],
   },
 
   async onShow() {
@@ -85,11 +87,43 @@ Page({
       .then(r => this.setData({ serviceCount: r.total || 0 }))
       .catch(() => {});
 
-    // 在养宠物数
+    // 在养宠物数 + 前6个预览
     db.collection('user_orders')
       .where({ orderType: 'agency', agencyProfileId: pid, category: 'foster', orderStatus: _.in(['confirmed', 'in_progress']) })
-      .count()
-      .then(r => this.setData({ petCount: r.total || 0 }))
+      .orderBy('createTime', 'desc')
+      .limit(6)
+      .get()
+      .then(r => {
+        const orders = r.data || [];
+        this.setData({ petCount: orders.length });
+        const previewPets = orders.map(o => ({
+          _id: o._id,
+          name: o.petName || '未命名',
+          image: (o.petInfo && o.petInfo.photo) || '',
+          species: (o.petInfo && o.petInfo.species) || '',
+        }));
+        this.setData({ previewPets });
+      })
+      .catch(() => {});
+
+    // 待接单预览（前3条）
+    db.collection('user_orders')
+      .where({ orderType: 'agency', agencyProfileId: pid, orderStatus: 'pending' })
+      .orderBy('createTime', 'desc')
+      .limit(3)
+      .get()
+      .then(r => {
+        const items = (r.data || []).map(o => ({
+          _id: o._id,
+          petName: o.petName || '未命名',
+          serviceName: o.serviceName || '寄养服务',
+          price: o.price,
+          unit: o.unit || '',
+          createTimeStr: this._formatDate(o.createTime),
+          image: (o.petInfo && o.petInfo.photo) || (o.images && o.images[0]) || '',
+        }));
+        this.setData({ pendingPreview: items });
+      })
       .catch(() => {});
   },
 
@@ -155,5 +189,14 @@ Page({
         }
       },
     });
+  },
+
+  _formatDate(t) {
+    if (!t) return '';
+    const d = typeof t === 'string' ? new Date(t) : (t instanceof Date ? t : new Date(t));
+    if (isNaN(d.getTime())) return '';
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${m}-${day}`;
   },
 });

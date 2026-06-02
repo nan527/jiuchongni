@@ -135,6 +135,21 @@
 
 .status-card__header {
   padding: 0 8rpx 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.status-card__more {
+  display: flex;
+  align-items: center;
+}
+
+.status-card__more-text {
+  font-size: 24rpx;
+  color: #FF9800;
+  font-weight: 500;
+  margin-right: 2rpx;
 }
 
 .status-card__title {
@@ -194,6 +209,92 @@
   font-size: 24rpx;
   color: #666;
   margin-top: 12rpx;
+}
+
+/* ==============================================================
+   宠物预览网格
+   ============================================================== */
+.pet-grid-card {
+  margin: 20rpx 24rpx 0;
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
+.pet-grid-card__header {
+  padding: 24rpx 32rpx 16rpx;
+}
+
+.pet-grid-card__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.pet-grid {
+  display: flex;
+  flex-wrap: wrap;
+  padding: 0 20rpx 8rpx;
+}
+
+.pet-grid__item {
+  width: 33.33%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 12rpx 0;
+}
+
+.pet-grid__avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: #f5f5f5;
+}
+
+.pet-grid__name {
+  font-size: 24rpx;
+  color: #333;
+  font-weight: 600;
+  margin-top: 8rpx;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 90%;
+}
+
+.pet-grid__species {
+  font-size: 20rpx;
+  color: #999;
+  margin-top: 2rpx;
+}
+
+.pet-grid-empty {
+  padding: 40rpx 0;
+  display: flex;
+  justify-content: center;
+}
+
+.pet-grid-empty__text {
+  font-size: 26rpx;
+  color: #bbb;
+}
+
+.pet-grid-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20rpx 0;
+  border-top: 1rpx solid #f5f5f5;
+}
+
+.pet-grid-card__more {
+  font-size: 26rpx;
+  color: #FF9800;
+  font-weight: 500;
+  margin-right: 6rpx;
 }
 
 /* ==============================================================
@@ -331,6 +432,114 @@
   height: 1rpx;
   background: #f5f5f5;
   margin: 0 32rpx;
+}
+
+/* ==============================================================
+   待接单预览卡片
+   ============================================================== */
+.pending-card {
+  margin: 16rpx 24rpx 0;
+  background: #fff;
+  border-radius: 24rpx;
+  box-shadow: 0 4rpx 20rpx rgba(0,0,0,0.04);
+  overflow: hidden;
+}
+
+.pending-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 24rpx 12rpx;
+}
+
+.pending-card__title {
+  font-size: 26rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.pending-card__more {
+  display: flex;
+  align-items: center;
+}
+
+.pending-card__more-text {
+  font-size: 22rpx;
+  color: #FF9800;
+  font-weight: 500;
+  margin-right: 2rpx;
+}
+
+.pending-card__list {
+  padding: 0 24rpx 16rpx;
+}
+
+.pending-card__item {
+  display: flex;
+  align-items: center;
+  padding: 20rpx 0;
+  border-bottom: 1rpx solid #f8f8f8;
+}
+
+.pending-card__item:last-child {
+  border-bottom: none;
+}
+
+.pending-card__avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.pending-card__info {
+  flex: 1;
+  margin-left: 20rpx;
+  min-width: 0;
+}
+
+.pending-card__name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.pending-card__svc {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.pending-card__right-col {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  flex-shrink: 0;
+}
+
+.pending-card__price {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #FF9800;
+}
+
+.pending-card__time {
+  font-size: 22rpx;
+  color: #ccc;
+  margin-top: 4rpx;
+}
+
+.pending-card--empty .pending-card__empty-inner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 28rpx 24rpx;
+}
+
+.pending-card__empty-text {
+  font-size: 26rpx;
+  color: #bbb;
 }
 
 /* ===== 标签内容区 ===== */

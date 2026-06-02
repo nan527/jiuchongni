@@ -58,6 +58,11 @@ const authService = {
               cached.auditStatus = fresh.data.auditStatus;
               this._cacheUser(cached);
             }
+            // 同步 agencyProfileId（注册机构后缓存可能未更新）
+            if (fresh.data && fresh.data.agencyProfileId !== cached.agencyProfileId) {
+              cached.agencyProfileId = fresh.data.agencyProfileId;
+              this._cacheUser(cached);
+            }
           } catch (e) { /* 查询失败则使用缓存 */ }
         }
         this._syncToGlobal(cached);
@@ -114,11 +119,6 @@ const authService = {
     }
 
     const userInfo = res.data[0];
-
-    if (role === ROLES.AGENCY && userInfo.auditStatus !== 'approved') {
-      const status = userInfo.auditStatus || 'pending';
-      throw new Error(`AGENCY_AUDIT_${status.toUpperCase()}`);
-    }
 
     try {
       await withTimeout(
@@ -271,27 +271,93 @@ const authService = {
       8000
     );
 
-    // 写入机构用户文档（_openid 由云开发自动注入，同一微信号可有多个角色）
-    await withTimeout(
-      getDB().collection('users').add({
-        data: {
-          role: ROLES.AGENCY,
-          nickname: orgName,
-          avatar: '',
-          phone: legalPhone,
-          email: '',
-          address: '',
-          bio: '',
-          account,
-          password,
-          agencyProfileId: profileRes._id,
-          auditStatus: 'pending',
-          createTime: getDB().serverDate(),
-          lastLoginTime: getDB().serverDate(),
-        },
-      }),
-      8000
-    );
+    // 写入机构用户文档（已登录用户则更新当前用户，否则新建）
+    if (isLoggedIn) {
+      try {
+        const currentUserRes = await withTimeout(
+          getDB().collection('users').where({ _openid: '{openid}' }).orderBy('createTime', 'desc').limit(1).get(),
+          8000
+        );
+        if (currentUserRes.data.length > 0) {
+          const currentUser = currentUserRes.data[0];
+          await withTimeout(
+            getDB().collection('users').doc(currentUser._id).update({
+              data: {
+                nickname: orgName,
+                phone: legalPhone,
+                agencyProfileId: profileRes._id,
+                auditStatus: 'pending',
+                updateTime: getDB().serverDate(),
+              },
+            }),
+            8000
+          );
+          // 清理同一 openid 下无 agencyProfileId 的空白机构文档
+          try {
+            const blanks = await withTimeout(
+              getDB().collection('users').where({
+                _openid: '{openid}',
+                role: ROLES.AGENCY,
+                agencyProfileId: getDB().command.exists(false),
+              }).get(),
+              5000
+            );
+            for (const doc of blanks.data) {
+              getDB().collection('users').doc(doc._id).remove().catch(() => {});
+            }
+          } catch (e) { /* 清理失败不影响 */ }
+          // 更新缓存
+          currentUser.agencyProfileId = profileRes._id;
+          currentUser.auditStatus = 'pending';
+          this._cacheUser(currentUser);
+        } else {
+          throw new Error('CANNOT_FIND_CURRENT_USER');
+        }
+      } catch (e) {
+        // 回退到新建用户
+        await withTimeout(
+          getDB().collection('users').add({
+            data: {
+              role: ROLES.AGENCY,
+              nickname: orgName,
+              avatar: '',
+              phone: legalPhone,
+              email: '',
+              address: '',
+              bio: '',
+              account,
+              password,
+              agencyProfileId: profileRes._id,
+              auditStatus: 'pending',
+              createTime: getDB().serverDate(),
+              lastLoginTime: getDB().serverDate(),
+            },
+          }),
+          8000
+        );
+      }
+    } else {
+      await withTimeout(
+        getDB().collection('users').add({
+          data: {
+            role: ROLES.AGENCY,
+            nickname: orgName,
+            avatar: '',
+            phone: legalPhone,
+            email: '',
+            address: '',
+            bio: '',
+            account,
+            password,
+            agencyProfileId: profileRes._id,
+            auditStatus: 'pending',
+            createTime: getDB().serverDate(),
+            lastLoginTime: getDB().serverDate(),
+          },
+        }),
+        8000
+      );
+    }
 
     return { success: true };
   },
@@ -336,11 +402,11 @@ const authService = {
     wx.showLoading({ title: '登录中…', mask: true });
 
     try {
-      // 按 openid + role 查询该角色的账号（取最新的）
+      // 按 openid + role 查询该角色的账号
       let existing = { data: [] };
       try {
         existing = await withTimeout(
-          getDB().collection('users').where({ _openid: '{openid}', role }).orderBy('createTime', 'desc').limit(1).get(),
+          getDB().collection('users').where({ _openid: '{openid}', role }).orderBy('createTime', 'desc').limit(10).get(),
           8000
         );
       } catch (queryErr) {
@@ -352,7 +418,53 @@ const authService = {
       }
 
       if (existing.data.length > 0) {
-        const userInfo = existing.data[0];
+        // 优先选择有 agencyProfileId 的（避免空白机构文档排在已注册账号前面）
+        let userInfo = existing.data[0];
+        if (role === ROLES.AGENCY) {
+          const registered = existing.data.find(u => u.agencyProfileId);
+          if (registered) {
+            userInfo = registered;
+            // 清理无用的空白机构文档
+            for (const doc of existing.data) {
+              if (doc._id !== userInfo._id && !doc.agencyProfileId) {
+                getDB().collection('users').doc(doc._id).remove().catch(() => {});
+              }
+            }
+          } else {
+            // 通过 openid 查找的都无 agencyProfileId → 尝试云函数跨账号匹配
+            try {
+              const bindRes = await withTimeout(
+                wx.cloud.callFunction({
+                  name: 'ai_handler',
+                  data: { action: 'bind_wechat' },
+                }),
+                8000
+              );
+              if (bindRes.result && bindRes.result.success && bindRes.result.found && bindRes.result.users.length > 0) {
+                const matched = bindRes.result.users[0];
+                userInfo = matched;
+                // 从数据库获取完整用户信息
+                try {
+                  const fullRes = await withTimeout(
+                    getDB().collection('users').doc(matched._id).get(),
+                    5000
+                  );
+                  if (fullRes.data) {
+                    userInfo = fullRes.data;
+                  }
+                } catch (e) { /* use basic info */ }
+                // 清理当前微信下的空白机构文档
+                for (const doc of existing.data) {
+                  if (!doc.agencyProfileId) {
+                    getDB().collection('users').doc(doc._id).remove().catch(() => {});
+                  }
+                }
+              }
+            } catch (e) {
+              console.warn('[AuthService] 云函数跨账号匹配失败', e);
+            }
+          }
+        }
         try {
           await withTimeout(
             getDB().collection('users').doc(userInfo._id).update({
