@@ -12,6 +12,7 @@
     "pages/agency/agency",
     "pages/admin/admin",
     "pages/admin/audit",
+    "pages/admin/audit-detail",
     "pages/admin/agencies",
     "pages/admin/dashboard",
     "pages/my/my",

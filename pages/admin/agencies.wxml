@@ -1,5 +1,16 @@
 <!-- pages/admin/agencies.wxml -->
-<view class="agencies-page">
+<view class="agencies-page" style="padding-top: {{ navBarHeight + 10 }}px;">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__left" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="36rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">机构管理</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
 
   <!-- 搜索栏 -->
   <view class="search-bar">

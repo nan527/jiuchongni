@@ -7,6 +7,8 @@ Page({
     role: ROLES.PET_OWNER,
     logging: false,
     isCheck: false,
+    statusBarHeight: 0,
+    navBarHeight: 0,
     roles: [
       { value: ROLES.PET_OWNER, label: ROLE_INFO[ROLES.PET_OWNER].label, desc: ROLE_INFO[ROLES.PET_OWNER].desc, icon: ROLE_INFO[ROLES.PET_OWNER].icon },
       { value: ROLES.AGENCY, label: ROLE_INFO[ROLES.AGENCY].label, desc: ROLE_INFO[ROLES.AGENCY].desc, icon: ROLE_INFO[ROLES.AGENCY].icon },
@@ -21,6 +23,14 @@ Page({
     agencyAccount: '',
     agencyPassword: '',
     agencyLogging: false,
+  },
+
+  onLoad() {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
   },
 
   onShow() {
@@ -59,6 +69,7 @@ Page({
 
     try {
       const userInfo = await authService.loginWithWechat(this.data.role);
+      if (!userInfo) return;
       wx.showToast({ title: '登录成功', icon: 'success' });
       setTimeout(() => {
         authService.navigateByRole(userInfo.role);
@@ -200,5 +211,8 @@ Page({
     } finally {
       this.setData({ agencyLogging: false });
     }
+  },
+
+  onGoBack() {
   },
 });

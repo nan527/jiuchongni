@@ -7,6 +7,20 @@ Page({
     pendingList: [],
     historyList: [],
     loading: true,
+    statusBarHeight: 0,
+    navBarHeight: 0,
+  },
+
+  onLoad() {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight;
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+  },
+
+  onGoBack() {
+    wx.navigateBack();
   },
 
   onShow() {
@@ -26,6 +40,13 @@ Page({
 
   onTabChange(e) {
     this.setData({ activeTab: e.detail.index });
+  },
+
+  goDetail(e) {
+    const { userId, profileId } = e.currentTarget.dataset;
+    wx.navigateTo({
+      url: `/pages/admin/audit-detail?userId=${userId}&profileId=${profileId}`,
+    });
   },
 
   async loadPendingList() {
@@ -49,12 +70,38 @@ Page({
         const profileRes = await db.collection('agency_profiles').where({ _id: _.in(profileIds) }).get();
         profileMap = (profileRes.data || []).reduce((m, p) => { m[p._id] = p; return m; }, {});
       }
+      // 解析图片 cloud:// ID 为临时 URL
       const pendingList = users.map((u) => ({
         userId: u._id,
         account: u.account || '',
         auditStatus: u.auditStatus || 'pending',
         profile: profileMap[u.agencyProfileId] || {},
       }));
+      // 收集所有需要解析的图片 ID
+      const fileIDs = [];
+      pendingList.forEach((item) => {
+        const p = item.profile;
+        if (p.licenseImage && p.licenseImage.startsWith('cloud://')) fileIDs.push(p.licenseImage);
+        if (p.storefrontImage && p.storefrontImage.startsWith('cloud://')) fileIDs.push(p.storefrontImage);
+        if (p.permitImage && p.permitImage.startsWith('cloud://')) fileIDs.push(p.permitImage);
+      });
+      if (fileIDs.length) {
+        try {
+          const urlRes = await wx.cloud.callFunction({
+            name: 'ai_handler',
+            data: { action: 'get_file_urls', fileIDs },
+          });
+          const urls = (urlRes.result && urlRes.result.urls) || [];
+          const urlMap = {};
+          fileIDs.forEach((id, i) => { urlMap[id] = urls[i] || id; });
+          pendingList.forEach((item) => {
+            const p = item.profile;
+            if (p.licenseImage && urlMap[p.licenseImage]) p.licenseImage = urlMap[p.licenseImage];
+            if (p.storefrontImage && urlMap[p.storefrontImage]) p.storefrontImage = urlMap[p.storefrontImage];
+            if (p.permitImage && urlMap[p.permitImage]) p.permitImage = urlMap[p.permitImage];
+          });
+        } catch (e) { /* 图片解析失败不影响列表显示 */ }
+      }
       this.setData({ pendingList, loading: false });
     } catch (err) {
       this.setData({ loading: false });
@@ -105,18 +152,20 @@ Page({
 
   async updateAudit(userId, profileId, status) {
     try {
-      const db = wx.cloud.database();
-      await db.collection('users').doc(userId).update({ data: { auditStatus: status } });
-      if (profileId) {
-        await db.collection('agency_profiles').doc(profileId).update({
-          data: { auditStatus: status, updateTime: db.serverDate() },
-        });
+      const res = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: { action: 'update_agency_audit', userId, profileId, status },
+      });
+      if (res.result && res.result.success) {
+        wx.showToast({ title: status === 'approved' ? '已通过' : '已驳回', icon: 'success' });
+        this.loadPendingList();
+        this.loadHistoryList();
+      } else {
+        wx.showToast({ title: '操作失败: ' + (res.result.msg || '未知错误'), icon: 'none' });
       }
-      wx.showToast({ title: status === 'approved' ? '已通过' : '已驳回', icon: 'success' });
-      this.loadPendingList();
-      this.loadHistoryList();
     } catch (err) {
-      wx.showToast({ title: '操作失败', icon: 'none' });
+      console.error('[Audit] updateAudit error', err);
+      wx.showToast({ title: '操作失败: ' + err.message, icon: 'none' });
     }
   },
 

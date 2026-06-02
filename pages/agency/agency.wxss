@@ -122,6 +122,17 @@
   margin: 24rpx 48rpx 0;
 }
 
+.logout-link {
+  text-align: center;
+  margin-top: 32rpx;
+}
+
+.logout-link__text {
+  font-size: 26rpx;
+  color: #999;
+  text-decoration: underline;
+}
+
 /* ==============================================================
    订单状态卡片（类似用户端「我的订单」）
    ============================================================== */

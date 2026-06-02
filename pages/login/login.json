@@ -1,5 +1,5 @@
 {
-  "navigationBarTitleText": "欢迎登录",
+  "navigationStyle": "custom",
   "usingComponents": {
     "van-button": "@vant/weapp/button/index",
     "van-radio": "@vant/weapp/radio/index",

@@ -38,6 +38,14 @@ App({
       const userInfo = await authService.checkLogin();
       if (userInfo) {
         this.globalData.auth.userInfo = userInfo;
+        // 根据角色跳转到对应首页（仅启动时跳转）
+        const role = userInfo.role;
+        if (role === 'agency') {
+          wx.reLaunch({ url: '/pages/agency/agency' });
+        } else if (role === 'admin') {
+          wx.reLaunch({ url: '/pages/admin/admin' });
+        }
+        // pet_owner 留在默认首页，无需跳转
       }
     } catch (err) {
       console.warn('[App] 静默登录异常', err);

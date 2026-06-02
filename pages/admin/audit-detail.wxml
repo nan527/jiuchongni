@@ -1,0 +1,109 @@
+<!-- pages/admin/audit-detail.wxml -->
+<view class="detail-page" style="padding-top: {{ navBarHeight + 10 }}px;">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__left" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="36rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">审核详情</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
+  <van-loading wx:if="{{ loading }}" vertical style="padding: 120rpx 0; text-align: center;">加载中...</van-loading>
+
+  <block wx:if="{{ !loading }}">
+    <!-- 机构名称 -->
+    <view class="section section-header">
+      <text class="org-name">{{ profile.orgName || '未命名机构' }}</text>
+      <van-tag wx:if="{{ profile.auditStatus === 'pending' }}" type="warning" round size="medium">待审核</van-tag>
+      <van-tag wx:elif="{{ profile.auditStatus === 'approved' }}" type="success" round size="medium">已通过</van-tag>
+      <van-tag wx:else type="danger" round size="medium">已驳回</van-tag>
+    </view>
+
+    <!-- 基本信息 -->
+    <view class="section">
+      <text class="section-title">基本信息</text>
+      <view class="info-grid">
+        <view class="info-item"><text class="info-key">信用代码</text><text class="info-val">{{ profile.creditCode || '-' }}</text></view>
+        <view class="info-item"><text class="info-key">经营类型</text><text class="info-val">{{ profile.businessType || '-' }}</text></view>
+        <view class="info-item"><text class="info-key">法人姓名</text><text class="info-val">{{ profile.legalName || '-' }}</text></view>
+        <view class="info-item"><text class="info-key">联系电话</text><text class="info-val">{{ profile.legalPhone || '-' }}</text></view>
+      </view>
+    </view>
+
+    <!-- 地址信息 -->
+    <view class="section">
+      <text class="section-title">地址信息</text>
+      <view class="info-grid">
+        <view class="info-item info-item--full">
+          <text class="info-key">所在地区</text>
+          <text class="info-val">{{ profile.region || '-' }}</text>
+        </view>
+        <view class="info-item info-item--full">
+          <text class="info-key">详细地址</text>
+          <text class="info-val">{{ profile.detailAddress || '-' }}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 营业执照 -->
+    <view class="section">
+      <text class="section-title">营业执照</text>
+      <view class="image-row">
+        <view class="image-box" wx:if="{{ profile.licenseImage }}" bindtap="previewImage" data-src="{{ profile.licenseImage }}">
+          <image class="image-full" src="{{ profile.licenseImage }}" mode="aspectFill" />
+          <text class="image-label">营业执照</text>
+        </view>
+        <view wx:else class="image-placeholder">暂无图片</view>
+      </view>
+    </view>
+
+    <!-- 门店照片 -->
+    <view class="section">
+      <text class="section-title">门店照片</text>
+      <view class="image-row">
+        <view class="image-box" wx:if="{{ profile.storefrontImage }}" bindtap="previewImage" data-src="{{ profile.storefrontImage }}">
+          <image class="image-full" src="{{ profile.storefrontImage }}" mode="aspectFill" />
+          <text class="image-label">门店外观</text>
+        </view>
+        <view wx:if="{{ profile.permitImage }}" class="image-box" bindtap="previewImage" data-src="{{ profile.permitImage }}">
+          <image class="image-full" src="{{ profile.permitImage }}" mode="aspectFill" />
+          <text class="image-label">经营许可</text>
+        </view>
+        <view wx:if="{{ !profile.storefrontImage && !profile.permitImage }}" class="image-placeholder">暂无图片</view>
+      </view>
+    </view>
+
+    <!-- 环境图片 -->
+    <view class="section" wx:if="{{ profile.envImages && profile.envImages.length }}">
+      <text class="section-title">环境图片</text>
+      <view class="image-grid">
+        <view wx:for="{{ profile.envImages }}" wx:key="*this" class="image-box image-box--small" bindtap="previewImage" data-src="{{ item }}">
+          <image class="image-full" src="{{ item }}" mode="aspectFill" />
+        </view>
+      </view>
+    </view>
+
+    <!-- 申请人账号 -->
+    <view class="section">
+      <text class="section-title">申请人信息</text>
+      <view class="info-grid">
+        <view class="info-item"><text class="info-key">账号</text><text class="info-val">{{ userInfo.account || '-' }}</text></view>
+        <view class="info-item"><text class="info-key">用户ID</text><text class="info-val">{{ userInfo._id || '-' }}</text></view>
+      </view>
+    </view>
+
+    <!-- 底部操作按钮 -->
+    <view class="bottom-bar" wx:if="{{ profile.auditStatus === 'pending' || profile.auditStatus === 'rejected' }}">
+      <view class="bottom-btn bottom-btn--reject" bindtap="reject">
+        <van-icon name="close" size="32rpx" />驳回
+      </view>
+      <view class="bottom-btn bottom-btn--approve" bindtap="approve">
+        <van-icon name="passed" size="32rpx" />通过
+      </view>
+    </view>
+  </block>
+</view>
