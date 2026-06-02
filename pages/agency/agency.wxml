@@ -1,4 +1,3 @@
-<!-- pages/agency/agency.wxml -->
 <view class="agency-page">
 
   <!-- 顶部机构卡片 -->
@@ -18,7 +17,7 @@
     </view>
   </view>
 
-  <!-- 状态提示条（未通过审核时显示） -->
+  <!-- 状态提示条 -->
   <view class="status-banner status-banner--{{ auditStatus || 'none' }}" wx:if="{{ isLocked }}">
     <van-icon name="info-o" size="32rpx" color="#fff" custom-style="margin-right:12rpx;" />
     <text class="status-banner__text">{{ auditStatus === 'pending' ? '机构审核中，审核通过后即可使用管理功能' : auditStatus === 'rejected' ? '审核未通过，请重新提交注册信息' : '请先完成机构注册，通过审核后即可使用管理功能' }}</text>
@@ -31,90 +30,191 @@
     </van-button>
   </view>
 
-  <!-- 数据统计条（审核通过后显示） -->
-  <view class="stats-bar" wx:if="{{ !isLocked }}">
-    <view class="stats-item">
-      <text class="stats-num">{{ orderCount }}</text>
-      <text class="stats-label">订单数</text>
+  <!-- ========== 审核通过后的功能界面（带底部标签切换） ========== -->
+  <view class="tab-content" wx:if="{{ !isLocked }}">
+
+    <!-- Tab 0: 订单状态 -->
+    <view wx:if="{{ activeTab === 0 }}">
+      <!-- 订单状态卡片 -->
+      <view class="status-card">
+        <view class="status-card__header">
+          <text class="status-card__title">订单状态</text>
+        </view>
+        <view class="status-card__grid">
+          <view class="status-card__item" bindtap="toOpsOrders">
+            <view class="status-card__icon-wrap">
+              <view class="status-card__icon status-card__icon--orange">
+                <van-icon name="clock-o" size="40rpx" color="#EF6C00" />
+              </view>
+              <view class="status-card__badge" wx:if="{{ pendingCount > 0 }}">{{ pendingCount > 99 ? '99+' : pendingCount }}</view>
+            </view>
+            <text class="status-card__label">待接单</text>
+          </view>
+          <view class="status-card__item" bindtap="toOpsOrders">
+            <view class="status-card__icon-wrap">
+              <view class="status-card__icon status-card__icon--blue">
+                <van-icon name="logistics" size="40rpx" color="#1565C0" />
+              </view>
+              <view class="status-card__badge" wx:if="{{ activeCount > 0 }}">{{ activeCount > 99 ? '99+' : activeCount }}</view>
+            </view>
+            <text class="status-card__label">进行中</text>
+          </view>
+          <view class="status-card__item" bindtap="toOpsOrders">
+            <view class="status-card__icon-wrap">
+              <view class="status-card__icon status-card__icon--red">
+                <van-icon name="passed" size="40rpx" color="#E65100" />
+              </view>
+              <view class="status-card__badge" wx:if="{{ toConfirmCount > 0 }}">{{ toConfirmCount > 99 ? '99+' : toConfirmCount }}</view>
+            </view>
+            <text class="status-card__label">待确认</text>
+          </view>
+          <view class="status-card__item" bindtap="toOpsOrders">
+            <view class="status-card__icon-wrap">
+              <view class="status-card__icon status-card__icon--green">
+                <van-icon name="star-o" size="40rpx" color="#2E7D32" />
+              </view>
+              <view class="status-card__badge" wx:if="{{ completedCount > 0 }}">{{ completedCount > 99 ? '99+' : completedCount }}</view>
+            </view>
+            <text class="status-card__label">已完成</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 全部订单入口 -->
+      <view class="status-card" bindtap="toOpsOrders" style="margin-top:16rpx;">
+        <view class="func-card__item" style="padding:32rpx;">
+          <van-icon name="orders-o" size="36rpx" color="#FF9800" custom-style="margin-right:20rpx;" />
+          <text style="font-size:28rpx;color:#333;flex:1;">查看全部订单</text>
+          <text style="font-size:24rpx;color:#999;margin-right:8rpx;">共 {{ orderCount }} 单</text>
+          <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+        </view>
+      </view>
+
+      <!-- 寄养需求 -->
+      <view class="nav-card" bindtap="toFosterRequests" style="margin-top:16rpx;">
+        <view class="nav-card__left">
+          <view class="nav-card__icon" style="background:#E8F5E9;">
+            <van-icon name="notes-o" size="44rpx" color="#2E7D32" />
+          </view>
+          <view class="nav-card__info">
+            <text class="nav-card__name">寄养需求</text>
+            <text class="nav-card__desc">接取用户发布的寄养/领养帖</text>
+          </view>
+        </view>
+        <view class="nav-card__right">
+          <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+        </view>
+      </view>
     </view>
-    <view class="stats-divider"></view>
-    <view class="stats-item">
-      <text class="stats-num">{{ petCount }}</text>
-      <text class="stats-label">在养宠物</text>
+
+    <!-- Tab 1: 宠物管理 -->
+    <view wx:elif="{{ activeTab === 1 }}">
+      <!-- 宠物管理卡片 -->
+      <view class="nav-card" bindtap="toPetManage">
+        <view class="nav-card__left">
+          <view class="nav-card__icon nav-card__icon--brown">
+            <van-icon name="friends-o" size="44rpx" color="#5D4037" />
+          </view>
+          <view class="nav-card__info">
+            <text class="nav-card__name">宠物管理</text>
+            <text class="nav-card__desc">笼位查看 · 状态管理</text>
+          </view>
+        </view>
+        <view class="nav-card__right">
+          <text class="nav-card__count">{{ petCount }}</text>
+          <text class="nav-card__unit">在养</text>
+          <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+        </view>
+      </view>
+
+      <!-- 笼位概览快捷卡片 -->
+      <view class="status-card" bindtap="toPetManage" style="margin-top:16rpx;">
+        <view class="func-card__item" style="padding:32rpx;">
+          <van-icon name="hotel-o" size="36rpx" color="#5D4037" custom-style="margin-right:20rpx;" />
+          <text style="font-size:28rpx;color:#333;flex:1;">笼位管理</text>
+          <text style="font-size:24rpx;color:#FF9800;font-weight:600;margin-right:8rpx;">查看详情</text>
+          <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+        </view>
+      </view>
+
     </view>
-    <view class="stats-divider"></view>
-    <view class="stats-item">
-      <text class="stats-num">{{ serviceCount }}</text>
-      <text class="stats-label">服务项目</text>
+
+    <!-- Tab 2: 机构信息 -->
+    <view wx:elif="{{ activeTab === 2 }}">
+      <view class="func-card">
+        <view class="func-card__header">
+          <text class="func-card__title">运营管理</text>
+        </view>
+        <view class="func-card__list">
+          <view class="func-card__item" bindtap="toEditInfo">
+            <view class="func-card__icon func-card__icon--blue">
+              <van-icon name="certificate" size="36rpx" color="#1565C0" />
+            </view>
+            <view class="func-card__info">
+              <text class="func-card__name">运营资质</text>
+              <text class="func-card__desc">资质与资料管理</text>
+            </view>
+            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+          </view>
+          <view class="func-card__divider"></view>
+          <view class="func-card__item" bindtap="toServiceManage">
+            <view class="func-card__icon func-card__icon--orange">
+              <van-icon name="shop-o" size="36rpx" color="#E65100" />
+            </view>
+            <view class="func-card__info">
+              <text class="func-card__name">服务项目</text>
+              <text class="func-card__desc">寄养/美容等服务管理</text>
+            </view>
+            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+          </view>
+          <view class="func-card__divider"></view>
+          <view class="func-card__item" bindtap="toOpsReview">
+            <view class="func-card__icon func-card__icon--purple">
+              <van-icon name="comment-o" size="36rpx" color="#7B1FA2" />
+            </view>
+            <view class="func-card__info">
+              <text class="func-card__name">用户口碑</text>
+              <text class="func-card__desc">查看评价</text>
+            </view>
+            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+          </view>
+          <view class="func-card__divider"></view>
+          <view class="func-card__item" bindtap="toOpsRevenue">
+            <view class="func-card__icon func-card__icon--red">
+              <van-icon name="balance-o" size="36rpx" color="#C62828" />
+            </view>
+            <view class="func-card__info">
+              <text class="func-card__name">运营营收</text>
+              <text class="func-card__desc">收入统计</text>
+            </view>
+            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+          </view>
+        </view>
+      </view>
+
+      <!-- 退出登录 -->
+      <view class="logout-area">
+        <view class="logout-btn" bindtap="handleLogout">
+          <text class="logout-btn__text">退出登录</text>
+        </view>
+      </view>
     </view>
+
   </view>
 
-  <!-- 运营管理 -->
-  <view class="section-title">运营管理</view>
-  <view class="ops-card {{ isLocked ? 'locked' : '' }}">
-    <view class="ops-grid">
-      <view class="ops-item" bindtap="toOpsOrders">
-        <view class="ops-icon-wrap ops-bg-orange">
-          <van-icon name="orders-o" size="40rpx" color="#E65100"></van-icon>
-        </view>
-        <text class="ops-label">订单状态</text>
-        <text class="ops-desc">查看管理</text>
-      </view>
-      <view class="ops-item" bindtap="toEditInfo">
-        <view class="ops-icon-wrap ops-bg-blue">
-          <van-icon name="certificate" size="40rpx" color="#1565C0"></van-icon>
-        </view>
-        <text class="ops-label">运营资质</text>
-        <text class="ops-desc">资质与资料</text>
-      </view>
-      <view class="ops-item" bindtap="toOpsReview">
-        <view class="ops-icon-wrap ops-bg-green">
-          <van-icon name="comment-o" size="40rpx" color="#2E7D32"></van-icon>
-        </view>
-        <text class="ops-label">用户口碑</text>
-        <text class="ops-desc">评价管理</text>
-      </view>
-      <view class="ops-item" bindtap="toOpsRevenue">
-        <view class="ops-icon-wrap ops-bg-red">
-          <van-icon name="balance-o" size="40rpx" color="#C62828"></van-icon>
-        </view>
-        <text class="ops-label">运营营收</text>
-        <text class="ops-desc">收入统计</text>
-      </view>
-      <view class="ops-item" bindtap="toOpsExposure">
-        <view class="ops-icon-wrap ops-bg-purple">
-          <van-icon name="bulb-o" size="40rpx" color="#6A1B9A"></van-icon>
-        </view>
-        <text class="ops-label">曝光引流</text>
-        <text class="ops-desc">推广获客</text>
-      </view>
-    </view>
-  </view>
+  <!-- 底部标签栏 -->
+  <van-tabbar
+    wx:if="{{ !isLocked }}"
+    active="{{ activeTab }}"
+    bind:change="onTabChange"
+    color="#999"
+    active-color="#FF9800"
+    safe-area-inset-bottom
+  >
+    <van-tabbar-item icon="todo-list-o">订单状态</van-tabbar-item>
+    <van-tabbar-item icon="friends-o">宠物管理</van-tabbar-item>
+    <van-tabbar-item icon="shop-o">机构信息</van-tabbar-item>
+  </van-tabbar>
 
-  <!-- 快捷功能 -->
-  <view class="section-title">快捷功能</view>
-  <view class="service-grid {{ isLocked ? 'locked' : '' }}">
-    <view class="service-item" bindtap="toOpsOrders">
-      <image class="service-icon" src="/static/tab-cart-orange.png" mode="aspectFit" />
-      <text class="service-label">订单</text>
-    </view>
-    <view class="service-item" bindtap="toPetManage">
-      <image class="service-icon" src="/static/tab-pet-green.png" mode="aspectFit" />
-      <text class="service-label">宠物管理</text>
-    </view>
-    <view class="service-item" bindtap="toServiceManage">
-      <image class="service-icon" src="/static/tab-ask-orange.png" mode="aspectFit" />
-      <text class="service-label">服务项目</text>
-    </view>
-    <view class="service-item" bindtap="toContact">
-      <image class="service-icon" src="/static/pet/contact.png" mode="aspectFit" />
-      <text class="service-label">客服中心</text>
-    </view>
-  </view>
-
-  <!-- 底部按钮 -->
-  <view class="bottom-area">
-    <van-button block round plain type="danger" size="normal" bindtap="handleLogout">退出登录</van-button>
-  </view>
-
+  <view style="height: 40rpx;"></view>
 </view>

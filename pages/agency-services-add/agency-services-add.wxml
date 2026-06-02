@@ -1,4 +1,3 @@
-<!-- pages/agency-services-add/agency-services-add.wxml -->
 <view class="add-page">
 
   <!-- 步骤1：选择服务分类 -->
@@ -18,35 +17,77 @@
     </view>
   </view>
 
-  <!-- 步骤2：选择或自定义服务模板 -->
-  <view class="section" wx:if="{{ selectedCat }}">
-    <view class="section-title">选择服务类型（可直接使用或自定义名称）</view>
+  <!-- 步骤2（模板多选模式）：选择服务模板 -->
+  <view class="section" wx:if="{{ selectedCat && !isCustomMode && !isEdit }}">
+    <view class="section-title">
+      选择服务类型（可多选）
+      <text class="tpl-count" wx:if="{{ selectedCount > 0 }}">已选 {{ selectedCount }}</text>
+    </view>
     <view class="tpl-list">
       <view
-        class="tpl-item {{ selectedTpl === tIdx ? 'tpl-active' : '' }}"
+        class="tpl-item {{ selectedMap[tIdx] ? 'tpl-active' : '' }}"
         wx:for="{{ currentTemplates }}"
         wx:for-index="tIdx"
         wx:key="name"
-        bindtap="onSelectTpl"
         data-idx="{{ tIdx }}"
-      >
-        <text class="tpl-name">{{ item.name }}</text>
-        <text class="tpl-unit">{{ item.unit }}</text>
-      </view>
-      <view
-        class="tpl-item {{ selectedTpl === -1 ? 'tpl-active' : '' }}"
+        hover-class="tpl-hover"
+        hover-stay-time="100"
+        animation="{{ tplAnims[tIdx] }}"
         bindtap="onSelectTpl"
-        data-idx="{{ -1 }}"
       >
-        <text class="tpl-name">✦ 自定义服务</text>
+        <view class="tpl-left">
+          <view wx:if="{{ selectedMap[tIdx] }}" class="tpl-checked">
+            <text class="tpl-checked-text">✓</text>
+          </view>
+          <view wx:else class="tpl-unchecked"></view>
+          <view class="tpl-info">
+            <text class="tpl-name">{{ item.name }}</text>
+            <text class="tpl-unit">{{ item.unit }}</text>
+          </view>
+        </view>
+        <input
+          wx:if="{{ selectedMap[tIdx] }}"
+          class="tpl-price-input"
+          placeholder="定价"
+          type="digit"
+          data-idx="{{ tIdx }}"
+          bindinput="onTplPriceInput"
+          catchtap="onTplPriceTap"
+        />
+      </view>
+
+      <!-- 自定义服务入口 -->
+      <view class="tpl-item tpl-custom" hover-class="tpl-hover" hover-stay-time="100" bindtap="onCustomMode">
+        <view class="tpl-left">
+          <van-icon name="add-circle" size="36rpx" color="#FF9800" />
+          <text class="tpl-name" style="color:#FF9800;font-weight:600;">✦ 自定义服务</text>
+        </view>
         <text class="tpl-unit">自行填写</text>
       </view>
     </view>
   </view>
 
-  <!-- 步骤3：填写服务详情 -->
-  <view class="section" wx:if="{{ selectedCat && selectedTpl !== null }}">
-    <view class="section-title">服务详情</view>
+  <!-- 批量添加按钮（模板多选模式） -->
+  <view class="submit-area" wx:if="{{ selectedCat && selectedCount > 0 && !isCustomMode && !isEdit }}">
+    <van-button
+      type="primary"
+      block
+      round
+      loading="{{ saving }}"
+      loading-text="添加中..."
+      color="linear-gradient(135deg, #FF9800, #FFB74D)"
+      bindtap="onSubmitBatch"
+    >
+      批量添加 {{ selectedCount }} 项服务
+    </van-button>
+  </view>
+
+  <!-- 步骤3（自定义模式）：填写服务详情 -->
+  <view class="section" wx:if="{{ isCustomMode || isEdit }}">
+    <view class="section-title">
+      <van-icon name="arrow-left" size="32rpx" color="#FF9800" bindtap="onBackToTpls" wx:if="{{ !isEdit }}" />
+      {{ isEdit ? '编辑服务' : '自定义服务详情' }}
+    </view>
     <van-cell-group inset>
       <van-field
         label="服务名称"
@@ -80,12 +121,6 @@
       </van-field>
     </van-cell-group>
 
-    <!-- 价格范围提示 -->
-    <view class="price-hint" wx:if="{{ priceHint }}">
-      <van-icon name="info-o" size="24rpx" color="#FF9800"></van-icon>
-      <text class="price-hint-text">{{ priceHint }}</text>
-    </view>
-
     <!-- 服务图片 -->
     <view class="upload-section">
       <view class="upload-title">服务图片（最多3张，选填）</view>
@@ -99,8 +134,8 @@
     </view>
   </view>
 
-  <!-- 提交按钮 -->
-  <view class="submit-area" wx:if="{{ selectedCat && selectedTpl !== null }}">
+  <!-- 提交按钮（自定义/编辑模式） -->
+  <view class="submit-area" wx:if="{{ (isCustomMode || isEdit) && selectedCat }}">
     <van-button
       type="primary"
       block

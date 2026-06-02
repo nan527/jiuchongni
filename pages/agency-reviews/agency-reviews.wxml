@@ -118,7 +118,37 @@
         <text class="review-card__price" wx:if="{{ item.price }}">¥{{ item.price }}</text>
         <text class="review-card__time">{{ item.reviewTimeStr }}</text>
       </view>
+      <!-- 机构回复 -->
+      <view class="review-card__reply" wx:if="{{ item.review.reply }}">
+        <view class="reply-header">
+          <van-icon name="chat-o" size="24rpx" color="#FF9800"></van-icon>
+          <text class="reply-label">机构回复</text>
+        </view>
+        <text class="reply-content">{{ item.review.reply }}</text>
+      </view>
+      <!-- 回复按钮 -->
+      <view class="review-card__action" wx:if="{{ !item.review.reply }}">
+        <van-button size="mini" round plain color="#FF9800" data-id="{{ item._id }}" bindtap="openReplyPopup">回复</van-button>
+      </view>
+      <view class="review-card__action" wx:else>
+        <van-button size="mini" round plain color="#999" data-id="{{ item._id }}" bindtap="openReplyPopup">修改回复</van-button>
+      </view>
     </view>
   </view>
+
+  <!-- 回复弹窗 -->
+  <van-popup show="{{ showReplyPopup }}" position="bottom" round bind:close="closeReplyPopup" custom-style="max-height:60vh;">
+    <view class="reply-popup">
+      <view class="reply-popup__header">
+        <text class="reply-popup__title">回复评价</text>
+        <van-icon name="cross" size="40rpx" color="#999" bindtap="closeReplyPopup" />
+      </view>
+      <textarea class="reply-popup__textarea" placeholder="请输入回复内容..." value="{{ replyContent }}" bindinput="onReplyInput" maxlength="500" auto-height />
+      <view class="reply-popup__footer">
+        <van-button round size="small" bindtap="closeReplyPopup" custom-style="margin-right:16rpx;">取消</van-button>
+        <van-button round type="primary" color="#FF9800" loading="{{ replySaving }}" bindtap="submitReply">提交回复</van-button>
+      </view>
+    </view>
+  </van-popup>
 
 </view>

@@ -7,10 +7,15 @@ Page({
     orderCount: 0,
     petCount: 0,
     serviceCount: 0,
+    pendingCount: 0,
+    activeCount: 0,
+    toConfirmCount: 0,
+    completedCount: 0,
     loading: false,
     isLocked: true,
     isRegistered: false,
     auditStatus: '',
+    activeTab: 0,
   },
 
   async onShow() {
@@ -47,26 +52,50 @@ Page({
     }
   },
 
-  async loadStats(userInfo) {
+  loadStats(userInfo) {
     const db = wx.cloud.database();
     const pid = userInfo && userInfo.agencyProfileId;
     if (!pid) return;
-    try {
-      const ordersRes = await db.collection('user_orders')
-        .where({ orderType: 'agency', agencyProfileId: pid })
-        .count();
-      this.setData({ orderCount: ordersRes.total || 0 });
-    } catch (e) { /* ignore */ }
-    try {
-      const svcRes = await db.collection('agency_services').where({ agencyProfileId: pid }).count();
-      this.setData({ serviceCount: svcRes.total || 0 });
-    } catch (e) { /* ignore */ }
-    try {
-      const petRes = await db.collection('user_orders')
-        .where({ orderType: 'agency', agencyProfileId: pid, category: 'foster', orderStatus: db.command.in(['confirmed', 'in_progress']) })
-        .count();
-      this.setData({ petCount: petRes.total || 0 });
-    } catch (e) { /* ignore */ }
+    const _ = db.command;
+
+    // 总订单数
+    db.collection('user_orders')
+      .where({ orderType: 'agency', agencyProfileId: pid })
+      .count()
+      .then(r => this.setData({ orderCount: r.total || 0 }))
+      .catch(() => {});
+
+    // 各状态订单数
+    const statusQueries = {
+      pendingCount: { orderStatus: 'pending' },
+      activeCount: { orderStatus: _.in(['confirmed', 'in_progress']) },
+      toConfirmCount: { orderStatus: 'to_confirm' },
+      completedCount: { orderStatus: 'completed' },
+    };
+    Object.entries(statusQueries).forEach(([key, cond]) => {
+      db.collection('user_orders')
+        .where({ orderType: 'agency', agencyProfileId: pid, ...cond })
+        .count()
+        .then(r => this.setData({ [key]: r.total || 0 }))
+        .catch(() => {});
+    });
+
+    // 服务项目数
+    db.collection('agency_services').where({ agencyProfileId: pid }).count()
+      .then(r => this.setData({ serviceCount: r.total || 0 }))
+      .catch(() => {});
+
+    // 在养宠物数
+    db.collection('user_orders')
+      .where({ orderType: 'agency', agencyProfileId: pid, category: 'foster', orderStatus: _.in(['confirmed', 'in_progress']) })
+      .count()
+      .then(r => this.setData({ petCount: r.total || 0 }))
+      .catch(() => {});
+  },
+
+  // ====== 底部标签切换 ======
+  onTabChange(e) {
+    this.setData({ activeTab: e.detail });
   },
 
   // ====== 注册入口 ======
@@ -97,11 +126,15 @@ Page({
 
   // ====== 快捷功能 ======
   toPetManage() {
-    wx.showToast({ title: '宠物管理开发中', icon: 'none' });
+    wx.navigateTo({ url: '/pages/agency-pets/agency-pets' });
   },
 
   toServiceManage() {
     wx.navigateTo({ url: '/pages/agency-services/agency-services' });
+  },
+
+  toFosterRequests() {
+    wx.navigateTo({ url: '/pages/agency-posts/agency-posts' });
   },
 
   toContact() {

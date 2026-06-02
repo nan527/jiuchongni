@@ -13,39 +13,39 @@ const CATEGORIES = [
 
 const TEMPLATES = {
   foster: [
-    { name: '日托寄养（白天临时看管）', unit: '/天', minPrice: 30, maxPrice: 500 },
-    { name: '长期寄宿寄养（多天/长假托管）', unit: '/天', minPrice: 50, maxPrice: 800 },
-    { name: '单独隔离寄养（病宠隔离）', unit: '/天', minPrice: 80, maxPrice: 1000 },
-    { name: '日常喂养、定时遛宠', unit: '/次', minPrice: 20, maxPrice: 200 },
-    { name: '每日健康打卡、视频反馈', unit: '/天', minPrice: 10, maxPrice: 100 },
-    { name: '特殊宠物照料（幼宠/老年宠/病弱宠）', unit: '/天', minPrice: 80, maxPrice: 1500 },
+    { name: '日托寄养（白天临时看管）', unit: '/天' },
+    { name: '长期寄宿寄养（多天/长假托管）', unit: '/天' },
+    { name: '单独隔离寄养（病宠隔离）', unit: '/天' },
+    { name: '日常喂养、定时遛宠', unit: '/次' },
+    { name: '每日健康打卡、视频反馈', unit: '/天' },
+    { name: '特殊宠物照料（幼宠/老年宠/病弱宠）', unit: '/天' },
   ],
   grooming: [
-    { name: '全身洗澡、除菌除臭', unit: '/次', minPrice: 30, maxPrice: 500 },
-    { name: '宠物剪毛、造型修剪', unit: '/次', minPrice: 50, maxPrice: 800 },
-    { name: '指甲修剪、耳道清洁', unit: '/次', minPrice: 20, maxPrice: 200 },
-    { name: '脚底毛修剪、肛门腺清理', unit: '/次', minPrice: 20, maxPrice: 200 },
-    { name: '毛发护理、药浴皮肤护理', unit: '/次', minPrice: 50, maxPrice: 600 },
+    { name: '全身洗澡、除菌除臭', unit: '/次' },
+    { name: '宠物剪毛、造型修剪', unit: '/次' },
+    { name: '指甲修剪、耳道清洁', unit: '/次' },
+    { name: '脚底毛修剪、肛门腺清理', unit: '/次' },
+    { name: '毛发护理、药浴皮肤护理', unit: '/次' },
   ],
   medical: [
-    { name: '日常体检、基础问诊', unit: '/次', minPrice: 30, maxPrice: 500 },
-    { name: '疫苗接种', unit: '/针', minPrice: 30, maxPrice: 300 },
-    { name: '驱虫服务（体内外）', unit: '/次', minPrice: 30, maxPrice: 300 },
-    { name: '皮肤病、常见病诊疗', unit: '/次', minPrice: 50, maxPrice: 1000 },
-    { name: '外伤处理、简单护理', unit: '/次', minPrice: 30, maxPrice: 500 },
-    { name: '绝育手术', unit: '/次', minPrice: 200, maxPrice: 3000 },
-    { name: '宠物健康档案建立、复诊跟踪', unit: '/次', minPrice: 0, maxPrice: 200 },
+    { name: '日常体检、基础问诊', unit: '/次' },
+    { name: '疫苗接种', unit: '/针' },
+    { name: '驱虫服务（体内外）', unit: '/次' },
+    { name: '皮肤病、常见病诊疗', unit: '/次' },
+    { name: '外伤处理、简单护理', unit: '/次' },
+    { name: '绝育手术', unit: '/次' },
+    { name: '宠物健康档案建立、复诊跟踪', unit: '/次' },
   ],
   door: [
-    { name: '上门遛狗、上门喂食', unit: '/次', minPrice: 30, maxPrice: 300 },
-    { name: '上门简单洗护', unit: '/次', minPrice: 50, maxPrice: 500 },
-    { name: '上门寄养临时照料', unit: '/天', minPrice: 80, maxPrice: 800 },
+    { name: '上门遛狗、上门喂食', unit: '/次' },
+    { name: '上门简单洗护', unit: '/次' },
+    { name: '上门寄养临时照料', unit: '/天' },
   ],
   extra: [
-    { name: '宠物食品、零食、用品售卖', unit: '/次', minPrice: 0, maxPrice: 99999 },
-    { name: '宠物玩具、窝具、穿戴用品售卖', unit: '/次', minPrice: 0, maxPrice: 99999 },
-    { name: '宠物殡葬/洗护增值项目', unit: '/次', minPrice: 50, maxPrice: 5000 },
-    { name: '宠物行为指导、驯养咨询', unit: '/次', minPrice: 50, maxPrice: 1000 },
+    { name: '宠物食品、零食、用品售卖', unit: '/次' },
+    { name: '宠物玩具、窝具、穿戴用品售卖', unit: '/次' },
+    { name: '宠物殡葬/洗护增值项目', unit: '/次' },
+    { name: '宠物行为指导、驯养咨询', unit: '/次' },
   ],
 };
 
@@ -54,15 +54,16 @@ Page({
     categories: CATEGORIES,
     unitOptions: UNIT_OPTIONS,
     selectedCat: '',
-    selectedTpl: null,
+    selectedMap: {},
+    selectedCount: 0,
+    tplPrices: {},
+    tplAnims: {},
+    isCustomMode: false,
     currentTemplates: [],
     form: { name: '', desc: '', price: '' },
     imageList: [],
     imageUrls: [],
     unitIdx: 0,
-    minPrice: 0,
-    maxPrice: 99999,
-    priceHint: '',
     saving: false,
     profileId: '',
     isEdit: false,
@@ -91,7 +92,8 @@ Page({
       const images = svc.images || [];
       this.setData({
         selectedCat: svc.category,
-        selectedTpl: -1,
+        isCustomMode: true,
+        selectedMap: {},
         currentTemplates: TEMPLATES[svc.category] || [],
         form: { name: svc.name, desc: svc.desc || '', price: String(svc.price) },
         unitIdx: unitIdx >= 0 ? unitIdx : 0,
@@ -109,41 +111,64 @@ Page({
     const tpls = TEMPLATES[key] || [];
     this.setData({
       selectedCat: key,
-      selectedTpl: null,
+      selectedMap: {},
+      selectedCount: 0,
+      tplPrices: {},
+      isCustomMode: false,
       currentTemplates: tpls,
       form: { name: '', desc: '', price: '' },
       unitIdx: 0,
-      priceHint: '',
       imageList: [],
       imageUrls: [],
     });
   },
 
   onSelectTpl(e) {
-    const idx = Number(e.currentTarget.dataset.idx);
-    if (idx === -1) {
-      // 自定义
-      this.setData({
-        selectedTpl: -1,
-        form: { name: '', desc: '', price: '' },
-        unitIdx: 0,
-        minPrice: 0,
-        maxPrice: 99999,
-        priceHint: '自定义服务，价格请合理设置',
-      });
+    const idx = e.currentTarget.dataset.idx;
+    const key = String(idx);
+    const map = { ...this.data.selectedMap };
+    if (map[key]) {
+      delete map[key];
+      const prices = { ...this.data.tplPrices };
+      delete prices[key];
+      this.setData({ selectedMap: map, tplPrices: prices, selectedCount: Object.keys(map).length });
     } else {
-      const tpl = this.data.currentTemplates[idx];
-      const unitIdx = UNIT_OPTIONS.indexOf(tpl.unit);
-      this.setData({
-        selectedTpl: idx,
-        form: { name: tpl.name, desc: '', price: '' },
-        unitIdx: unitIdx >= 0 ? unitIdx : 0,
-        minPrice: tpl.minPrice,
-        maxPrice: tpl.maxPrice,
-        priceHint: `建议价格范围：${tpl.minPrice} ~ ${tpl.maxPrice} 元`,
+      map[key] = true;
+      this.setData({ selectedMap: map, selectedCount: Object.keys(map).length });
+      // 选中动画
+      this.setData({ [`tplAnims[${idx}]`]: null }, () => {
+        const anim = wx.createAnimation({ duration: 200 });
+        anim.scale(1.05, 1.05).step();
+        anim.scale(1, 1).step();
+        this.setData({ [`tplAnims[${idx}]`]: anim.export() });
       });
     }
   },
+
+  onCustomMode() {
+    this.setData({
+      isCustomMode: true,
+      selectedMap: {},
+      selectedCount: 0,
+      tplPrices: {},
+      form: { name: '', desc: '', price: '' },
+      unitIdx: 0,
+      imageList: [],
+      imageUrls: [],
+    });
+  },
+
+  onBackToTpls() {
+    this.setData({ isCustomMode: false });
+  },
+
+  onTplPriceInput(e) {
+    const idx = e.currentTarget.dataset.idx;
+    this.setData({ [`tplPrices[${idx}]`]: e.detail.value });
+  },
+
+  /** 阻止价格输入框的点击冒泡（避免触发选中/取消） */
+  onTplPriceTap() {},
 
   onNameInput(e) { this.setData({ 'form.name': e.detail }); },
   onDescInput(e) { this.setData({ 'form.desc': e.detail }); },
@@ -182,13 +207,12 @@ Page({
     if (!f.price || isNaN(parseFloat(f.price))) return '请输入有效价格';
     const p = parseFloat(f.price);
     if (p < 0) return '价格不能为负数';
-    if (p < this.data.minPrice || p > this.data.maxPrice) {
-      return `价格需在 ${this.data.minPrice} ~ ${this.data.maxPrice} 元之间`;
-    }
     return '';
   },
 
   async onSubmit() {
+    // 仅自定义/编辑模式走此流程
+    if (!this.data.isCustomMode && !this.data.isEdit) return;
     const msg = this.validate();
     if (msg) {
       wx.showToast({ title: msg, icon: 'none', duration: 2000 });
@@ -227,5 +251,74 @@ Page({
     } finally {
       this.setData({ saving: false });
     }
+  },
+
+  /** 批量添加选中的模板服务 */
+  async onSubmitBatch() {
+    const map = this.data.selectedMap;
+    const selected = Object.keys(map).map(Number);
+    if (selected.length === 0) {
+      wx.showToast({ title: '请至少选择一项服务', icon: 'none' });
+      return;
+    }
+
+    // 校验每项价格
+    for (const idx of selected) {
+      const price = this.data.tplPrices[String(idx)];
+      if (!price || isNaN(parseFloat(price))) {
+        const tpl = this.data.currentTemplates[idx];
+        wx.showToast({ title: `请设置「${tpl.name}」的价格`, icon: 'none' });
+        return;
+      }
+    }
+
+    if (this.data.saving) return;
+
+    // 确认弹窗
+    const summary = selected.map(idx => {
+      const tpl = this.data.currentTemplates[idx];
+      const price = this.data.tplPrices[String(idx)];
+      return `  ${tpl.name} — ¥${price}${tpl.unit}`;
+    }).join('\n');
+
+    wx.showModal({
+      title: '确认添加',
+      content: `将添加以下 ${selected.length} 项服务：\n\n${summary}`,
+      confirmColor: '#FF9800',
+      success: async (res) => {
+        if (!res.confirm) return;
+        this.setData({ saving: true });
+
+        try {
+          const db = wx.cloud.database();
+          const batch = [];
+
+          for (const idx of selected) {
+            const tpl = this.data.currentTemplates[idx];
+            const record = {
+              category: this.data.selectedCat,
+              name: tpl.name,
+              desc: '',
+              price: parseFloat(this.data.tplPrices[String(idx)]),
+              unit: tpl.unit,
+              images: [],
+              agencyProfileId: this.data.profileId,
+              updateTime: db.serverDate(),
+              createTime: db.serverDate(),
+            };
+            batch.push(db.collection('agency_services').add({ data: record }));
+          }
+
+          await Promise.all(batch);
+          wx.showToast({ title: `成功添加 ${batch.length} 项服务`, icon: 'success' });
+          setTimeout(() => wx.navigateBack(), 1000);
+        } catch (err) {
+          console.error('[AddService] 批量添加失败', err);
+          wx.showToast({ title: '添加失败', icon: 'none' });
+        } finally {
+          this.setData({ saving: false });
+        }
+      },
+    });
   },
 });

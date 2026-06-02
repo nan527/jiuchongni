@@ -51,10 +51,22 @@ Page({
       { key: 'checkup', label: '体检' },
       { key: 'note', label: '备注' },
     ],
+    healthHistory: [],
+    healthHistoryLoading: false,
+    // 通用
     healthValue: '',
-    healthFood: '',
     healthNote: '',
     healthSaving: false,
+    // 疫苗
+    healthVaccineName: '',
+    healthInstitution: '',
+    healthNextDate: '',
+    // 驱虫
+    healthMedicineName: '',
+    // 体检
+    healthCheckupResult: '',
+    // 饮食
+    healthFoodIntake: '',
   },
 
   _agencyProfileId: '',
@@ -354,10 +366,69 @@ Page({
       healthPetId: petid || '',
       healthPetName: petname || '宠物',
       healthType: 'weight',
+      // 重置所有字段
       healthValue: '',
-      healthFood: '',
       healthNote: '',
+      healthVaccineName: '',
+      healthInstitution: '',
+      healthNextDate: '',
+      healthMedicineName: '',
+      healthCheckupResult: '',
+      healthFoodIntake: '',
+      healthHistory: [],
+      healthHistoryLoading: true,
     });
+    this._loadHealthHistory(petid);
+  },
+
+  /** 加载该宠物的历史健康记录 */
+  async _loadHealthHistory(petId) {
+    if (!petId) {
+      this.setData({ healthHistory: [], healthHistoryLoading: false });
+      return;
+    }
+    try {
+      const db = wx.cloud.database();
+      const res = await db.collection('health_records')
+        .where({ pet_id: petId })
+        .orderBy('record_date', 'desc')
+        .limit(20)
+        .get();
+      const records = (res.data || []).map(r => ({
+        type: r.type,
+        typeLabel: this._healthTypeLabel(r.type),
+        value: r.value || '',
+        note: r.note || r.food_intake || '',
+        dateStr: this._healthFormatDate(r.record_date),
+        recorderRole: r.recorder_role || '',
+      }));
+      this.setData({ healthHistory: records, healthHistoryLoading: false });
+    } catch (err) {
+      console.warn('[AgencyOrders] load health history error', err);
+      this.setData({ healthHistory: [], healthHistoryLoading: false });
+    }
+  },
+
+  _healthTypeLabel(type) {
+    const map = {
+      weight: '体重',
+      temperature: '体温',
+      food: '饮食',
+      vaccine: '疫苗',
+      deworming: '驱虫',
+      checkup: '体检',
+      note: '备注',
+    };
+    return map[type] || type;
+  },
+
+  _healthFormatDate(t) {
+    if (!t) return '';
+    const d = typeof t === 'string' ? new Date(t) : (t instanceof Date ? t : new Date(t));
+    if (isNaN(d.getTime())) return '';
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${m}-${day}`;
   },
 
   closeHealthRecord() {
@@ -365,36 +436,110 @@ Page({
   },
 
   onHealthTypeChange(e) {
-    this.setData({ healthType: e.currentTarget.dataset.key });
+    const key = e.currentTarget.dataset.key;
+    if (key === this.data.healthType) return;
+    // 切换类型时清空相关字段
+    this.setData({
+      healthType: key,
+      healthValue: '',
+      healthNote: '',
+      healthVaccineName: '',
+      healthInstitution: '',
+      healthNextDate: '',
+      healthMedicineName: '',
+      healthCheckupResult: '',
+      healthFoodIntake: '',
+    });
   },
 
   onHealthValueChange(e) { this.setData({ healthValue: e.detail.value || e.detail }); },
-  onHealthFoodChange(e) { this.setData({ healthFood: e.detail.value || e.detail }); },
+  onHealthVaccineNameChange(e) { this.setData({ healthVaccineName: e.detail.value }); },
+  onHealthInstitutionChange(e) { this.setData({ healthInstitution: e.detail.value }); },
+  onHealthNextDateChange(e) { this.setData({ healthNextDate: e.detail.value }); },
+  onHealthMedicineNameChange(e) { this.setData({ healthMedicineName: e.detail.value }); },
+  onHealthCheckupResultChange(e) { this.setData({ healthCheckupResult: e.detail.value }); },
+  onHealthFoodIntakeChange(e) { this.setData({ healthFoodIntake: e.detail.value }); },
   onHealthNoteChange(e) { this.setData({ healthNote: e.detail.value || e.detail }); },
 
   async saveHealthRecord() {
-    const { healthPetId, healthType, healthValue, healthFood, healthNote } = this.data;
-    if (!healthValue && !healthFood && !healthNote) {
+    const {
+      healthPetId, healthType, healthValue, healthNote,
+      healthVaccineName, healthInstitution, healthNextDate,
+      healthMedicineName, healthCheckupResult, healthFoodIntake,
+    } = this.data;
+
+    // 按类型的必填校验
+    if (healthType === 'weight' && !healthValue) {
+      return wx.showToast({ title: '请输入体重', icon: 'none' });
+    }
+    if (healthType === 'temperature' && !healthValue) {
+      return wx.showToast({ title: '请输入体温', icon: 'none' });
+    }
+    if (healthType === 'vaccine' && !healthVaccineName) {
+      return wx.showToast({ title: '请输入疫苗名称', icon: 'none' });
+    }
+    if (healthType === 'deworming' && !healthMedicineName) {
+      return wx.showToast({ title: '请输入驱虫药名称', icon: 'none' });
+    }
+    if (healthType === 'food' && !healthFoodIntake) {
+      return wx.showToast({ title: '请输入饮食情况', icon: 'none' });
+    }
+    if (healthType === 'note' && !healthNote) {
+      return wx.showToast({ title: '请输入备注内容', icon: 'none' });
+    }
+    // 兜底：至少填一项
+    if (!healthValue && !healthNote && !healthVaccineName && !healthMedicineName && !healthCheckupResult && !healthFoodIntake) {
       wx.showToast({ title: '请至少填写一项数据', icon: 'none' });
       return;
     }
+
     if (this.data.healthSaving) return;
     this.setData({ healthSaving: true });
 
     try {
       const db = wx.cloud.database();
-      await db.collection('health_records').add({
-        data: {
-          ownerId: this._agencyProfileId,
-          pet_id: healthPetId,
-          type: healthType,
-          value: healthValue,
-          food_intake: healthFood,
-          note: healthNote,
-          record_date: db.serverDate(),
-          recorder_role: 'agency',
-        },
-      });
+      const recordData = {
+        ownerId: this._agencyProfileId,
+        pet_id: healthPetId,
+        type: healthType,
+        record_date: db.serverDate(),
+        recorder_role: 'agency',
+        note: healthNote || '',
+      };
+
+      // 按类型填充字段
+      switch (healthType) {
+        case 'weight':
+          recordData.value = healthValue;
+          break;
+        case 'temperature':
+          recordData.value = healthValue;
+          break;
+        case 'vaccine':
+          recordData.value = healthVaccineName;
+          recordData.vaccine_name = healthVaccineName;
+          if (healthInstitution) recordData.institution = healthInstitution;
+          if (healthNextDate) recordData.next_date = new Date(healthNextDate);
+          break;
+        case 'deworming':
+          recordData.value = healthMedicineName;
+          recordData.medicine_name = healthMedicineName;
+          if (healthNextDate) recordData.next_date = new Date(healthNextDate);
+          break;
+        case 'checkup':
+          if (healthCheckupResult) recordData.result = healthCheckupResult;
+          if (healthInstitution) recordData.institution = healthInstitution;
+          break;
+        case 'food':
+          recordData.value = healthFoodIntake;
+          recordData.food_intake = healthFoodIntake;
+          break;
+        case 'note':
+          recordData.value = healthNote;
+          break;
+      }
+
+      await db.collection('health_records').add({ data: recordData });
       wx.showToast({ title: '录入成功' });
       this.setData({ showHealthPopup: false, healthSaving: false });
     } catch (err) {

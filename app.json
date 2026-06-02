@@ -33,7 +33,9 @@
     "pages/agency-orders/agency-orders",
     "pages/agency-revenue/agency-revenue",
     "pages/agency-reviews/agency-reviews",
-    "pages/adoption-review/adoption-review"
+    "pages/adoption-review/adoption-review",
+    "pages/agency-pets/agency-pets",
+    "pages/agency-posts/agency-posts"
   ],
   "subpackages": [
     {
