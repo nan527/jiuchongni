@@ -159,6 +159,16 @@
     <view class="section-card__header">
       <van-icon name="comment-o" size="32rpx" color="#FF9800" />
       <text class="section-card__title">我的评价</text>
+      <view class="review-actions">
+        <view class="review-action-btn" catchtap="openEditReview">
+          <van-icon name="edit" size="28rpx" color="#FF9800" />
+          <text class="review-action-text">修改</text>
+        </view>
+        <view class="review-action-btn review-action-btn--danger" catchtap="deleteReview">
+          <van-icon name="delete-o" size="28rpx" color="#E53935" />
+          <text class="review-action-text review-action-text--danger">删除</text>
+        </view>
+      </view>
     </view>
     <view class="review-area">
       <view class="review-area__stars">
@@ -208,7 +218,7 @@
 <van-popup show="{{showReview}}" position="bottom" round bind:close="closeReview">
   <view class="review-popup">
     <view class="review-popup__header">
-      <text class="review-popup__title">评价服务</text>
+      <text class="review-popup__title">{{editReviewId ? '修改评价' : '评价服务'}}</text>
       <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeReview" />
     </view>
     <view class="review-popup__rating">
@@ -225,6 +235,6 @@
       loading="{{submittingReview}}"
       color="linear-gradient(135deg, #FF9800, #FFB74D)"
       bindtap="submitReview"
-    >提交评价</van-button>
+    >{{editReviewId ? '保存修改' : '提交评价'}}</van-button>
   </view>
 </van-popup>

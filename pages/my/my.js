@@ -163,25 +163,32 @@ Page({
       const res = await db.collection('pets')
         .where({ ownerId: userId })
         .orderBy('createTime', 'desc')
-        .limit(1)
         .get();
-      const pet = (res.data || [])[0] || null;
-      if (pet) {
-        const STATUS_MAP = {
-          agency_foster: { label: '寄养中', color: '#FF9800', bg: '#FFF3E0' },
-          pending_foster: { label: '待寄养', color: '#E65100', bg: '#FFF3E0' },
-          waiting_pickup: { label: '待取回', color: '#EF6C00', bg: '#FFF8E1' },
-          other_foster: { label: '他人寄养', color: '#1565C0', bg: '#E3F2FD' },
+      const STATUS_MAP = {
+        agency_foster: { label: '寄养中', color: '#FF9800', bg: '#FFF3E0' },
+        pending_foster: { label: '待寄养', color: '#E65100', bg: '#FFF3E0' },
+        waiting_pickup: { label: '待取回', color: '#EF6C00', bg: '#FFF8E1' },
+        other_foster: { label: '他人寄养', color: '#1565C0', bg: '#E3F2FD' },
+      };
+      const petList = (res.data || []).map(p => {
+        const sc = STATUS_MAP[p.petStatus];
+        return {
+          ...p,
+          statusLabel: sc ? sc.label : '',
+          statusColor: sc ? sc.color : '',
+          statusBg: sc ? sc.bg : '',
         };
-        const sc = STATUS_MAP[pet.petStatus];
-        if (sc) {
-          pet.statusLabel = sc.label;
-          pet.statusColor = sc.color;
-          pet.statusBg = sc.bg;
-        }
+      });
+      // 优先展示用户设置的展示宠物
+      const displayPetId = this.data.userInfo && this.data.userInfo.displayPetId;
+      let firstPet;
+      if (displayPetId) {
+        firstPet = petList.find(p => p._id === displayPetId) || petList[0] || null;
+      } else {
+        firstPet = petList[0] || null;
       }
-      this.setData({ firstPet: pet, petLoading: false });
-      if (pet) this.loadHealthBrief(pet._id);
+      this.setData({ firstPet, petLoading: false });
+      if (firstPet) this.loadHealthBrief(firstPet._id);
     } catch (err) {
       console.warn('[My] loadFirstPet 异常', err);
       this.setData({ petLoading: false });
@@ -302,6 +309,13 @@ Page({
     wx.navigateTo({ url: '/packagePet/pages/pet/pet' });
   },
 
+  onPetTap(e) {
+    const id = e.currentTarget.dataset.id;
+    if (id) {
+      wx.navigateTo({ url: `/pages/pet-detail/pet-detail?id=${id}` });
+    }
+  },
+
   toOrders(e) {
     const status = e.currentTarget.dataset.status;
     const seen = this._lastSeen || {};
@@ -312,11 +326,8 @@ Page({
       this._saveLastSeen();
       this._updateBadges();
     }
-    if (status) {
-      wx.navigateTo({ url: '/pages/orders/orders?status=' + status });
-    } else {
-      wx.navigateTo({ url: '/pages/orders/orders' });
-    }
+    // 订单页已是 tab 页，使用 switchTab
+    wx.switchTab({ url: '/pages/orders/orders' });
   },
 
   toHealthRemind() {

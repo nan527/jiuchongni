@@ -7,7 +7,7 @@
       <view class="nav-bar__back" bindtap="onGoBack">
         <van-icon name="arrow-left" size="40rpx" color="#fff" />
       </view>
-      <text class="nav-bar__title">我的订单</text>
+      <text class="nav-bar__title">订单</text>
       <view class="nav-bar__right"></view>
     </view>
     <van-tabs active="{{activeTab}}" bind:change="onTabChange" color="#FF9800" line-width="60rpx" swipeable>
@@ -88,6 +88,17 @@
           <van-button size="small" round plain data-id="{{item._id}}" catchtap="onViewDetail">查看详情</van-button>
         </view>
       </view>
+      <view class="o-card__actions" wx:elif="{{item.orderStatus === 'completed' && item.review}}">
+        <view class="o-card__btn">
+          <van-button size="small" round plain data-id="{{item._id}}" catchtap="openEditReview">修改评价</van-button>
+        </view>
+        <view class="o-card__btn">
+          <van-button size="small" round plain data-id="{{item._id}}" catchtap="deleteReview" color="#E53935">删除评价</van-button>
+        </view>
+        <view class="o-card__btn">
+          <van-button size="small" round plain data-id="{{item._id}}" catchtap="onViewDetail">查看详情</van-button>
+        </view>
+      </view>
       <view class="o-card__actions" wx:elif="{{item.orderStatus !== 'unpaid'}}">
         <view class="o-card__btn">
           <van-button size="small" round plain data-id="{{item._id}}" catchtap="onViewDetail">查看详情</van-button>
@@ -108,7 +119,7 @@
   <van-popup show="{{showReview}}" position="bottom" round bind:close="closeReview">
     <view class="review-popup">
       <view class="review-popup__header">
-        <text class="review-popup__title">评价服务</text>
+        <text class="review-popup__title">{{editReviewId ? '修改评价' : '评价服务'}}</text>
         <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeReview" />
       </view>
       <view class="review-popup__rating">
@@ -125,7 +136,7 @@
         loading="{{submittingReview}}"
         color="linear-gradient(135deg, #FF9800, #FFB74D)"
         bindtap="submitReview"
-      >提交评价</van-button>
+      >{{editReviewId ? '保存修改' : '提交评价'}}</van-button>
     </view>
   </van-popup>
 

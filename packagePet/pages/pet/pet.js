@@ -43,6 +43,7 @@ Page({
   data: {
     petList: [],
     loading: true,
+    displayPetId: '',
     showForm: false,
     name: '',
     species: '',
@@ -80,6 +81,7 @@ Page({
       return;
     }
     this._userId = userInfo._id;
+    this.setData({ displayPetId: userInfo.displayPetId || '' });
     this.loadPetList();
   },
 
@@ -169,6 +171,50 @@ Page({
     wx.navigateTo({ url: `/pages/pet-detail/pet-detail?id=${id}` });
   },
 
+  // 点击编辑图标 → 直接打开编辑表单
+  onEditPet(e) {
+    const id = e.currentTarget.dataset.id;
+    const pet = this.data.petList.find(p => p._id === id);
+    if (!pet || pet._isAdopted) {
+      wx.showToast({ title: '领养宠物暂不支持编辑', icon: 'none' });
+      return;
+    }
+    this.setData({
+      showForm: true,
+      editingId: pet._id,
+      name: pet.name || '',
+      species: pet.species || '',
+      age: pet.age ? String(pet.age) : '',
+      character: pet.character || '',
+      special: pet.special_needs || '',
+      photoUrl: pet.photo || '',
+      fileList: pet.photo ? [{ url: pet.photo }] : [],
+      selectedPresetIdx: -1,
+    });
+    wx.pageScrollTo({ scrollTop: 0, duration: 300 });
+  },
+
+  // 设为展示宠物
+  async setAsDisplayPet(e) {
+    const id = e.currentTarget.dataset.id;
+    if (id === this.data.displayPetId) return;
+    try {
+      const db = wx.cloud.database();
+      const STORAGE_KEYS = require('../../../constants/index').STORAGE_KEYS;
+      await db.collection('users').doc(this._userId).update({
+        data: { displayPetId: id },
+      });
+      // 同步更新本地缓存
+      const userInfo = wx.getStorageSync(STORAGE_KEYS.USER_INFO) || {};
+      userInfo.displayPetId = id;
+      wx.setStorageSync(STORAGE_KEYS.USER_INFO, userInfo);
+      this.setData({ displayPetId: id });
+      wx.showToast({ title: '已设为展示宠物', icon: 'success' });
+    } catch (err) {
+      wx.showToast({ title: '设置失败', icon: 'none' });
+    }
+  },
+
   // 添加表单
   toggleForm() {
     const show = !this.data.showForm;
@@ -250,5 +296,25 @@ Page({
       this.setData({ saving: false });
       wx.showModal({ title: '保存失败', content: '请检查数据库权限', showCancel: false });
     }
+  },
+
+  onDeletePet(e) {
+    const { id, name } = e.currentTarget.dataset;
+    wx.showModal({
+      title: '确认删除',
+      content: `确定删除「${name}」的档案吗？此操作不可撤销。`,
+      confirmColor: '#E53935',
+      success: async (res) => {
+        if (!res.confirm) return;
+        try {
+          const db = wx.cloud.database();
+          await db.collection('pets').doc(id).remove();
+          wx.showToast({ title: '已删除' });
+          this.loadPetList();
+        } catch (err) {
+          wx.showToast({ title: '删除失败', icon: 'none' });
+        }
+      },
+    });
   },
 });
