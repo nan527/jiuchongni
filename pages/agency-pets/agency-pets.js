@@ -10,6 +10,7 @@ Page({
     cages: [],
     filteredCages: [],
     activeFilter: 'all',
+    activeOrders: [],
     // 移动弹窗
     showMovePopup: false,
     moveFromCage: 0,
@@ -74,131 +75,125 @@ Page({
     const db = wx.cloud.database();
 
     try {
-      const [profileRes, ordersRes] = await Promise.all([
-        db.collection('agency_profiles').doc(this._agencyProfileId).get(),
-        db.collection('user_orders')
-          .where({
-            orderType: 'agency',
-            agencyProfileId: this._agencyProfileId,
-            category: 'foster',
-            orderStatus: db.command.in(['confirmed', 'in_progress', 'to_confirm']),
-          })
-          .limit(100)
-          .get(),
-      ]);
-
-      const profile = profileRes.data || {};
-      const totalCages = Number(profile.totalCages) || 0;
+      // 直接查订单，不依赖 profile 读取
+      const ordersRes = await db.collection('user_orders')
+        .where({
+          orderType: 'agency',
+          agencyProfileId: this._agencyProfileId,
+          category: 'foster',
+          orderStatus: db.command.in(['confirmed', 'in_progress', 'to_confirm']),
+        })
+        .limit(100)
+        .get();
 
       // 过滤已离开的订单
       const activeOrders = (ordersRes.data || []).filter(o => !this._isLeaveExpired(o.leaveTimeMs));
 
-      // ---- 笼位分配逻辑 ----
-      // 1. 对已有 cageNumber 的订单，按 cageNumber 映射
-      // 2. 对没有 cageNumber 的订单，自动分配到空闲笼位
-      const usedNumbers = new Set();
-      const assignedOrders = [];
-
-      activeOrders.forEach(o => {
-        if (o.cageNumber && o.cageNumber >= 1 && o.cageNumber <= totalCages) {
-          if (!usedNumbers.has(o.cageNumber)) {
-            usedNumbers.add(o.cageNumber);
-            assignedOrders.push(o);
-          }
-          // 如果 cageNumber 冲突（两个订单同一号码），忽略后者的号码
-        }
-      });
-
-      // 未分配的订单（无 cageNumber 或号码冲突/无效）
-      const unassigned = activeOrders.filter(o => {
-        if (!o.cageNumber || o.cageNumber < 1 || o.cageNumber > totalCages) return true;
-        // 检查是否已被前面的 assignedOrders 包含
-        return !assignedOrders.find(a => a._id === o._id);
-      });
-
-      // 找出空闲笼位号
-      const availableNumbers = [];
-      for (let n = 1; n <= totalCages; n++) {
-        if (!usedNumbers.has(n)) availableNumbers.push(n);
+      // 尝试读 profile 获取笼位总数，失败就用订单数
+      let totalCages = 0;
+      try {
+        const profileRes = await db.collection('agency_profiles').doc(this._agencyProfileId).get();
+        totalCages = Number((profileRes.data || {}).totalCages) || 0;
+      } catch (e) {
+        // 读不到就用订单数
       }
-
-      // 为未分配订单自动分配笼位，并回写数据库
-      const backfillBatch = [];
-      unassigned.forEach((o, idx) => {
-        if (idx < availableNumbers.length) {
-          const cn = availableNumbers[idx];
-          o.cageNumber = cn;
-          usedNumbers.add(cn);
-          backfillBatch.push({ id: o._id, cageNumber: cn });
-          assignedOrders.push(o);
-        }
-      });
-
-      // 异步回写 cageNumber（不阻塞渲染）
-      if (backfillBatch.length > 0) {
-        backfillBatch.forEach(item => {
-          db.collection('user_orders').doc(item.id).update({
-            data: { cageNumber: item.cageNumber },
-          }).catch(err => console.warn('[AgencyPets] backfill cageNumber failed', err));
-        });
+      if (totalCages === 0 && activeOrders.length > 0) {
+        totalCages = activeOrders.length;
       }
-
-      // 按 cageNumber 升序排列
-      assignedOrders.sort((a, b) => a.cageNumber - b.cageNumber);
 
       // 构建笼位数组
       const cages = [];
       let occupiedCount = 0;
-      const orderMap = {};
-      assignedOrders.forEach(o => { orderMap[o.cageNumber] = o; });
 
-      for (let i = 1; i <= totalCages; i++) {
-        const order = orderMap[i];
-        if (order) {
-          occupiedCount++;
-          cages.push({
-            cageNumber: i,
-            occupied: true,
-            order: {
-              _id: order._id,
-              petName: order.petName || '未命名宠物',
-              petId: order.petId,
-              checkinDate: order.checkinDate || '',
-              leaveTimeMs: order.leaveTimeMs,
-              petInfo: {
-                species: (order.petInfo && order.petInfo.species) || '',
-                age: (order.petInfo && order.petInfo.age) || '',
-                photo: (order.petInfo && order.petInfo.photo) || '',
+      if (totalCages > 0) {
+        // 对已有 cageNumber 的订单按号码映射
+        const usedNumbers = new Set();
+        const orderMap = {};
+
+        activeOrders.forEach(o => {
+          if (o.cageNumber && o.cageNumber >= 1 && o.cageNumber <= totalCages && !usedNumbers.has(o.cageNumber)) {
+            usedNumbers.add(o.cageNumber);
+            orderMap[o.cageNumber] = o;
+          }
+        });
+
+        // 未分配的订单自动分配空闲笼位
+        const unassigned = activeOrders.filter(o => !o.cageNumber || o.cageNumber < 1 || o.cageNumber > totalCages || !orderMap[o.cageNumber]);
+        const available = [];
+        for (let n = 1; n <= totalCages; n++) {
+          if (!usedNumbers.has(n)) available.push(n);
+        }
+        unassigned.forEach((o, idx) => {
+          if (idx < available.length) {
+            o.cageNumber = available[idx];
+            usedNumbers.add(o.cageNumber);
+            orderMap[o.cageNumber] = o;
+            db.collection('user_orders').doc(o._id).update({
+              data: { cageNumber: o.cageNumber },
+            }).catch(() => {});
+          }
+        });
+
+        // 构建笼位网格
+        for (let i = 1; i <= totalCages; i++) {
+          const order = orderMap[i];
+          if (order) {
+            occupiedCount++;
+            cages.push({
+              cageNumber: i,
+              occupied: true,
+              order: {
+                _id: order._id,
+                petName: order.petName || '未命名宠物',
+                petId: order.petId,
+                checkinDate: order.checkinDate || '',
+                leaveTimeMs: order.leaveTimeMs,
+                petInfo: {
+                  species: (order.petInfo && order.petInfo.species) || '',
+                  age: (order.petInfo && order.petInfo.age) || '',
+                  photo: (order.petInfo && order.petInfo.photo) || '',
+                },
               },
-            },
-          });
-        } else {
-          cages.push({
-            cageNumber: i,
-            occupied: false,
-            order: null,
-          });
+            });
+          } else {
+            cages.push({ cageNumber: i, occupied: false, order: null });
+          }
         }
       }
 
+      const orderData = activeOrders.map(o => ({
+        _id: o._id,
+        petName: o.petName || '未命名宠物',
+        petInfo: {
+          species: (o.petInfo && o.petInfo.species) || '',
+          age: (o.petInfo && o.petInfo.age) || '',
+          photo: (o.petInfo && o.petInfo.photo) || '',
+        },
+        checkinDate: o.checkinDate || '',
+        cageNumber: o.cageNumber,
+        orderStatus: o.orderStatus,
+        serviceName: o.serviceName || '',
+        leaveTimeMs: o.leaveTimeMs,
+      }));
+
       this.setData({
+        loading: false,
         totalCages,
         occupiedCages: occupiedCount,
         availableCages: Math.max(0, totalCages - occupiedCount),
         cages,
-        loading: false,
+        filteredCages: cages,
+        activeOrders: orderData,
       });
-      this._applyFilter();
 
     } catch (err) {
       console.error('[AgencyPets] loadCageData error', err);
       this.setData({
+        loading: false,
         totalCages: 0,
-        occupiedCages: 0,
-        availableCages: 0,
         cages: [],
         filteredCages: [],
-        loading: false,
+        activeOrders: [],
       });
     }
   },

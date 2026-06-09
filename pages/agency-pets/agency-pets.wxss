@@ -1,6 +1,7 @@
 .ap-page {
   min-height: 100vh;
   background: #f5f5f5;
+  padding-bottom: 40rpx;
 }
 
 /* 笼位概览导航条 */
@@ -56,6 +57,103 @@
   background: #fff3e0;
   color: #e65100;
   font-weight: 600;
+}
+
+/* 在养宠物列表（无笼位信息时显示） */
+.pet-list {
+  padding: 24rpx;
+}
+
+.pet-list__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.pet-list__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.pet-list__item {
+  display: flex;
+  align-items: center;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 24rpx;
+  margin-bottom: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+}
+
+.pet-list__avatar {
+  width: 80rpx;
+  height: 80rpx;
+  border-radius: 50%;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.pet-list__info {
+  flex: 1;
+  margin-left: 20rpx;
+  min-width: 0;
+}
+
+.pet-list__name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+}
+
+.pet-list__meta {
+  font-size: 24rpx;
+  color: #999;
+  margin-top: 4rpx;
+}
+
+.pet-list__svc {
+  font-size: 22rpx;
+  color: #FF9800;
+  margin-top: 4rpx;
+}
+
+.pet-list__cage {
+  flex-shrink: 0;
+  margin-right: 16rpx;
+}
+
+.pet-list__cage-num {
+  font-size: 22rpx;
+  color: #999;
+  background: #f5f5f5;
+  padding: 6rpx 14rpx;
+  border-radius: 12rpx;
+}
+
+.pet-list__status {
+  flex-shrink: 0;
+}
+
+.pet-list__status-text {
+  font-size: 22rpx;
+  font-weight: 600;
+}
+
+.pet-list__status-text--active {
+  color: #FF9800;
+}
+
+.pet-list__hint {
+  text-align: center;
+  padding: 32rpx 0;
+}
+
+.pet-list__hint-text {
+  font-size: 24rpx;
+  color: #999;
+  line-height: 1.6;
 }
 
 /* 笼位网格 */

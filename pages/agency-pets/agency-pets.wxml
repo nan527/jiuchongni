@@ -68,6 +68,37 @@
     </view>
   </view>
 
+  <!-- 无笼位信息但有在养宠物：直接显示宠物列表 -->
+  <view class="pet-list" wx:elif="{{ !loading && totalCages === 0 && activeOrders.length > 0 }}">
+    <view class="pet-list__header">
+      <text class="pet-list__title">在养宠物（{{ activeOrders.length }}只）</text>
+      <view class="cage-bar" style="display:inline-flex;margin:0;">
+        <view class="cage-bar__item">
+          <text class="cage-bar__num" style="font-size:32rpx;">{{ activeOrders.length }}</text>
+          <text class="cage-bar__label">在养</text>
+        </view>
+      </view>
+    </view>
+    <view class="pet-list__item" wx:for="{{ activeOrders }}" wx:key="_id">
+      <image class="pet-list__avatar" src="{{ item.petInfo.photo || '/static/pet/logo.png' }}" mode="aspectFill" />
+      <view class="pet-list__info">
+        <text class="pet-list__name">{{ item.petName }}</text>
+        <text class="pet-list__meta">{{ item.petInfo.species }}{{ item.petInfo.age ? ' · ' + item.petInfo.age + '岁' : '' }}</text>
+        <text class="pet-list__svc" wx:if="{{ item.serviceName }}">{{ item.serviceName }}</text>
+      </view>
+      <view class="pet-list__cage" wx:if="{{ item.cageNumber }}">
+        <text class="pet-list__cage-num">{{ item.cageNumber }}号笼</text>
+      </view>
+      <view class="pet-list__status" wx:if="{{ item.orderStatus === 'confirmed' || item.orderStatus === 'in_progress' }}">
+        <text class="pet-list__status-text pet-list__status-text--active">寄养中</text>
+      </view>
+    </view>
+    <view class="pet-list__hint" wx:if="{{ totalCages === 0 }}">
+      <text class="pet-list__hint-text">💡 未设置笼位数量，无法使用笼位管理功能</text>
+      <van-button round plain color="#FF9800" size="small" bindtap="toEditAgency" custom-style="margin-top:12rpx;">去设置笼位</van-button>
+    </view>
+  </view>
+
   <!-- 空状态：未设置笼位 -->
   <view class="empty-page" wx:elif="{{ !loading }}">
     <image class="empty-icon" src="/static/pet/logo.png" mode="aspectFit" />
