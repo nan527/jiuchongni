@@ -223,6 +223,15 @@
   text-overflow: ellipsis;
 }
 
+.svc-card__agency {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  margin-top: 6rpx;
+  font-size: 22rpx;
+  color: #999;
+}
+
 .svc-card__price-row {
   display: flex;
   align-items: baseline;

@@ -7,6 +7,7 @@ Page({
   data: {
     svc: null,
     catTitle: '服务',
+    agencyProfile: null,
     myPets: [],
     selectedPetId: '',
     petName: '',
@@ -64,6 +65,7 @@ Page({
         svc,
         catTitle: CAT_TITLE_MAP[svc.category] || '服务',
       });
+      this.loadAgencyProfile(svc.agencyProfileId || '');
       this.loadAgencyCageInfo(svc.agencyProfileId || '');
       const userInfo = await authService.checkLogin();
       if (userInfo) {
@@ -98,6 +100,26 @@ Page({
       this.setData({ myPets: pets });
     } catch (e) {
       console.warn('[ServiceDetail] loadMyPets', e);
+    }
+  },
+
+  async loadAgencyProfile(agencyProfileId) {
+    if (!agencyProfileId) return;
+    const db = wx.cloud.database();
+    try {
+      const res = await db.collection('agency_profiles').doc(agencyProfileId).get();
+      const profile = res.data || {};
+      // 解析机构图片
+      if (profile.storefrontImage) {
+        const urls = await resolveTempUrls([profile.storefrontImage]);
+        profile.storefrontImage = urls[0];
+      }
+      if (profile.envImages && profile.envImages.length) {
+        profile.envImages = await resolveTempUrls(profile.envImages.slice(0, 3));
+      }
+      this.setData({ agencyProfile: profile });
+    } catch (e) {
+      console.warn('[ServiceDetail] loadAgencyProfile', e);
     }
   },
 
@@ -149,6 +171,13 @@ Page({
   onPhoneChange(e) { this.setData({ phone: e.detail }); },
   onRemarkChange(e) { this.setData({ remark: e.detail }); },
   onCheckinDateChange(e) { this.setData({ checkinDate: e.detail.value }); },
+
+  onAgencyTap() {
+    const agencyId = this.data.svc.agencyProfileId;
+    if (agencyId) {
+      wx.navigateTo({ url: `/pages/agency-detail/agency-detail?id=${agencyId}` });
+    }
+  },
   onStayDaysChange(e) {
     const days = parseInt(e.detail, 10);
     this.setData({ stayDays: Number.isNaN(days) || days <= 0 ? 1 : days });

@@ -1,16 +1,19 @@
 <!-- pages/health/health.wxml -->
 <view class="health-page">
 
-  <!-- 渐变头部 -->
-  <view class="page-header">
-    <view class="page-header__inner">
-      <text class="page-header__title">健康管理</text>
-      <text class="page-header__sub">记录宠物的健康档案</text>
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top:{{statusBarHeight}}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">健康管理</text>
+      <view class="nav-bar__right"></view>
     </view>
   </view>
 
   <!-- 宠物选择器 -->
-  <scroll-view class="pet-scroll" scroll-x enable-flex wx:if="{{petList.length > 1}}">
+  <scroll-view class="pet-scroll" scroll-x enable-flex wx:if="{{petList.length > 0}}" style="padding-top:{{navBarHeight + 16}}px;">
     <view
       class="pet-chip {{selectedPetId === item._id ? 'pet-chip--active' : ''}}"
       wx:for="{{petList}}"
@@ -51,6 +54,70 @@
         <view class="status-card__item">
           <text class="status-card__label">上次驱虫</text>
           <text class="status-card__date">{{lastDeworming || '未记录'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 体重趋势图 -->
+    <view class="chart-card" wx:if="{{weightChart.length > 0}}">
+      <view class="section-header">
+        <text class="section-header__title">体重趋势</text>
+        <text class="section-header__sub">近{{weightChart.length}}次记录</text>
+      </view>
+      <view class="weight-chart">
+        <view class="weight-chart__bar-wrap" wx:for="{{weightChart}}" wx:key="date">
+          <view class="weight-chart__bar {{item.isMax ? 'weight-chart__bar--max' : ''}} {{item.isMin ? 'weight-chart__bar--min' : ''}}"
+                style="height:{{item.height}};"></view>
+          <text class="weight-chart__value">{{item.value}}</text>
+          <text class="weight-chart__date">{{item.date}}</text>
+        </view>
+      </view>
+      <view class="weight-chart__legend">
+        <view class="weight-chart__legend-item">
+          <view class="weight-chart__legend-dot weight-chart__legend-dot--max"></view>
+          <text>最高</text>
+        </view>
+        <view class="weight-chart__legend-item">
+          <view class="weight-chart__legend-dot weight-chart__legend-dot--min"></view>
+          <text>最低</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 疫苗时间线 -->
+    <view class="timeline-card" wx:if="{{vaccineTimeline.length > 0}}">
+      <view class="section-header">
+        <text class="section-header__title">疫苗记录</text>
+      </view>
+      <view class="timeline">
+        <view class="timeline__item {{item.isFirst ? 'timeline__item--first' : ''}} {{item.isLast ? 'timeline__item--last' : ''}}"
+              wx:for="{{vaccineTimeline}}" wx:key="date">
+          <view class="timeline__dot"></view>
+          <view class="timeline__line" wx:if="{{!item.isLast}}"></view>
+          <view class="timeline__content">
+            <text class="timeline__name">{{item.name}}</text>
+            <text class="timeline__date">{{item.date}}</text>
+            <view class="timeline__status timeline__status--done">{{item.status}}</view>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 驱虫时间线 -->
+    <view class="timeline-card" wx:if="{{dewormingTimeline.length > 0}}">
+      <view class="section-header">
+        <text class="section-header__title">驱虫记录</text>
+      </view>
+      <view class="timeline">
+        <view class="timeline__item {{item.isFirst ? 'timeline__item--first' : ''}} {{item.isLast ? 'timeline__item--last' : ''}}"
+              wx:for="{{dewormingTimeline}}" wx:key="date">
+          <view class="timeline__dot"></view>
+          <view class="timeline__line" wx:if="{{!item.isLast}}"></view>
+          <view class="timeline__content">
+            <text class="timeline__name">{{item.name}}</text>
+            <text class="timeline__date">{{item.date}}</text>
+            <view class="timeline__status timeline__status--done">{{item.status}}</view>
+          </view>
         </view>
       </view>
     </view>

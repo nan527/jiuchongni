@@ -45,6 +45,15 @@ Page({
         if (Array.isArray(item.images) && item.images.length) {
           item.images = await resolveTempUrls(item.images);
         }
+        // 加载机构名称
+        if (s.agencyProfileId) {
+          try {
+            const agencyRes = await db.collection('agency_profiles').doc(s.agencyProfileId).field({ orgName: true }).get();
+            item.agencyName = agencyRes.data.orgName || '';
+          } catch (e) {
+            item.agencyName = '';
+          }
+        }
         svcList.push(item);
       }
       this.setData({ svcList, svcLoading: false });
@@ -67,11 +76,15 @@ Page({
   },
 
   toAI() {
-    wx.showToast({ title: 'AI 创作即将上线', icon: 'none' });
+    wx.navigateTo({ url: '/pages/ai/ai' });
   },
 
   toHealth() {
     wx.showToast({ title: '健康管理即将上线', icon: 'none' });
+  },
+
+  toSmartMatch() {
+    wx.navigateTo({ url: '/pages/smart-match/smart-match' });
   },
 
   onAgencyTap(e) {

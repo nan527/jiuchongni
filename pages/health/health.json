@@ -1,7 +1,5 @@
 {
-  "navigationBarTitleText": "健康管理",
-  "navigationBarBackgroundColor": "#FF9800",
-  "navigationBarTextStyle": "white",
+  "navigationStyle": "custom",
   "usingComponents": {
     "van-icon": "/miniprogram_npm/@vant/weapp/icon/index",
     "van-loading": "/miniprogram_npm/@vant/weapp/loading/index"

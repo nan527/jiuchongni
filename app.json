@@ -30,7 +30,8 @@
     "pages/agency-reviews/agency-reviews",
     "pages/agency-pets/agency-pets",
     "pages/agency-posts/agency-posts",
-    "pages/browse-services/browse-services"
+    "pages/browse-services/browse-services",
+    "pages/smart-match/smart-match"
   ],
   "subpackages": [
     {

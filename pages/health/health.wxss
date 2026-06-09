@@ -1,4 +1,4 @@
-/* pages/health/health.less */
+/* pages/health/health.wxss */
 
 .health-page {
   min-height: 100vh;
@@ -188,6 +188,12 @@
   font-size: 24rpx;
   color: #8C7A6B;
   margin-right: 4rpx;
+}
+
+.section-header__sub {
+  font-size: 22rpx;
+  color: #8C7A6B;
+  margin-left: 12rpx;
 }
 
 /* ===== 待办提醒 ===== */
@@ -396,84 +402,6 @@
   margin-left: 16rpx;
 }
 
-/* ===== AI 建议 ===== */
-.ai-card {
-  margin: 20rpx 28rpx 0;
-  background: #FFFAF5;
-  border-radius: 24rpx;
-  padding: 28rpx 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
-}
-
-.ai-card__body {
-  display: flex;
-  align-items: flex-start;
-  background: #FFF8E1;
-  border-radius: 16rpx;
-  padding: 20rpx;
-}
-
-.ai-card__text {
-  flex: 1;
-  font-size: 26rpx;
-  color: #3D2C1E;
-  line-height: 1.6;
-  margin-left: 12rpx;
-}
-
-/* ===== 空状态 ===== */
-.empty-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 60rpx 0;
-}
-
-.empty-wrap__text {
-  font-size: 28rpx;
-  color: #8C7A6B;
-  margin-top: 20rpx;
-}
-
-.empty-wrap__btn {
-  margin-top: 28rpx;
-  padding: 14rpx 40rpx;
-  border: 2rpx solid #FF9800;
-  border-radius: 40rpx;
-  transition: transform 0.15s ease;
-}
-
-.empty-wrap__btn:active {
-  transform: scale(0.95);
-}
-
-.empty-wrap__btn-text {
-  font-size: 26rpx;
-  color: #FF9800;
-  font-weight: 600;
-}
-
-/* ===== 悬浮添加按钮 ===== */
-.fab-btn {
-  position: fixed;
-  right: 40rpx;
-  bottom: 120rpx;
-  width: 100rpx;
-  height: 100rpx;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #FF9800, #FFB74D);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 0 8rpx 32rpx rgba(255, 152, 0, 0.4);
-  z-index: 100;
-  transition: transform 0.15s ease;
-}
-
-.fab-btn:active {
-  transform: scale(0.9);
-}
-
 /* ===== 体重趋势图 ===== */
 .chart-card {
   margin: 20rpx 28rpx 0;
@@ -636,4 +564,82 @@
 .timeline__status--done {
   background: #E8F5E9;
   color: #2E7D32;
+}
+
+/* ===== AI 建议 ===== */
+.ai-card {
+  margin: 20rpx 28rpx 0;
+  background: #FFFAF5;
+  border-radius: 24rpx;
+  padding: 28rpx 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+}
+
+.ai-card__body {
+  display: flex;
+  align-items: flex-start;
+  background: #FFF8E1;
+  border-radius: 16rpx;
+  padding: 20rpx;
+}
+
+.ai-card__text {
+  flex: 1;
+  font-size: 26rpx;
+  color: #3D2C1E;
+  line-height: 1.6;
+  margin-left: 12rpx;
+}
+
+/* ===== 空状态 ===== */
+.empty-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 0;
+}
+
+.empty-wrap__text {
+  font-size: 28rpx;
+  color: #8C7A6B;
+  margin-top: 20rpx;
+}
+
+.empty-wrap__btn {
+  margin-top: 28rpx;
+  padding: 14rpx 40rpx;
+  border: 2rpx solid #FF9800;
+  border-radius: 40rpx;
+  transition: transform 0.15s ease;
+}
+
+.empty-wrap__btn:active {
+  transform: scale(0.95);
+}
+
+.empty-wrap__btn-text {
+  font-size: 26rpx;
+  color: #FF9800;
+  font-weight: 600;
+}
+
+/* ===== 悬浮添加按钮 ===== */
+.fab-btn {
+  position: fixed;
+  right: 40rpx;
+  bottom: 120rpx;
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  box-shadow: 0 8rpx 32rpx rgba(255, 152, 0, 0.4);
+  z-index: 100;
+  transition: transform 0.15s ease;
+}
+
+.fab-btn:active {
+  transform: scale(0.9);
 }

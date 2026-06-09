@@ -35,6 +35,12 @@
       </view>
       <text class="func-entry__label">健康管理</text>
     </view>
+    <view class="func-entry__item" bindtap="toSmartMatch">
+      <view class="func-entry__icon func-entry__icon--blue">
+        <van-icon name="aim" size="44rpx" color="#2196F3" />
+      </view>
+      <text class="func-entry__label">智能匹配</text>
+    </view>
   </view>
 
   <!-- 推荐机构 -->
@@ -92,6 +98,10 @@
           <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.catTitle}}</van-tag>
         </view>
         <text class="svc-card__name">{{item.name}}</text>
+        <view class="svc-card__agency" wx:if="{{item.agencyName}}">
+          <van-icon name="shop-o" size="20rpx" color="#999" />
+          <text>{{item.agencyName}}</text>
+        </view>
         <view class="svc-card__price-row">
           <text class="svc-card__price">¥{{item.price}}</text>
           <text class="svc-card__unit">/{{item.priceUnit || '次'}}</text>

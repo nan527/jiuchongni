@@ -35,6 +35,21 @@ Page({
     recentRecords: [],
     // AI
     aiSuggestion: '',
+    // 图表数据
+    weightChart: [],
+    vaccineTimeline: [],
+    dewormingTimeline: [],
+    // 导航栏
+    statusBarHeight: 0,
+    navBarHeight: 0,
+  },
+
+  onLoad() {
+    const sysInfo = wx.getSystemInfoSync();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const statusBarHeight = sysInfo.statusBarHeight || 20;
+    const navBarHeight = menuBtn.top + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
   },
 
   async onShow() {
@@ -133,6 +148,15 @@ Page({
         note: r.note || r.food_intake || '',
       }));
 
+      // 处理体重趋势图数据
+      const weightChart = this._buildWeightChart(weightRecords);
+
+      // 处理疫苗时间线
+      const vaccineTimeline = this._buildTimeline(vaccineRecords, 'vaccine');
+
+      // 处理驱虫时间线
+      const dewormingTimeline = this._buildTimeline(dewormingRecords, 'deworming');
+
       // AI 建议
       this.loadAiSuggestion(pet, weightRecords);
 
@@ -143,6 +167,9 @@ Page({
         lastDeworming,
         reminders,
         recentRecords,
+        weightChart,
+        vaccineTimeline,
+        dewormingTimeline,
       });
     } catch (e) {
       console.warn('[Health] loadPetHealth', e);
@@ -221,6 +248,48 @@ Page({
     }
   },
 
+  _buildWeightChart(weightRecords) {
+    if (weightRecords.length === 0) return [];
+
+    // 取最近 7 条体重记录
+    const records = weightRecords.slice(0, 7).reverse();
+    const weights = records.map(r => parseFloat(r.value) || 0);
+    const maxWeight = Math.max(...weights);
+    const minWeight = Math.min(...weights);
+    const range = maxWeight - minWeight || 1;
+
+    return records.map((r, i) => {
+      const weight = weights[i];
+      const heightPercent = ((weight - minWeight) / range) * 60 + 40;
+      return {
+        value: weight,
+        date: this._formatDate(r.record_date),
+        height: `${heightPercent}%`,
+        isMax: weight === maxWeight && weights.length > 1,
+        isMin: weight === minWeight && weights.length > 1,
+      };
+    });
+  },
+
+  _buildTimeline(records, type) {
+    if (records.length === 0) return [];
+
+    return records.slice(0, 5).map((r, i) => {
+      const date = new Date(r.record_date);
+      const name = type === 'vaccine'
+        ? (r.vaccine_name || r.value || '疫苗接种')
+        : (r.medicine_name || r.value || '驱虫');
+      return {
+        name,
+        date: this._formatDate(r.record_date),
+        year: date.getFullYear(),
+        isFirst: i === 0,
+        isLast: i === Math.min(records.length, 5) - 1,
+        status: i === 0 ? '已完成' : '已完成',
+      };
+    });
+  },
+
   _formatDate(t) {
     if (!t) return '';
     const d = typeof t === 'string' ? new Date(t) : (t instanceof Date ? t : new Date(t));
@@ -241,5 +310,9 @@ Page({
 
   toPetArchive() {
     wx.navigateTo({ url: '/packagePet/pages/pet/pet' });
+  },
+
+  onGoBack() {
+    wx.navigateBack();
   },
 });
