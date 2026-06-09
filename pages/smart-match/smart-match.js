@@ -1,5 +1,5 @@
 // pages/smart-match/smart-match.js
-const { CAT_TITLE_MAP } = require('../../utils/helpers');
+const { CAT_TITLE_MAP, getStatusBarHeight } = require('../../utils/helpers');
 const { resolveTempUrls } = require('../../utils/fileHelper');
 
 Page({
@@ -100,9 +100,8 @@ Page({
   },
 
   onLoad() {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight || 20;
     const navHeight = menuBtn.top + (menuBtn.height - statusBarHeight) / 2 + statusBarHeight;
     this.setData({ statusBarHeight, navHeight });
     this.loadAllServices();

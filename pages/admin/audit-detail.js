@@ -1,4 +1,6 @@
 // pages/admin/audit-detail.js
+const { getStatusBarHeight } = require('../../utils/helpers');
+
 Page({
   data: {
     loading: true,
@@ -10,9 +12,8 @@ Page({
   },
 
   onLoad(options) {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight;
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
 

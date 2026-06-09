@@ -1,5 +1,6 @@
 // pages/pet/pet.js
 const authService = require('../../../services/authService');
+const { getStatusBarHeight } = require('../../../utils/helpers');
 
 const PRESET_AVATARS = [
   { name: '金毛', src: '/packagePet/static/Avatar/pet/金毛.png' },
@@ -66,9 +67,8 @@ Page({
   },
 
   onLoad() {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight;
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
   },

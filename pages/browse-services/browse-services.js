@@ -1,5 +1,6 @@
 // pages/browse-services/browse-services.js
 const { resolveTempUrls } = require('../../utils/fileHelper');
+const { getStatusBarHeight } = require('../../utils/helpers');
 
 const CATEGORY_LIST = [
   { key: 'all', label: '全部' },
@@ -34,9 +35,8 @@ Page({
   },
 
   onLoad() {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight;
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
     this.loadServices();

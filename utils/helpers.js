@@ -84,6 +84,21 @@ function isLeaveExpired(leaveTimeMs) {
   return ms > 0 && ms <= Date.now();
 }
 
+/**
+ * 获取状态栏高度（兼容新旧 API）
+ * @returns {number} 状态栏高度（px）
+ */
+function getStatusBarHeight() {
+  try {
+    if (wx.getWindowInfo) {
+      return wx.getWindowInfo().statusBarHeight || 20;
+    }
+    return wx.getSystemInfoSync().statusBarHeight || 20;
+  } catch (e) {
+    return 20;
+  }
+}
+
 module.exports = {
   CAT_TITLE_MAP,
   formatDate,
@@ -91,4 +106,5 @@ module.exports = {
   buildPetInfoText,
   buildLeaveRemainText,
   isLeaveExpired,
+  getStatusBarHeight,
 };

@@ -1,5 +1,6 @@
 // pages/pet-detail/pet-detail.js
 const authService = require('../../services/authService');
+const { getStatusBarHeight } = require('../../utils/helpers');
 
 const STATUS_CONFIG = {
   agency_foster:   { label: '寄养中',   color: '#FF9800', bg: '#FFF3E0' },
@@ -44,9 +45,8 @@ Page({
   },
 
   async onLoad(options) {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight;
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
 

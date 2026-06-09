@@ -1,6 +1,6 @@
 // pages/agency-detail/agency-detail.js
 const { resolveAgencyImages, resolveTempUrls } = require('../../utils/fileHelper');
-const { CAT_TITLE_MAP } = require('../../utils/helpers');
+const { CAT_TITLE_MAP, getStatusBarHeight } = require('../../utils/helpers');
 
 Page({
   data: {
@@ -17,9 +17,8 @@ Page({
   },
 
   onLoad(options) {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight;
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
 

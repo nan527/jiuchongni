@@ -1,7 +1,7 @@
 // pages/orders/orders.js
 const authService = require('../../services/authService');
 const { resolveTempUrls } = require('../../utils/fileHelper');
-const { formatDate, buildPetInfoText, buildLeaveRemainText, isLeaveExpired } = require('../../utils/helpers');
+const { formatDate, buildPetInfoText, buildLeaveRemainText, isLeaveExpired, getStatusBarHeight } = require('../../utils/helpers');
 
 const STATUS_FILTER = [
   { key: 'all', label: '全部' },
@@ -55,9 +55,8 @@ Page({
   },
 
   onLoad(options) {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight;
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     const headerHeight = navBarHeight + 60;
     this.setData({ statusBarHeight, navBarHeight, headerHeight });

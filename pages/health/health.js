@@ -1,5 +1,6 @@
 // pages/health/health.js
 const authService = require('../../services/authService');
+const { getStatusBarHeight } = require('../../utils/helpers');
 const db = wx.cloud.database();
 
 function withTimeout(promise, ms) {
@@ -45,9 +46,8 @@ Page({
   },
 
   onLoad() {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight || 20;
     const navBarHeight = menuBtn.top + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
   },

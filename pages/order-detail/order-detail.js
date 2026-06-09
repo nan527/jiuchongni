@@ -1,7 +1,7 @@
 // pages/order-detail/order-detail.js
 const authService = require('../../services/authService');
 const { resolveTempUrls } = require('../../utils/fileHelper');
-const { formatDateTime, buildPetInfoText } = require('../../utils/helpers');
+const { formatDateTime, buildPetInfoText, getStatusBarHeight } = require('../../utils/helpers');
 
 const STATUS_CONFIG = {
   unpaid:      { label: '待付款',   color: '#EF6C00', bg: '#FFF8E1' },
@@ -41,9 +41,8 @@ Page({
   },
 
   async onLoad(options) {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight;
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
 

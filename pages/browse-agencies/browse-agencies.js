@@ -1,5 +1,6 @@
 // pages/browse-agencies/browse-agencies.js
 const { resolveAgencyImages } = require('../../utils/fileHelper');
+const { getStatusBarHeight } = require('../../utils/helpers');
 const TYPE_LIST = [
   { key: 'all', label: '全部' },
   { key: '宠物寄养机构', label: '寄养机构' },
@@ -21,9 +22,8 @@ Page({
   },
 
   onLoad() {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight;
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
     this.loadAgencies();

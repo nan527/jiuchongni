@@ -1,7 +1,7 @@
 // pages/service-detail/service-detail.js
 const authService = require('../../services/authService');
 const { resolveTempUrls } = require('../../utils/fileHelper');
-const { CAT_TITLE_MAP, formatDate } = require('../../utils/helpers');
+const { CAT_TITLE_MAP, formatDate, getStatusBarHeight } = require('../../utils/helpers');
 
 Page({
   data: {
@@ -32,9 +32,8 @@ Page({
   },
 
   async onLoad(options) {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight;
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
 

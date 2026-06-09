@@ -1,5 +1,6 @@
 // pages/agency-pet-detail/agency-pet-detail.js
 const authService = require('../../services/authService');
+const { getStatusBarHeight } = require('../../utils/helpers');
 
 const HEALTH_TYPE_LABEL = {
   weight: '体重', food: '饮食', temperature: '体温',
@@ -19,9 +20,8 @@ Page({
   _petId: '',
 
   onLoad(opts) {
-    const sysInfo = wx.getSystemInfoSync();
+    const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const statusBarHeight = sysInfo.statusBarHeight;
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
 

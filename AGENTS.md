@@ -153,6 +153,19 @@ this.setData({ selectedMap: needsMap });
 <view wx:if="{{selectedMap[item.value]}}">
 ```
 
+### 11. 状态栏高度获取
+使用 `getStatusBarHeight()` 工具函数获取状态栏高度，不要直接调用 `wx.getSystemInfoSync()`：
+```javascript
+const { getStatusBarHeight } = require('../../utils/helpers');
+
+onLoad() {
+  const statusBarHeight = getStatusBarHeight();
+  const menuBtn = wx.getMenuButtonBoundingClientRect();
+  const navBarHeight = menuBtn.top + menuBtn.height;
+  this.setData({ statusBarHeight, navBarHeight });
+}
+```
+
 ---
 
 ## 关键业务常量
