@@ -87,6 +87,72 @@
   line-height: 1.7;
 }
 
+/* ===== 所属机构卡片 ===== */
+.agency-card {
+  padding: 24rpx;
+}
+
+.agency-card__header {
+  display: flex;
+  align-items: center;
+}
+
+.agency-card__logo {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 16rpx;
+  background: #f5f5f5;
+  flex-shrink: 0;
+}
+
+.agency-card__info {
+  flex: 1;
+  margin-left: 20rpx;
+  min-width: 0;
+}
+
+.agency-card__name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: #333;
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agency-card__meta {
+  display: flex;
+  align-items: center;
+  margin-top: 8rpx;
+  gap: 6rpx;
+}
+
+.agency-card__addr {
+  font-size: 22rpx;
+  color: #999;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.agency-card__tags {
+  margin-top: 8rpx;
+}
+
+.agency-card__env {
+  display: flex;
+  gap: 12rpx;
+  margin-top: 20rpx;
+}
+
+.agency-card__env-img {
+  width: 200rpx;
+  height: 140rpx;
+  border-radius: 12rpx;
+  background: #f5f5f5;
+}
+
 .section-title {
   font-size: 28rpx;
   font-weight: 700;

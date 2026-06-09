@@ -31,7 +31,8 @@
     "pages/agency-pets/agency-pets",
     "pages/agency-pet-detail/agency-pet-detail",
     "pages/agency-posts/agency-posts",
-    "pages/browse-services/browse-services"
+    "pages/browse-services/browse-services",
+    "pages/smart-match/smart-match"
   ],
   "subpackages": [
     {

@@ -4,10 +4,22 @@
 
 ---
 
+## 重要：执行任务前必须阅读文档
+
+**每次执行任务前，AI 必须先阅读以下文档：**
+
+1. `docs/设计规范.md` - UI/UX 设计规范和品牌标准
+2. `docs/开发规范.md` - 代码编写规范和最佳实践
+3. `docs/页面功能说明.md` - 所有页面的详细功能说明
+4. `docs/项目结构文档.md` - 项目架构和技术栈
+5. `docs/任务执行文档.md` - 当前任务状态和待办事项
+
+---
+
 ## 项目定位
 
 **就宠你** — 微信小程序宠物智能服务平台。
-- 宠物主人：浏览机构/服务、在线下单、管理宠物档案、健康分析
+- 宠物主人：浏览机构/服务、在线下单、管理宠物档案、健康分析、智能匹配
 - 服务机构：发布服务、接单、笼位管理、收入统计、评价管理
 - 管理员：审核机构入驻、平台数据看板
 
@@ -47,12 +59,14 @@ pages/
   browse-services/   → 浏览服务列表
   agency-detail/     → 机构详情
   service-detail/    → 服务详情 + 下单
+  smart-match/       → 智能匹配（多维度筛选）
   order-detail/      → 订单详情
   payment/           → 支付页
   profile/           → 个人资料编辑
   pet-detail/        → 宠物详情
-  health/            → 健康管理
-  match/             → 智能匹配
+  health/            → 健康管理（体重趋势、疫苗时间线）
+  health-add/        → 添加健康记录
+  match/             → 智能匹配（旧）
   ai/                → AI 创作（空壳）
   agency/            → 机构首页
   agency-register/   → 机构注册
@@ -115,6 +129,30 @@ static/
 ### 8. 云文件处理
 云存储的文件 ID 以 `cloud://` 开头，不能直接用于 `<image src>`。需通过 `utils/fileHelper.js` 的 `resolveTempUrls()` 转为临时 HTTP URL。
 
+### 9. 异步操作超时控制
+所有云数据库查询和云函数调用必须使用 `withTimeout()` 包装，防止网络超时导致页面卡死：
+```javascript
+const res = await withTimeout(
+  db.collection('collection').get(),
+  8000
+);
+```
+
+### 10. 模板表达式限制
+微信小程序模板不支持复杂表达式（如 `.indexOf()`）。需要在 JS 中预处理数据，使用对象映射：
+```javascript
+// ❌ 错误：模板中不支持
+<view wx:if="{{selectedList.indexOf(item.value) > -1}}">
+
+// ✅ 正确：在 JS 中创建映射对象
+const needsMap = {};
+selected.forEach(v => { needsMap[v] = true; });
+this.setData({ selectedMap: needsMap });
+
+// 模板中使用
+<view wx:if="{{selectedMap[item.value]}}">
+```
+
 ---
 
 ## 关键业务常量
@@ -160,20 +198,10 @@ extra        → 商品增值
 
 ## 已知技术债务
 
-### 高优：宠物档案未按用户过滤
-**位置**：`packagePet/pages/pet/pet.js` → `loadPetList()`
+> 暂无技术债务
+**位置**：`cloudfunctions/ai_handler/package.json`
 
-当前代码缺少 `_openid` 过滤条件，所有用户登录后都能看到全部宠物档案。需在查询中添加用户过滤。
-
-### 高优：globalData.pet 未初始化
-**位置**：`app.js` → `globalData`
-
-健康页和匹配页依赖 `app.globalData.pet.currentPet`，但该值从未被设置。
-
-### 中优：匹配算法未生效
-**位置**：`pages/match/match.js` → `calculateMatch()`
-
-硬编码 `match_score: 95`，未使用已定义的匹配函数。
+`require('axios')` 会失败，需声明依赖或手动安装。
 
 ### 低优：TDesign 组件残留引用
 `components/card/` 和 `components/nav/` 引用 `tdesign-miniprogram` 但未安装、未被任何页面使用。可安全删除。
@@ -182,9 +210,25 @@ extra        → 商品增值
 
 ## 提交前检查清单
 
+- [ ] 是否已阅读 `docs/` 文件夹中的相关文档？
 - [ ] 样式修改是否在 `.less` 文件中进行？（不要改 `.wxss`）
 - [ ] Tab 页面间的导航是否使用了 `wx.switchTab()`？
 - [ ] 新页面是否注册了所需 Vant 组件？
 - [ ] 卡片内操作按钮是否使用了 `catchtap` 防止冒泡？
 - [ ] 图片 `mode` 是否符合约定？
+- [ ] 云数据库查询是否使用了 `withTimeout()` 包装？
+- [ ] 模板中是否避免了复杂表达式（如 `.indexOf()`）？
 - [ ] 是否引入了新的 npm 依赖？（如需，更新 `package.json` 并执行构建 npm）
+
+---
+
+## 文档索引
+
+| 文档 | 说明 |
+|------|------|
+| `docs/设计规范.md` | UI/UX 设计规范，包含色彩、字体、间距、组件规范 |
+| `docs/开发规范.md` | 代码编写规范，包含 JS/WXML/Less 编码规范 |
+| `docs/页面功能说明.md` | 所有页面的详细功能、数据结构和交互逻辑 |
+| `docs/项目结构文档.md` | 项目架构、技术栈、数据库集合说明 |
+| `docs/任务执行文档.md` | 任务跟踪、已完成/进行中/待办事项 |
+| `agents/README.md` | AI 助手配置和使用说明 |

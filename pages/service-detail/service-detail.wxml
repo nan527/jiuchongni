@@ -35,6 +35,33 @@
     <text class="svc-desc" wx:if="{{ svc.desc }}">{{ svc.desc }}</text>
   </view>
 
+  <!-- 所属机构 -->
+  <view class="info-section agency-card" wx:if="{{ agencyProfile }}" bindtap="onAgencyTap">
+    <view class="agency-card__header">
+      <image class="agency-card__logo" src="{{ agencyProfile.storefrontImage || '/static/pet/logo.png' }}" mode="aspectFill" />
+      <view class="agency-card__info">
+        <text class="agency-card__name">{{ agencyProfile.orgName }}</text>
+        <view class="agency-card__meta">
+          <van-icon name="location-o" size="22rpx" color="#999" />
+          <text class="agency-card__addr">{{ agencyProfile.detailAddress || agencyProfile.region || '暂无地址' }}</text>
+        </view>
+        <view class="agency-card__tags" wx:if="{{ agencyProfile.businessType }}">
+          <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="small">{{ agencyProfile.businessType }}</van-tag>
+        </view>
+      </view>
+      <van-icon name="arrow" size="28rpx" color="#ccc" />
+    </view>
+    <view class="agency-card__env" wx:if="{{ agencyProfile.envImages && agencyProfile.envImages.length > 0 }}">
+      <image
+        class="agency-card__env-img"
+        wx:for="{{ agencyProfile.envImages }}"
+        wx:key="*this"
+        src="{{ item }}"
+        mode="aspectFill"
+      />
+    </view>
+  </view>
+
   <!-- 下单表单 -->
   <view class="info-section">
     <view class="section-title">填写订单信息</view>

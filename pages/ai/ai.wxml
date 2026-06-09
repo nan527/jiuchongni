@@ -1,8 +1,377 @@
 <!-- pages/ai/ai.wxml -->
-<view class="container">
-  <van-panel title="AI 宠物数字创作" desc="生成卡通头像或成长相册">
-    <view style="padding: 20px;">
-      <van-button type="info" block bindtap="generateAvatar">生成 AI 卡通头像</van-button>
+<view class="ai-page" style="padding-top: {{ navBarHeight }}px;">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">AI 创作</text>
+      <view class="nav-bar__right"></view>
     </view>
-  </van-panel>
+  </view>
+
+  <!-- 英雄区域 -->
+  <view class="hero-banner" style="padding-top: {{ navBarHeight }}px;">
+    <view class="hero-banner__inner">
+      <text class="hero-banner__title">宠物智能空间</text>
+      <text class="hero-banner__sub">AI 驱动的宠物服务平台，智能匹配、数字创作、数据洞察</text>
+      <view class="hero-banner__stats">
+        <view class="hero-stat">
+          <text class="hero-stat__num">3</text>
+          <text class="hero-stat__label">我的宠物</text>
+        </view>
+        <view class="hero-stat">
+          <text class="hero-stat__num">12</text>
+          <text class="hero-stat__label">相册照片</text>
+        </view>
+        <view class="hero-stat">
+          <text class="hero-stat__num">98</text>
+          <text class="hero-stat__label">健康评分</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 功能卡片网格 -->
+  <view class="feature-grid">
+    <view class="feature-row">
+      <!-- AI 智能匹配 -->
+      <view class="feature-card" bindtap="openModule" data-module="match">
+        <view class="feature-card__glow" style="background: #FF9800;"></view>
+        <view class="feature-card__icon" style="background: #FFF3E0;">
+          <van-icon name="friends-o" size="36rpx" color="#FF9800" />
+        </view>
+        <text class="feature-card__title">AI 智能匹配</text>
+        <text class="feature-card__desc">基于宠物特征和偏好，智能推荐最合适的机构</text>
+      </view>
+
+      <!-- 宠物相册 -->
+      <view class="feature-card" bindtap="openModule" data-module="album">
+        <view class="feature-card__glow" style="background: #FF9800;"></view>
+        <view class="feature-card__icon" style="background: #FFF3E0;">
+          <van-icon name="photo-o" size="36rpx" color="#FF9800" />
+        </view>
+        <text class="feature-card__title">宠物相册</text>
+        <text class="feature-card__desc">智能整理照片，AI 生成配文，一键分享萌宠日常</text>
+      </view>
+    </view>
+
+    <view class="feature-row">
+      <!-- 数字分身 -->
+      <view class="feature-card" bindtap="openModule" data-module="avatar">
+        <view class="feature-card__glow" style="background: #FF7043;"></view>
+        <view class="feature-card__icon" style="background: #FFF3E0;">
+          <van-icon name="smile-o" size="36rpx" color="#FF7043" />
+        </view>
+        <text class="feature-card__title">数字分身</text>
+        <text class="feature-card__desc">为宠物生成专属卡通形象、艺术头像和壁纸</text>
+      </view>
+
+      <!-- 数据看板 -->
+      <view class="feature-card" bindtap="openModule" data-module="dashboard">
+        <view class="feature-card__glow" style="background: #2196F3;"></view>
+        <view class="feature-card__icon" style="background: #E3F2FD;">
+          <van-icon name="bar-chart-o" size="36rpx" color="#2196F3" />
+        </view>
+        <text class="feature-card__title">数据看板</text>
+        <text class="feature-card__desc">可视化呈现健康趋势、消费分析和成长记录</text>
+      </view>
+    </view>
+  </view>
+
 </view>
+
+<!-- ===== AI 智能匹配弹窗 ===== -->
+<van-popup show="{{showMatch}}" position="bottom" round bind:close="closeModule">
+  <view class="module-popup">
+    <view class="module-popup__header">
+      <text class="module-popup__title">AI 智能匹配</text>
+      <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeModule" />
+    </view>
+
+    <!-- 选择宠物 -->
+    <view class="match-section">
+      <text class="match-section__label">选择你的宠物</text>
+      <view class="pet-selector">
+        <view
+          class="pet-selector__item {{matchPetIdx === index ? 'pet-selector__item--active' : ''}}"
+          wx:for="{{myPets}}"
+          wx:key="index"
+          bindtap="onMatchPetSelect"
+          data-idx="{{index}}"
+        >
+          <image class="pet-selector__avatar" src="{{item.avatar || '/static/pet/logo.png'}}" mode="aspectFill" />
+          <text class="pet-selector__name">{{item.name}}</text>
+        </view>
+        <view class="pet-selector__item" wx:if="{{myPets.length === 0}}">
+          <van-icon name="plus" size="40rpx" color="#C4B8AC" />
+          <text class="pet-selector__name">添加宠物</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 偏好标签 -->
+    <view class="match-section">
+      <text class="match-section__label">你更看重什么？</text>
+      <view class="match-prefs">
+        <view
+          class="match-pref-tag {{matchPrefs.indexOf(item) >= 0 ? 'match-pref-tag--active' : ''}}"
+          wx:for="{{prefOptions}}"
+          wx:key="*this"
+          bindtap="onPrefToggle"
+          data-pref="{{item}}"
+        >{{item}}</view>
+      </view>
+    </view>
+
+    <van-button class="gen-btn" type="primary" round loading="{{matchLoading}}" loading-text="匹配中..."
+      color="linear-gradient(135deg, #FF9800, #FFB74D)" bindtap="startMatch">开始智能匹配</van-button>
+
+    <!-- 匹配结果 -->
+    <view class="match-result" wx:if="{{matchResults.length > 0}}">
+      <text class="match-result__title">
+        <van-icon name="bulb-o" size="28rpx" />
+        为你推荐 {{matchResults.length}} 家机构
+      </text>
+      <view class="match-result__item" wx:for="{{matchResults}}" wx:key="index">
+        <view class="match-result__rank match-result__rank--{{index < 3 ? index + 1 : ''}}">{{index + 1}}</view>
+        <view class="match-result__info">
+          <text class="match-result__name">{{item.name}}</text>
+          <text class="match-result__reason">{{item.reason}}</text>
+        </view>
+        <text class="match-result__score">{{item.score}}分</text>
+      </view>
+    </view>
+
+    <view class="empty-hint" wx:if="{{!matchLoading && matchResults.length === 0 && matchTried}}">
+      暂未找到合适的机构，请调整偏好重试
+    </view>
+  </view>
+</van-popup>
+
+<!-- ===== 宠物相册弹窗 ===== -->
+<van-popup show="{{showAlbum}}" position="bottom" round bind:close="closeModule">
+  <view class="module-popup">
+    <view class="module-popup__header">
+      <text class="module-popup__title">宠物相册</text>
+      <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeModule" />
+    </view>
+
+    <!-- Tab 切换 -->
+    <view class="album-tabs">
+      <view class="album-tab {{albumTab === 0 ? 'album-tab--active' : ''}}" bindtap="onAlbumTab" data-tab="0">相册</view>
+      <view class="album-tab {{albumTab === 1 ? 'album-tab--active' : ''}}" bindtap="onAlbumTab" data-tab="1">动态影集</view>
+      <view class="album-tab {{albumTab === 2 ? 'album-tab--active' : ''}}" bindtap="onAlbumTab" data-tab="2">AI 配文</view>
+    </view>
+
+    <!-- 相册网格 -->
+    <view wx:if="{{albumTab === 0}}">
+      <view class="album-grid">
+        <view class="album-grid__item" wx:for="{{albumPhotos}}" wx:key="index">
+          <image class="album-grid__img" src="{{item.url}}" mode="aspectFill" />
+          <view class="album-caption" wx:if="{{item.caption}}">{{item.caption}}</view>
+        </view>
+        <view class="album-grid__item album-grid__item--add" bindtap="addAlbumPhoto">
+          <van-icon name="plus" size="40rpx" color="#C4B8AC" />
+          <text class="album-grid__add-text">添加照片</text>
+        </view>
+      </view>
+      <view class="album-actions">
+        <van-button class="album-action-btn" round color="linear-gradient(135deg, #FF9800, #FFB74D)" bindtap="generateAlbumCaption">AI 生成配文</van-button>
+        <van-button class="album-action-btn" round plain type="info" color="#FF9800" bindtap="shareAlbum">一键分享</van-button>
+      </view>
+    </view>
+
+    <!-- 动态影集 -->
+    <view wx:if="{{albumTab === 1}}">
+      <view style="background: #1a1a2e; border-radius: 20rpx; padding: 40rpx; text-align: center; margin-bottom: 24rpx;">
+        <van-icon name="play-circle-o" size="80rpx" color="rgba(255,255,255,0.6)" />
+        <view style="color: rgba(255,255,255,0.8); font-size: 26rpx; margin-top: 16rpx;">动态影集预览</view>
+        <view style="color: rgba(255,255,255,0.4); font-size: 22rpx; margin-top: 8rpx;">照片轮播 + AI 配文 + 背景音乐</view>
+      </view>
+      <view class="album-actions">
+        <van-button class="album-action-btn" round color="linear-gradient(135deg, #FF7043, #FFB74D)" bindtap="createSlideshow">生成影集</van-button>
+        <van-button class="album-action-btn" round plain type="info" color="#FF7043" bindtap="shareSlideshow">分享影集</van-button>
+      </view>
+    </view>
+
+    <!-- AI 配文 -->
+    <view wx:if="{{albumTab === 2}}">
+      <view style="margin-bottom: 20rpx;">
+        <text style="font-size: 26rpx; color: #3D2C1E; font-weight: 600; display: block; margin-bottom: 12rpx;">选择照片生成配文</text>
+        <view class="album-grid" style="gap: 12rpx;">
+          <view class="album-grid__item" style="width: 23%;" wx:for="{{albumPhotos}}" wx:key="index" bindtap="onCaptionPhotoSelect" data-idx="{{index}}">
+            <image class="album-grid__img" src="{{item.url}}" mode="aspectFill" style="{{captionPhotoIdx === index ? 'border: 3rpx solid #FF9800; box-sizing: border-box;' : ''}}" />
+          </view>
+        </view>
+      </view>
+      <van-button class="gen-btn" round loading="{{captionLoading}}" loading-text="AI 创作中..."
+        color="linear-gradient(135deg, #FF9800, #FFB74D)" bindtap="generatePhotoCaption">AI 生成配文</van-button>
+      <view class="result-area" wx:if="{{captionResult || captionLoading}}" style="margin-top: 20rpx;">
+        <view class="result-area__header">
+          <text class="result-area__label"><van-icon name="edit" size="28rpx" /> AI 配文</text>
+          <view class="result-area__copy" wx:if="{{captionResult && !captionLoading}}" bindtap="onCopyCaption">复制</view>
+        </view>
+        <view class="result-area__loading" wx:if="{{captionLoading}}">
+          <van-loading type="spinner" color="#FF9800" size="40rpx" />
+          <text class="result-area__loading-text">AI 正在为照片创作配文...</text>
+        </view>
+        <text class="result-area__text" wx:elif="{{captionResult}}">{{captionResult}}</text>
+      </view>
+    </view>
+  </view>
+</van-popup>
+
+<!-- ===== 数字分身弹窗 ===== -->
+<van-popup show="{{showAvatar}}" position="bottom" round bind:close="closeModule">
+  <view class="module-popup">
+    <view class="module-popup__header">
+      <text class="module-popup__title">数字分身</text>
+      <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeModule" />
+    </view>
+
+    <!-- 预览区 -->
+    <view class="avatar-preview">
+      <image class="avatar-preview__img" src="{{avatarPreviewUrl || '/static/pet/logo.png'}}" mode="aspectFill" />
+      <text class="avatar-preview__hint" wx:if="{{!avatarGenerated}}">选择风格后生成专属形象</text>
+      <text class="avatar-preview__hint" wx:else>{{avatarStyleName}} 风格</text>
+    </view>
+
+    <!-- 风格选择 -->
+    <view class="match-section">
+      <text class="match-section__label">选择风格</text>
+      <view class="avatar-style-grid">
+        <view
+          class="avatar-style-item {{avatarStyle === item.key ? 'avatar-style-item--active' : ''}}"
+          wx:for="{{avatarStyles}}"
+          wx:key="key"
+          bindtap="onAvatarStyleSelect"
+          data-style="{{item.key}}"
+        >
+          <view class="avatar-style-item__img" style="background: {{item.bg}}; display: flex; align-items: center; justify-content: center;">
+            <van-icon name="{{item.icon}}" size="48rpx" color="{{item.color}}" />
+          </view>
+          <text class="avatar-style-item__label">{{item.name}}</text>
+        </view>
+      </view>
+    </view>
+
+    <van-button class="gen-btn" round loading="{{avatarLoading}}" loading-text="生成中..."
+      color="linear-gradient(135deg, #FF7043, #FFB74D)" bindtap="generateAvatar">生成数字分身</van-button>
+
+    <view class="album-actions" wx:if="{{avatarGenerated}}" style="margin-top: 16rpx;">
+      <van-button class="album-action-btn" round plain type="info" color="#FF7043" bindtap="saveAvatar">保存到相册</van-button>
+      <van-button class="album-action-btn" round plain type="info" color="#FF7043" bindtap="shareAvatar">分享给好友</van-button>
+    </view>
+  </view>
+</van-popup>
+
+<!-- ===== 数据看板弹窗 ===== -->
+<van-popup show="{{showDashboard}}" position="bottom" round bind:close="closeModule">
+  <view class="module-popup">
+    <view class="module-popup__header">
+      <text class="module-popup__title">数据看板</text>
+      <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeModule" />
+    </view>
+
+    <!-- 概览卡片 -->
+    <view class="dashboard-cards">
+      <view class="dash-card">
+        <text class="dash-card__label">本月消费</text>
+        <text class="dash-card__value" style="color: #FF9800;">¥{{dashData.monthExpense}}</text>
+        <view class="dash-card__trend dash-card__trend--down">
+          <van-icon name="arrow-down" size="20rpx" />
+          <text>较上月 {{dashData.expenseTrend}}%</text>
+        </view>
+      </view>
+      <view class="dash-card">
+        <text class="dash-card__label">健康评分</text>
+        <text class="dash-card__value" style="color: #66BB6A;">{{dashData.healthScore}}</text>
+        <view class="dash-card__trend dash-card__trend--up">
+          <van-icon name="arrow-up" size="20rpx" />
+          <text>状态良好</text>
+        </view>
+      </view>
+      <view class="dash-card">
+        <text class="dash-card__label">服务次数</text>
+        <text class="dash-card__value" style="color: #2196F3;">{{dashData.serviceCount}}</text>
+        <view class="dash-card__trend dash-card__trend--up">
+          <van-icon name="arrow-up" size="20rpx" />
+          <text>较上月 +2</text>
+        </view>
+      </view>
+      <view class="dash-card">
+        <text class="dash-card__label">寄养天数</text>
+        <text class="dash-card__value" style="color: #FF9800;">{{dashData.fosterDays}}</text>
+        <view class="dash-card__trend">
+          <text style="color: #8C7A6B;">累计</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 消费趋势图 -->
+    <view class="chart-section">
+      <text class="chart-section__title">月度消费趋势</text>
+      <view class="bar-chart">
+        <view class="bar-row" wx:for="{{expenseChartData}}" wx:key="month">
+          <text class="bar-row__label">{{item.month}}月</text>
+          <view class="bar-row__track">
+            <view class="bar-row__fill" style="width: {{item.percent}}%; background: linear-gradient(90deg, #FF9800, #FFB74D);"></view>
+          </view>
+          <text class="bar-row__value">¥{{item.value}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 服务类型分布 -->
+    <view class="chart-section">
+      <text class="chart-section__title">服务类型分布</text>
+      <view class="donut-chart">
+        <view class="donut-chart__ring" style="background: conic-gradient(#FF9800 0% {{dashData.serviceDist.foster}}%, #66BB6A {{dashData.serviceDist.foster}}% {{dashData.serviceDist.foster + dashData.serviceDist.grooming}}%, #2196F3 {{dashData.serviceDist.foster + dashData.serviceDist.grooming}}% {{dashData.serviceDist.foster + dashData.serviceDist.grooming + dashData.serviceDist.medical}}%, #FF7043 {{dashData.serviceDist.foster + dashData.serviceDist.grooming + dashData.serviceDist.medical}}% 100%);">
+          <view class="donut-chart__center">
+            <text class="donut-chart__center-num">{{dashData.serviceCount}}</text>
+            <text class="donut-chart__center-label">总次数</text>
+          </view>
+        </view>
+        <view class="donut-chart__legend">
+          <view class="legend-item">
+            <view class="legend-item__dot" style="background: #FF9800;"></view>
+            <text class="legend-item__label">寄养</text>
+            <text class="legend-item__value">{{dashData.serviceDist.foster}}%</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-item__dot" style="background: #66BB6A;"></view>
+            <text class="legend-item__label">美容</text>
+            <text class="legend-item__value">{{dashData.serviceDist.grooming}}%</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-item__dot" style="background: #2196F3;"></view>
+            <text class="legend-item__label">医疗</text>
+            <text class="legend-item__value">{{dashData.serviceDist.medical}}%</text>
+          </view>
+          <view class="legend-item">
+            <view class="legend-item__dot" style="background: #FF7043;"></view>
+            <text class="legend-item__label">其他</text>
+            <text class="legend-item__value">{{dashData.serviceDist.other}}%</text>
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 健康趋势 -->
+    <view class="chart-section">
+      <text class="chart-section__title">健康评分趋势</text>
+      <view class="bar-chart">
+        <view class="bar-row" wx:for="{{healthChartData}}" wx:key="month">
+          <text class="bar-row__label">{{item.month}}月</text>
+          <view class="bar-row__track">
+            <view class="bar-row__fill" style="width: {{item.score}}%; background: linear-gradient(90deg, #66BB6A, #A5D6A7);"></view>
+          </view>
+          <text class="bar-row__value">{{item.score}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+</van-popup>

@@ -1,0 +1,279 @@
+<!-- pages/smart-match/smart-match.wxml -->
+<view class="match-page">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top:{{statusBarHeight}}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="goBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">智能匹配</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
+  <!-- 筛选面板 -->
+  <view class="filter-panel" style="margin-top:{{navHeight}}px;">
+
+    <!-- 常用筛选（默认展开） -->
+    <view class="filter-group">
+      <view class="filter-section">
+        <text class="filter-section__label">服务类型</text>
+        <view class="filter-tags">
+          <view
+            wx:for="{{categoryOptions}}"
+            wx:key="value"
+            class="filter-tag {{selectedCategory === item.value ? 'filter-tag--active' : ''}}"
+            bindtap="onCategoryTap"
+            data-value="{{item.value}}"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <view class="filter-section">
+        <text class="filter-section__label">预算范围（元）</text>
+        <view class="filter-price">
+          <view class="filter-price__box">
+            <input
+              class="filter-price__input"
+              type="digit"
+              placeholder="最低价"
+              value="{{priceMin}}"
+              bindinput="onPriceMinInput"
+            />
+          </view>
+          <text class="filter-price__sep">—</text>
+          <view class="filter-price__box">
+            <input
+              class="filter-price__input"
+              type="digit"
+              placeholder="最高价"
+              value="{{priceMax}}"
+              bindinput="onPriceMaxInput"
+            />
+          </view>
+        </view>
+      </view>
+    </view>
+
+    <!-- 更多筛选（可折叠） -->
+    <view class="filter-toggle" bindtap="toggleMoreFilters">
+      <text class="filter-toggle__text">更多筛选</text>
+      <view class="filter-toggle__badge" wx:if="{{moreFilterCount > 0}}">{{moreFilterCount}}</view>
+      <van-icon
+        name="{{showMoreFilters ? 'arrow-up' : 'arrow-down'}}"
+        size="24rpx"
+        color="#8C7A6B"
+      />
+    </view>
+
+    <view class="filter-group {{showMoreFilters ? 'filter-group--show' : 'filter-group--hide'}}">
+      <!-- 宠物类型 -->
+      <view class="filter-section">
+        <text class="filter-section__label">宠物类型</text>
+        <view class="filter-tags">
+          <view
+            wx:for="{{petTypeOptions}}"
+            wx:key="value"
+            class="filter-tag {{selectedPetType === item.value ? 'filter-tag--active' : ''}}"
+            bindtap="onPetTypeTap"
+            data-value="{{item.value}}"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <!-- 宠物体型 -->
+      <view class="filter-section">
+        <text class="filter-section__label">宠物体型</text>
+        <view class="filter-tags">
+          <view
+            wx:for="{{petSizeOptions}}"
+            wx:key="value"
+            class="filter-tag {{selectedPetSize === item.value ? 'filter-tag--active' : ''}}"
+            bindtap="onPetSizeTap"
+            data-value="{{item.value}}"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <!-- 宠物年龄 -->
+      <view class="filter-section">
+        <text class="filter-section__label">宠物年龄</text>
+        <view class="filter-tags">
+          <view
+            wx:for="{{petAgeOptions}}"
+            wx:key="value"
+            class="filter-tag {{selectedPetAge === item.value ? 'filter-tag--active' : ''}}"
+            bindtap="onPetAgeTap"
+            data-value="{{item.value}}"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <!-- 时间段 -->
+      <view class="filter-section">
+        <text class="filter-section__label">时间段</text>
+        <view class="filter-tags">
+          <view
+            wx:for="{{timeOptions}}"
+            wx:key="value"
+            class="filter-tag {{selectedTime === item.value ? 'filter-tag--active' : ''}}"
+            bindtap="onTimeTap"
+            data-value="{{item.value}}"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <!-- 地点 -->
+      <view class="filter-section">
+        <text class="filter-section__label">所在区域</text>
+        <view class="filter-location" bindtap="onLocationTap">
+          <van-icon class="filter-location__icon" name="location-o" size="28rpx" color="#C4B8AC" />
+          <text class="filter-location__text {{location ? '' : 'filter-location__text--placeholder'}}">
+            {{location || '点击选择区域'}}
+          </text>
+          <van-icon wx:if="{{location}}" name="cross" size="24rpx" color="#C4B8AC" catchtap="clearLocation" />
+        </view>
+      </view>
+
+      <!-- 特殊需求 -->
+      <view class="filter-section">
+        <text class="filter-section__label">特殊需求</text>
+        <view class="filter-tags">
+          <view
+            wx:for="{{specialNeedsOptions}}"
+            wx:key="value"
+            class="filter-tag {{specialNeedsMap[item.value] ? 'filter-tag--active' : ''}}"
+            bindtap="onSpecialNeedsTap"
+            data-value="{{item.value}}"
+          >{{item.label}}</view>
+        </view>
+      </view>
+
+      <!-- 个性化需求 -->
+      <view class="filter-section">
+        <text class="filter-section__label">个性化需求</text>
+        <text class="filter-section__desc">请详细描述您的需求，AI将为您智能匹配</text>
+        <view class="filter-textarea-box">
+          <textarea
+            class="filter-textarea"
+            placeholder="例如：我家猫咪比较胆小，需要安静的环境，希望有专人照顾，最好能每天发照片给我看..."
+            placeholder-class="filter-textarea__placeholder"
+            value="{{customNeeds}}"
+            bindinput="onCustomNeedsInput"
+            maxlength="200"
+            auto-height
+          />
+          <text class="filter-textarea__count">{{customNeeds.length}}/200</text>
+        </view>
+        <view class="filter-textarea__tips">
+          <text class="filter-textarea__tip">提示：</text>
+          <text class="filter-textarea__tip-item">宠物性格特点</text>
+          <text class="filter-textarea__tip-item">特殊照顾要求</text>
+          <text class="filter-textarea__tip-item">期望的服务方式</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 搜索按钮 -->
+    <van-button
+      class="match-btn"
+      type="primary"
+      color="linear-gradient(135deg, #FF9800, #FFB74D)"
+      round
+      bindtap="onMatchTap"
+    >
+      <van-icon name="aim" size="28rpx" style="margin-right: 8rpx;" /> 智能匹配
+    </van-button>
+  </view>
+
+  <!-- 筛选条件摘要 -->
+  <view class="filter-summary" wx:if="{{hasFilter}}">
+    <view class="filter-summary__tag" wx:if="{{selectedPetType}}">
+      <text>{{selectedPetTypeName}}</text>
+    </view>
+    <view class="filter-summary__tag" wx:if="{{selectedPetSize}}">
+      <text>{{selectedPetSizeName}}</text>
+    </view>
+    <view class="filter-summary__tag" wx:if="{{selectedPetAge}}">
+      <text>{{selectedPetAgeName}}</text>
+    </view>
+    <view class="filter-summary__tag" wx:if="{{selectedCategory}}">
+      <text>{{selectedCategoryName}}</text>
+    </view>
+    <view class="filter-summary__tag" wx:if="{{priceMin || priceMax}}">
+      <text>{{priceMin || '0'}}-{{priceMax || '∞'}}元</text>
+    </view>
+    <view class="filter-summary__tag" wx:if="{{selectedTime}}">
+      <text>{{selectedTimeName}}</text>
+    </view>
+    <view class="filter-summary__tag" wx:if="{{location}}">
+      <text>{{location}}</text>
+    </view>
+    <view class="filter-summary__tag" wx:for="{{selectedSpecialNeedsNames}}" wx:key="*this">
+      <text>{{item}}</text>
+    </view>
+    <view class="filter-summary__tag" wx:if="{{customNeeds}}">
+      <text>自定义需求</text>
+    </view>
+    <text class="filter-summary__text">共找到 {{resultList.length}} 个结果</text>
+    <text class="filter-summary__clear" bindtap="clearFilters">清除筛选</text>
+  </view>
+
+  <!-- 结果统计 -->
+  <view class="result-header" wx:if="{{!hasFilter && resultList.length > 0}}">
+    <text class="result-header__title">推荐服务</text>
+    <text class="result-header__count">共 {{resultList.length}} 项</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#FF9800" size="48rpx" />
+  </view>
+
+  <!-- 服务列表 -->
+  <view class="svc-list" wx:if="{{resultList.length > 0}}">
+    <view
+      class="svc-card"
+      wx:for="{{resultList}}"
+      wx:key="_id"
+      bindtap="onSvcTap"
+      data-id="{{item._id}}"
+    >
+      <image class="svc-card__img" src="{{item.coverImage || '/static/pet/logo.png'}}" mode="aspectFill" />
+      <view class="svc-card__body">
+        <view class="svc-card__header">
+          <text class="svc-card__name">{{item.name}}</text>
+          <view class="svc-card__price">
+            <text>¥{{item.price}}</text>
+            <text class="svc-card__unit">/{{item.priceUnit || '次'}}</text>
+          </view>
+        </view>
+        <text class="svc-card__agency" wx:if="{{item.agencyName}}">
+          <van-icon name="shop-o" size="20rpx" /> {{item.agencyName}}
+        </text>
+        <text class="svc-card__desc" wx:if="{{item.description}}">{{item.description}}</text>
+        <view class="svc-card__footer">
+          <view class="svc-card__tags">
+            <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.catTitle}}</van-tag>
+            <view class="match-tag match-tag--high" wx:if="{{item.matchScore >= 90}}">
+              <van-icon name="aim" size="16rpx" /> 高度匹配
+            </view>
+            <view class="match-tag match-tag--med" wx:elif="{{item.matchScore >= 70}}">
+              <van-icon name="aim" size="16rpx" /> 适配
+            </view>
+          </view>
+          <text class="svc-card__btn">查看详情</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-wrap" wx:if="{{!loading && resultList.length === 0}}">
+    <van-icon name="search" size="80rpx" color="#F0E6D8" />
+    <text class="empty-wrap__text">暂无匹配的服务</text>
+    <text class="empty-wrap__text" style="font-size: 24rpx; margin-top: 8rpx;">试试调整筛选条件</text>
+  </view>
+
+</view>
