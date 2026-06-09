@@ -29,7 +29,8 @@
     "pages/agency-revenue/agency-revenue",
     "pages/agency-reviews/agency-reviews",
     "pages/agency-pets/agency-pets",
-    "pages/agency-posts/agency-posts"
+    "pages/agency-posts/agency-posts",
+    "pages/browse-services/browse-services"
   ],
   "subpackages": [
     {
@@ -56,6 +57,12 @@
         "text": "首页",
         "iconPath": "static/tab-home.png",
         "selectedIconPath": "static/tab-home-orange.png"
+      },
+      {
+        "pagePath": "pages/orders/orders",
+        "text": "订单",
+        "iconPath": "static/tab-order.png",
+        "selectedIconPath": "static/tab-order-orange.png"
       },
       {
         "pagePath": "pages/my/my",

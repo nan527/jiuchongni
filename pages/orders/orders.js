@@ -47,6 +47,7 @@ Page({
     reviewRating: 5,
     reviewContent: '',
     submittingReview: false,
+    editReviewId: '',
     // 导航栏
     statusBarHeight: 0,
     navBarHeight: 0,
@@ -83,14 +84,15 @@ Page({
   },
 
   onGoBack() {
-    wx.navigateBack({ fail: () => wx.switchTab({ url: '/pages/my/my' }) });
+    // tab 页不支持 navigateBack，直接切换到首页
+    wx.switchTab({ url: '/pages/index/index' });
   },
 
   async onShow() {
     const userInfo = await authService.checkLogin();
     if (!userInfo) {
       wx.showToast({ title: '请先登录', icon: 'none' });
-      setTimeout(() => wx.navigateBack(), 800);
+      setTimeout(() => wx.switchTab({ url: '/pages/index/index' }), 800);
       return;
     }
     this._userId = userInfo._id;
@@ -327,11 +329,46 @@ Page({
   // 评价
   openReview(e) {
     const id = e.currentTarget.dataset.id;
-    this.setData({ showReview: true, reviewOrderId: id, reviewRating: 5, reviewContent: '' });
+    this.setData({ showReview: true, reviewOrderId: id, editReviewId: '', reviewRating: 5, reviewContent: '' });
+  },
+
+  openEditReview(e) {
+    const id = e.currentTarget.dataset.id;
+    const order = this.data.allOrders.find(o => o._id === id);
+    if (!order || !order.review) return;
+    this.setData({
+      showReview: true,
+      reviewOrderId: id,
+      editReviewId: id,
+      reviewRating: order.review.rating || 5,
+      reviewContent: order.review.content || '',
+    });
+  },
+
+  deleteReview(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.showModal({
+      title: '删除评价',
+      content: '确定要删除这条评价吗？删除后不可恢复。',
+      confirmColor: '#E53935',
+      success: async (res) => {
+        if (!res.confirm) return;
+        try {
+          const db = wx.cloud.database();
+          await db.collection('user_orders').doc(id).update({
+            data: { review: db.command.remove() },
+          });
+          wx.showToast({ title: '已删除', icon: 'success' });
+          this.loadOrders();
+        } catch (e) {
+          wx.showToast({ title: '删除失败', icon: 'none' });
+        }
+      },
+    });
   },
 
   closeReview() {
-    this.setData({ showReview: false, reviewOrderId: '' });
+    this.setData({ showReview: false, reviewOrderId: '', editReviewId: '' });
   },
 
   onRatingChange(e) {
@@ -343,23 +380,33 @@ Page({
   },
 
   async submitReview() {
-    const { reviewOrderId, reviewRating, reviewContent } = this.data;
+    const { reviewOrderId, reviewRating, reviewContent, editReviewId } = this.data;
     if (!reviewContent.trim()) return wx.showToast({ title: '请输入评价内容', icon: 'none' });
     if (this.data.submittingReview) return;
     this.setData({ submittingReview: true });
 
     try {
       const db = wx.cloud.database();
-      await db.collection('user_orders').doc(reviewOrderId).update({
-        data: {
-          review: { rating: reviewRating, content: reviewContent.trim(), createTime: db.serverDate() },
-        },
-      });
-      wx.showToast({ title: '评价成功' });
-      this.setData({ showReview: false, reviewOrderId: '' });
+      if (editReviewId) {
+        await db.collection('user_orders').doc(editReviewId).update({
+          data: {
+            'review.rating': reviewRating,
+            'review.content': reviewContent.trim(),
+          },
+        });
+        wx.showToast({ title: '修改成功' });
+      } else {
+        await db.collection('user_orders').doc(reviewOrderId).update({
+          data: {
+            review: { rating: reviewRating, content: reviewContent.trim(), createTime: db.serverDate() },
+          },
+        });
+        wx.showToast({ title: '评价成功' });
+      }
+      this.setData({ showReview: false, reviewOrderId: '', editReviewId: '' });
       this.loadOrders();
     } catch (e) {
-      wx.showToast({ title: '评价失败', icon: 'none' });
+      wx.showToast({ title: '操作失败', icon: 'none' });
     } finally {
       this.setData({ submittingReview: false });
     }

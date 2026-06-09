@@ -62,6 +62,10 @@ Page({
     wx.navigateTo({ url: '/pages/browse-agencies/browse-agencies' });
   },
 
+  toBrowseServices() {
+    wx.navigateTo({ url: '/pages/browse-services/browse-services' });
+  },
+
   toAI() {
     wx.showToast({ title: 'AI 创作即将上线', icon: 'none' });
   },

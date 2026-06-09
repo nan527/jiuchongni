@@ -1,4 +1,4 @@
-/* pages/browse-agencies/browse-agencies.wxss */
+/* pages/browse-services/browse-services.wxss */
 
 .browse-page {
   min-height: 100vh;
@@ -52,7 +52,7 @@
 /* ===== 分类筛选 ===== */
 .cat-scroll {
   white-space: nowrap;
-  padding: 20rpx 32rpx;
+  padding: 20rpx 32rpx 0;
   background: #FFFAF5;
   border-bottom: 1rpx solid #F0E6D8;
 }
@@ -74,6 +74,32 @@
   font-weight: 600;
 }
 
+/* ===== 价格筛选 ===== */
+.price-scroll {
+  white-space: nowrap;
+  padding: 16rpx 32rpx 20rpx;
+  background: #FFFAF5;
+}
+
+.price-pill {
+  display: inline-block;
+  padding: 10rpx 28rpx;
+  margin-right: 16rpx;
+  border-radius: 28rpx;
+  font-size: 24rpx;
+  color: #8C7A6B;
+  background: #FFF8F0;
+  border: 1rpx solid #F0E6D8;
+  transition: all 0.2s ease;
+}
+
+.price-pill--active {
+  background: #FFF3E0;
+  color: #E65100;
+  border-color: #FF9800;
+  font-weight: 600;
+}
+
 /* ===== 加载状态 ===== */
 .loading-wrap {
   display: flex;
@@ -81,12 +107,12 @@
   padding: 80rpx 0;
 }
 
-/* ===== 机构列表 ===== */
-.agency-list {
+/* ===== 服务列表 ===== */
+.svc-list {
   padding: 20rpx 32rpx;
 }
 
-.agency-card {
+.svc-card {
   display: flex;
   background: #FFFAF5;
   border-radius: 24rpx;
@@ -96,18 +122,18 @@
   transition: transform 0.15s ease;
 }
 
-.agency-card:active {
+.svc-card:active {
   transform: scale(0.98);
 }
 
-.agency-card__img {
-  width: 240rpx;
-  height: 240rpx;
+.svc-card__img {
+  width: 220rpx;
+  height: 220rpx;
   flex-shrink: 0;
   background: #F0E6D8;
 }
 
-.agency-card__body {
+.svc-card__body {
   flex: 1;
   padding: 20rpx 24rpx;
   display: flex;
@@ -116,7 +142,7 @@
   min-width: 0;
 }
 
-.agency-card__name {
+.svc-card__name {
   font-size: 30rpx;
   font-weight: 600;
   color: #3D2C1E;
@@ -126,26 +152,40 @@
   overflow: hidden;
 }
 
-.agency-card__type {
-  margin-top: 10rpx;
-}
-
-.agency-card__loc {
+.svc-card__meta {
   display: flex;
   align-items: center;
+  gap: 12rpx;
   margin-top: 10rpx;
 }
 
-.agency-card__loc-text {
+.svc-card__agency {
   font-size: 22rpx;
   color: #8C7A6B;
-  margin-left: 6rpx;
-  white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.agency-card__intro {
+.svc-card__bottom {
+  display: flex;
+  align-items: baseline;
+  margin-top: 10rpx;
+}
+
+.svc-card__price {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #E65100;
+}
+
+.svc-card__unit {
+  font-size: 22rpx;
+  color: #8C7A6B;
+  margin-left: 4rpx;
+}
+
+.svc-card__desc {
   font-size: 22rpx;
   color: #8C7A6B;
   margin-top: 8rpx;

@@ -1,0 +1,83 @@
+<!-- pages/browse-services/browse-services.wxml -->
+<view class="browse-page" style="padding-top: {{ navBarHeight }}px;">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">浏览服务</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
+  <!-- 搜索栏 -->
+  <view class="search-bar">
+    <van-search
+      value="{{searchVal}}"
+      placeholder="搜索服务名称、机构名称"
+      shape="round"
+      background="transparent"
+      bind:change="onSearchChange"
+      bind:search="onSearch"
+    />
+  </view>
+
+  <!-- 分类筛选 -->
+  <scroll-view class="cat-scroll" scroll-x enable-flex>
+    <view
+      class="cat-pill {{activeCategory === item.key ? 'cat-pill--active' : ''}}"
+      wx:for="{{categoryList}}"
+      wx:key="key"
+      bindtap="onCategoryTap"
+      data-key="{{item.key}}"
+    >
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- 价格筛选 -->
+  <scroll-view class="price-scroll" scroll-x enable-flex>
+    <view
+      class="price-pill {{activePrice === item.key ? 'price-pill--active' : ''}}"
+      wx:for="{{priceRanges}}"
+      wx:key="key"
+      bindtap="onPriceTap"
+      data-key="{{item.key}}"
+    >
+      {{item.label}}
+    </view>
+  </scroll-view>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#FF9800" size="48rpx" />
+  </view>
+
+  <!-- 服务列表 -->
+  <view class="svc-list" wx:if="{{!loading && serviceList.length > 0}}">
+    <view class="svc-card" wx:for="{{serviceList}}" wx:key="_id" bindtap="onServiceTap" data-id="{{item._id}}">
+      <image class="svc-card__img" src="{{item.images[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
+      <view class="svc-card__body">
+        <text class="svc-card__name">{{item.name}}</text>
+        <view class="svc-card__meta">
+          <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.category === 'foster' ? '宠物寄养' : item.category === 'grooming' ? '美容洗护' : item.category === 'medical' ? '医疗健康' : item.category === 'door' ? '上门服务' : '商品与增值'}}</van-tag>
+          <text class="svc-card__agency" wx:if="{{item._agencyName}}">{{item._agencyName}}</text>
+        </view>
+        <view class="svc-card__bottom">
+          <text class="svc-card__price">¥{{item.price}}</text>
+          <text class="svc-card__unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
+        </view>
+        <text class="svc-card__desc" wx:if="{{item.desc}}">{{item.desc}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-wrap" wx:if="{{!loading && serviceList.length === 0}}">
+    <van-icon name="search" size="80rpx" color="#F0E6D8" />
+    <text class="empty-wrap__text">暂无相关服务</text>
+  </view>
+
+</view>

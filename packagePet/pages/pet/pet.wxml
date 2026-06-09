@@ -39,11 +39,23 @@
             <view wx:if="{{item.statusConfig}}" class="pet-card__status" style="background:{{item.statusConfig.bg}};color:{{item.statusConfig.color}};">
               {{item.statusConfig.label}}
             </view>
+            <view wx:if="{{displayPetId === item._id}}" class="pet-card__display-tag">展示中</view>
           </view>
           <text class="pet-card__detail">{{item.species}}{{item.age ? ' · ' + item.age + '岁' : ''}}</text>
           <text wx:if="{{item.character}}" class="pet-card__char">{{item.character}}</text>
         </view>
-        <van-icon name="arrow" size="32rpx" color="#C4B8AC" />
+        <view class="pet-card__actions">
+          <view class="pet-card__star {{displayPetId === item._id ? 'pet-card__star--active' : ''}}" catchtap="setAsDisplayPet" data-id="{{item._id}}">
+            <van-icon name="{{displayPetId === item._id ? 'star' : 'star-o'}}" size="32rpx" color="{{displayPetId === item._id ? '#FF9800' : '#C4B8AC'}}" />
+          </view>
+          <view class="pet-card__edit" catchtap="onEditPet" data-id="{{item._id}}">
+            <van-icon name="edit" size="32rpx" color="#FF9800" />
+          </view>
+          <view class="pet-card__delete" catchtap="onDeletePet" data-id="{{item._id}}" data-name="{{item.name}}">
+            <van-icon name="delete-o" size="32rpx" color="#E53935" />
+          </view>
+          <van-icon name="arrow" size="32rpx" color="#C4B8AC" />
+        </view>
       </view>
     </view>
 

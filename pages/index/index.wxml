@@ -74,7 +74,7 @@
   <!-- 机构服务 -->
   <view class="section-bar">
     <text class="section-bar__title">机构服务</text>
-    <view class="section-bar__more" bindtap="toBrowseAgencies">
+    <view class="section-bar__more" bindtap="toBrowseServices">
       <text>查看更多</text>
       <van-icon name="arrow" size="24rpx" color="#8C7A6B" />
     </view>
