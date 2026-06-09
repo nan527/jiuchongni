@@ -96,7 +96,7 @@
           <view class="ao-card" wx:for="{{ activeList }}" wx:key="_id">
             <view class="ao-card__header">
               <text class="ao-card__svc">{{ item.serviceName }}</text>
-              <van-tag wx:if="{{ item.orderStatus === 'confirmed' }}" type="primary" size="medium">{{ item.category === 'foster' ? '寄养中' : '已接单' }}</van-tag>
+              <van-tag wx:if="{{ item.orderStatus === 'confirmed' }}" type="primary" size="medium">{{ item.category === 'foster' ? '已接单' : '已接单' }}</van-tag>
               <van-tag wx:if="{{ item.orderStatus === 'in_progress' }}" color="#E8F5E9" text-color="#2E7D32" size="medium">{{ item.category === 'foster' ? '寄养中' : '服务中' }}</van-tag>
             </view>
             <view class="ao-card__body">

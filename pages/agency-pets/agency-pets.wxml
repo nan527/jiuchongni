@@ -79,7 +79,7 @@
         </view>
       </view>
     </view>
-    <view class="pet-list__item" wx:for="{{ activeOrders }}" wx:key="_id">
+    <view class="pet-list__item" wx:for="{{ activeOrders }}" wx:key="_id" data-petid="{{ item.petId }}" bindtap="onPetTap">
       <image class="pet-list__avatar" src="{{ item.petInfo.photo || '/static/pet/logo.png' }}" mode="aspectFill" />
       <view class="pet-list__info">
         <text class="pet-list__name">{{ item.petName }}</text>

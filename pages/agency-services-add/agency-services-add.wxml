@@ -1,5 +1,23 @@
 <view class="add-page">
 
+  <!-- 步骤指示器 -->
+  <view class="steps" wx:if="{{ !isEdit }}">
+    <view class="step {{ selectedCat ? 'step--done' : 'step--active' }}">
+      <view class="step__circle">1</view>
+      <text class="step__label">选择分类</text>
+    </view>
+    <view class="step__line {{ selectedCat ? 'step__line--done' : '' }}"></view>
+    <view class="step {{ selectedCat && !isCustomMode ? 'step--active' : (selectedCat ? 'step--done' : '') }}">
+      <view class="step__circle">2</view>
+      <text class="step__label">选择服务</text>
+    </view>
+    <view class="step__line {{ isCustomMode ? 'step__line--done' : '' }}"></view>
+    <view class="step {{ isCustomMode ? 'step--active' : '' }}">
+      <view class="step__circle">3</view>
+      <text class="step__label">填写详情</text>
+    </view>
+  </view>
+
   <!-- 步骤1：选择服务分类 -->
   <view class="section">
     <view class="section-title">服务分类</view>
@@ -11,7 +29,9 @@
         bindtap="onSelectCat"
         data-key="{{ item.key }}"
       >
-        <van-icon name="{{ item.icon }}" size="40rpx" color="{{ selectedCat === item.key ? '#FF9800' : '#999' }}"></van-icon>
+        <view class="cat-icon cat-icon--{{ item.key }}">
+          <van-icon name="{{ item.icon }}" size="40rpx" color="{{ selectedCat === item.key ? '#fff' : '#666' }}"></van-icon>
+        </view>
         <text class="cat-label">{{ item.title }}</text>
       </view>
     </view>
@@ -21,7 +41,10 @@
   <view class="section" wx:if="{{ selectedCat && !isCustomMode && !isEdit }}">
     <view class="section-title">
       选择服务类型（可多选）
-      <text class="tpl-count" wx:if="{{ selectedCount > 0 }}">已选 {{ selectedCount }}</text>
+      <view class="tpl-header-right">
+        <text class="tpl-select-all" bindtap="onSelectAll">全选</text>
+        <text class="tpl-count" wx:if="{{ selectedCount > 0 }}">已选 {{ selectedCount }}</text>
+      </view>
     </view>
     <view class="tpl-list">
       <view
@@ -59,8 +82,10 @@
       <!-- 自定义服务入口 -->
       <view class="tpl-item tpl-custom" hover-class="tpl-hover" hover-stay-time="100" bindtap="onCustomMode">
         <view class="tpl-left">
-          <van-icon name="add-circle" size="36rpx" color="#FF9800" />
-          <text class="tpl-name" style="color:#FF9800;font-weight:600;">✦ 自定义服务</text>
+          <view class="tpl-custom-icon">
+            <van-icon name="add" size="28rpx" color="#FF9800" />
+          </view>
+          <text class="tpl-name" style="color:#FF9800;font-weight:600;">自定义服务</text>
         </view>
         <text class="tpl-unit">自行填写</text>
       </view>

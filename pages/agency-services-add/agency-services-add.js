@@ -145,6 +145,18 @@ Page({
     }
   },
 
+  onSelectAll() {
+    const map = { ...this.data.selectedMap };
+    const allSelected = Object.keys(map).length === this.data.currentTemplates.length;
+    if (allSelected) {
+      this.setData({ selectedMap: {}, selectedCount: 0, tplPrices: {} });
+    } else {
+      const newMap = {};
+      this.data.currentTemplates.forEach((_, i) => { newMap[i] = true; });
+      this.setData({ selectedMap: newMap, selectedCount: Object.keys(newMap).length });
+    }
+  },
+
   onCustomMode() {
     this.setData({
       isCustomMode: true,

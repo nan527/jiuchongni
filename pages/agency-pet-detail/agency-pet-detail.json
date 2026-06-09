@@ -1,0 +1,8 @@
+{
+  "navigationStyle": "custom",
+  "usingComponents": {
+    "van-icon": "/miniprogram_npm/@vant/weapp/icon/index",
+    "van-loading": "/miniprogram_npm/@vant/weapp/loading/index",
+    "van-tag": "/miniprogram_npm/@vant/weapp/tag/index"
+  }
+}

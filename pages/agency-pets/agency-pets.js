@@ -56,11 +56,19 @@ Page({
     this.setData({ activeFilter: filter }, () => this._applyFilter());
   },
 
-  /** 点击笼位卡片：占用笼位跳转到订单管理 */
+  /** 点击宠物列表项：跳转到宠物档案 */
+  onPetTap(e) {
+    const petId = e.currentTarget.dataset.petid;
+    if (petId) {
+      wx.navigateTo({ url: '/pages/agency-pet-detail/agency-pet-detail?petId=' + petId });
+    }
+  },
+
+  /** 点击笼位卡片：占用笼位跳转到宠物档案 */
   onCageTap(e) {
     const order = e.currentTarget.dataset.order;
-    if (order) {
-      wx.navigateTo({ url: '/pages/agency-orders/agency-orders' });
+    if (order && order.petId) {
+      wx.navigateTo({ url: '/pages/agency-pet-detail/agency-pet-detail?petId=' + order.petId });
     }
   },
 
@@ -75,6 +83,7 @@ Page({
     const db = wx.cloud.database();
 
     try {
+      console.log('[AgencyPets] agencyProfileId:', this._agencyProfileId);
       // 直接查订单，不依赖 profile 读取
       const ordersRes = await db.collection('user_orders')
         .where({
@@ -85,6 +94,7 @@ Page({
         })
         .limit(100)
         .get();
+      console.log('[AgencyPets] 查到订单:', ordersRes.data.length, '条');
 
       // 过滤已离开的订单
       const activeOrders = (ordersRes.data || []).filter(o => !this._isLeaveExpired(o.leaveTimeMs));
@@ -102,6 +112,7 @@ Page({
       }
 
       // 构建笼位数组
+      console.log('[AgencyPets] totalCages:', totalCages, 'activeOrders:', activeOrders.length);
       const cages = [];
       let occupiedCount = 0;
 
@@ -163,6 +174,7 @@ Page({
 
       const orderData = activeOrders.map(o => ({
         _id: o._id,
+        petId: o.petId,
         petName: o.petName || '未命名宠物',
         petInfo: {
           species: (o.petInfo && o.petInfo.species) || '',

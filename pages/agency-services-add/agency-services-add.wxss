@@ -5,8 +5,79 @@
   padding-bottom: 40rpx;
 }
 
+/* ===== 步骤指示器 ===== */
+.steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx 40rpx 16rpx;
+  background: #fff;
+}
+
+.step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8rpx;
+}
+
+.step__circle {
+  width: 48rpx;
+  height: 48rpx;
+  border-radius: 50%;
+  background: #e0e0e0;
+  color: #999;
+  font-size: 24rpx;
+  font-weight: 700;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.step--active .step__circle {
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  color: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(255, 152, 0, 0.3);
+}
+
+.step--done .step__circle {
+  background: #FF9800;
+  color: #fff;
+}
+
+.step__label {
+  font-size: 20rpx;
+  color: #999;
+}
+
+.step--active .step__label {
+  color: #FF9800;
+  font-weight: 600;
+}
+
+.step--done .step__label {
+  color: #FF9800;
+}
+
+.step__line {
+  width: 60rpx;
+  height: 4rpx;
+  background: #e0e0e0;
+  border-radius: 2rpx;
+  margin: 0 8rpx;
+  margin-bottom: 28rpx;
+}
+
+.step__line--done {
+  background: #FF9800;
+}
+
 .section {
   margin: 24rpx 24rpx 0;
+  background: #fff;
+  border-radius: 20rpx;
+  padding: 28rpx 24rpx;
+  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
 }
 
 .section-title {
@@ -14,9 +85,24 @@
   font-weight: 600;
   color: #333;
   margin-bottom: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
 }
 
-/* 分类选择网格 */
+.tpl-header-right {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+}
+
+.tpl-select-all {
+  font-size: 24rpx;
+  color: #FF9800;
+  font-weight: 500;
+}
+
+/* ===== 分类选择网格 ===== */
 .cat-grid {
   display: flex;
   flex-wrap: wrap;
@@ -30,17 +116,38 @@
   justify-content: center;
   width: calc(33.33% - 12rpx);
   height: 140rpx;
-  background: #fff;
+  background: #fafafa;
   border-radius: 16rpx;
   border: 3rpx solid transparent;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
   transition: all 0.2s;
 }
 
 .cat-item.cat-active {
   border-color: #FF9800;
   background: #FFF8E1;
+  box-shadow: 0 4rpx 16rpx rgba(255, 152, 0, 0.15);
 }
+
+.cat-icon {
+  width: 72rpx;
+  height: 72rpx;
+  border-radius: 20rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.cat-icon--foster { background: #FFF3E0; }
+.cat-icon--grooming { background: #FCE4EC; }
+.cat-icon--medical { background: #E3F2FD; }
+.cat-icon--door { background: #E8F5E9; }
+.cat-icon--extra { background: #F3E5F5; }
+
+.cat-active .cat-icon--foster { background: #FF9800; }
+.cat-active .cat-icon--grooming { background: #E91E63; }
+.cat-active .cat-icon--medical { background: #1976D2; }
+.cat-active .cat-icon--door { background: #388E3C; }
+.cat-active .cat-icon--extra { background: #7B1FA2; }
 
 .cat-label {
   font-size: 24rpx;
@@ -53,7 +160,7 @@
   font-weight: 600;
 }
 
-/* 模板列表 */
+/* ===== 模板列表 ===== */
 .tpl-list {
   display: flex;
   flex-direction: column;
@@ -64,17 +171,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  background: #fff;
-  border-radius: 16rpx;
+  background: #fafafa;
+  border-radius: 12rpx;
   padding: 20rpx 24rpx;
-  border: 3rpx solid #e8e8e8;
-  box-shadow: 0 2rpx 8rpx rgba(0,0,0,0.04);
+  border: 2rpx solid #f0f0f0;
+  transition: all 0.15s;
 }
 
 .tpl-item.tpl-active {
   border-color: #FF9800;
   background: #FFF8E1;
-  border-left-width: 10rpx;
+  border-left-width: 8rpx;
   padding-left: 18rpx;
 }
 
@@ -122,9 +229,22 @@
   margin-left: 12rpx;
 }
 
+/* 自定义服务入口 */
 .tpl-custom {
-  justify-content: space-between;
-  margin-top: 8rpx;
+  border-style: dashed;
+  border-color: #FFCC80;
+  background: #FFFAF5;
+}
+
+.tpl-custom-icon {
+  width: 36rpx;
+  height: 36rpx;
+  border-radius: 50%;
+  background: #FFF3E0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-right: 12rpx;
 }
 
 .tpl-custom .tpl-unit {
@@ -140,7 +260,6 @@
   font-size: 22rpx;
   padding: 2rpx 14rpx;
   border-radius: 999rpx;
-  margin-left: 12rpx;
 }
 
 /* 按下反馈 */
@@ -200,7 +319,6 @@
 /* 图片上传区 */
 .upload-section {
   margin-top: 24rpx;
-  padding: 0 24rpx;
 }
 
 .upload-title {
