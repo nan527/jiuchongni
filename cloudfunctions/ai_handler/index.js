@@ -1429,7 +1429,7 @@ async function smartMatchParse(event) {
       max_tokens: 500,
     }, {
       headers: { Authorization: `Bearer ${apiKey}` },
-      timeout: 15000,
+      timeout: 30000,
     });
 
     const raw = res.data.choices[0].message.content;
