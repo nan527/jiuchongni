@@ -1426,7 +1426,7 @@ async function smartMatchParse(event) {
         { role: 'user', content: trimmedText || '请根据宠物信息推荐服务' },
       ],
       temperature: 0.3,
-      max_tokens: 500,
+      max_tokens: 2000,
     }, {
       headers: { Authorization: `Bearer ${apiKey}` },
       timeout: 30000,
@@ -1441,7 +1441,8 @@ async function smartMatchParse(event) {
     }
 
     const choice = res.data.choices[0];
-    const raw = (choice.message && choice.message.content) || choice.text || '';
+    // MiMo 是推理模型，回答在 reasoning_content 字段，content 可能为空
+    const raw = (choice.message && (choice.message.content || choice.message.reasoning_content)) || choice.text || '';
     console.log('[smartMatchParse] AI 原始返回:', raw);
 
     if (!raw) {
