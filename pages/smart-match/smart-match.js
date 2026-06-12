@@ -1,363 +1,304 @@
 // pages/smart-match/smart-match.js
 const { CAT_TITLE_MAP, getStatusBarHeight } = require('../../utils/helpers');
-const { resolveTempUrls } = require('../../utils/fileHelper');
+const { resolveAgencyImages, resolveTempUrls } = require('../../utils/fileHelper');
+const authService = require('../../services/authService');
+
+const db = wx.cloud.database();
+
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
 
 Page({
   data: {
     statusBarHeight: 0,
-    navHeight: 0,
+    navBarHeight: 0,
 
-    // 折叠控制
-    showMoreFilters: false,
-    moreFilterCount: 0,
+    // 宠物选择
+    petList: [],
+    selectedPetId: '',
+    selectedPet: null,
+    petPickerVisible: false,
 
-    // 宠物类型
-    petTypeOptions: [
-      { label: '不限', value: '' },
-      { label: '猫咪', value: 'cat' },
-      { label: '狗狗', value: 'dog' },
-      { label: '兔子', value: 'rabbit' },
-      { label: '仓鼠', value: 'hamster' },
-      { label: '鸟类', value: 'bird' },
-      { label: '水族', value: 'fish' },
-      { label: '其他', value: 'other' },
-    ],
-    selectedPetType: '',
-    selectedPetTypeName: '',
-
-    // 宠物体型
-    petSizeOptions: [
-      { label: '不限', value: '' },
-      { label: '小型（<5kg）', value: 'small' },
-      { label: '中型（5-15kg）', value: 'medium' },
-      { label: '大型（>15kg）', value: 'large' },
-    ],
-    selectedPetSize: '',
-    selectedPetSizeName: '',
-
-    // 宠物年龄
-    petAgeOptions: [
-      { label: '不限', value: '' },
-      { label: '幼年（<1岁）', value: 'baby' },
-      { label: '成年（1-7岁）', value: 'adult' },
-      { label: '老年（>7岁）', value: 'senior' },
-    ],
-    selectedPetAge: '',
-    selectedPetAgeName: '',
-
-    // 服务类型
-    categoryOptions: [
-      { label: '全部', value: '' },
-      { label: '宠物寄养', value: 'foster' },
-      { label: '美容洗护', value: 'grooming' },
-      { label: '医疗健康', value: 'medical' },
-      { label: '上门服务', value: 'door' },
-      { label: '商品增值', value: 'extra' },
-    ],
-    selectedCategory: '',
-    selectedCategoryName: '',
-
-    // 价格范围
-    priceMin: '',
-    priceMax: '',
-
-    // 时间段
-    timeOptions: [
-      { label: '不限', value: '' },
-      { label: '工作日', value: 'weekday' },
-      { label: '周末', value: 'weekend' },
-      { label: '节假日', value: 'holiday' },
-    ],
-    selectedTime: '',
-    selectedTimeName: '',
-
-    // 地区
-    location: '',
-
-    // 特殊需求
-    specialNeedsOptions: [
-      { label: '术后护理', value: 'postop' },
-      { label: '产后护理', value: 'postpartum' },
-      { label: '老年护理', value: 'eldercare' },
-      { label: '幼宠照护', value: 'babycare' },
-      { label: '皮肤敏感', value: 'sensitive' },
-      { label: '行动不便', value: 'mobility' },
-    ],
-    selectedSpecialNeeds: [],
-    selectedSpecialNeedsNames: [],
-    specialNeedsMap: {},
-
-    // 个性化需求文本
-    customNeeds: '',
+    // 需求输入
+    userText: '',
+    placeholder: '例如：我家猫咪比较胆小，需要安静的环境，有24小时监控',
 
     // 结果
     resultList: [],
+    aiReasons: {},       // { [serviceId]: '匹配理由' }
+    parsedIntent: null,  // AI 解析结果
     loading: false,
-    hasFilter: false,
-
-    // 全量服务缓存
-    allServices: [],
+    hasResult: false,
+    resultCount: 0,
   },
 
   onLoad() {
     const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
-    const navHeight = menuBtn.top + (menuBtn.height - statusBarHeight) / 2 + statusBarHeight;
-    this.setData({ statusBarHeight, navHeight });
-    this.loadAllServices();
+    const navBarHeight = menuBtn.top + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
   },
 
-  async loadAllServices() {
-    this.setData({ loading: true });
-    const db = wx.cloud.database();
+  async onShow() {
+    const userInfo = await authService.checkLogin();
+    if (!userInfo) {
+      wx.showToast({ title: '请先登录', icon: 'none' });
+      setTimeout(() => wx.navigateBack(), 800);
+      return;
+    }
+    this._userId = userInfo._id;
+    if (this.data.petList.length === 0) {
+      await this.loadPets();
+    }
+  },
+
+  async loadPets() {
+    const userId = this._userId;
+    if (!userId) return;
     try {
-      const res = await db.collection('agency_services')
-        .orderBy('createTime', 'desc')
-        .limit(100)
-        .get();
-      const list = res.data || [];
-      // 加载机构名称
-      for (const svc of list) {
-        svc.catTitle = CAT_TITLE_MAP[svc.category] || '服务';
-        if (svc.images && svc.images.length) {
-          svc.coverImage = (await resolveTempUrls([svc.images[0]]))[0];
-        }
-        // 尝试加载机构名
-        if (svc.agencyId) {
-          try {
-            const agencyRes = await db.collection('agency_profiles').doc(svc.agencyId).field({ orgName: true }).get();
-            svc.agencyName = agencyRes.data.orgName || '';
-          } catch (e) {
-            svc.agencyName = '';
-          }
-        }
+      const res = await withTimeout(
+        db.collection('pets').where({ ownerId: userId }).orderBy('createTime', 'desc').get(),
+        8000
+      );
+      const petList = (res.data || []).filter(p => p.ownerId === userId);
+      let selectedPetId = this.data.selectedPetId;
+      if (petList.length > 0 && !petList.find(p => p._id === selectedPetId)) {
+        selectedPetId = petList[0]._id;
       }
-      this.setData({ allServices: list, resultList: list, loading: false });
+      const selectedPet = petList.find(p => p._id === selectedPetId) || null;
+      this.setData({ petList, selectedPetId, selectedPet });
     } catch (e) {
-      this.setData({ allServices: [], resultList: [], loading: false });
+      console.warn('[SmartMatch] loadPets', e);
     }
   },
 
-  onCategoryTap(e) {
-    const value = e.currentTarget.dataset.value;
-    const cat = this.data.categoryOptions.find(o => o.value === value);
-    this.setData({ selectedCategory: value, selectedCategoryName: cat ? cat.label : '' });
+  // 宠物选择
+  onShowPetPicker() {
+    this.setData({ petPickerVisible: true });
   },
 
-  onPetTypeTap(e) {
-    const value = e.currentTarget.dataset.value;
-    const opt = this.data.petTypeOptions.find(o => o.value === value);
-    this.setData({ selectedPetType: value, selectedPetTypeName: opt ? opt.label : '' });
-    this.updateMoreFilterCount();
+  onPetPickerClose() {
+    this.setData({ petPickerVisible: false });
   },
 
-  onPetSizeTap(e) {
-    const value = e.currentTarget.dataset.value;
-    const opt = this.data.petSizeOptions.find(o => o.value === value);
-    this.setData({ selectedPetSize: value, selectedPetSizeName: opt ? opt.label : '' });
-    this.updateMoreFilterCount();
+  onPetSelect(e) {
+    const id = e.currentTarget.dataset.id;
+    const pet = this.data.petList.find(p => p._id === id);
+    this.setData({ selectedPetId: id, selectedPet: pet, petPickerVisible: false });
   },
 
-  onPetAgeTap(e) {
-    const value = e.currentTarget.dataset.value;
-    const opt = this.data.petAgeOptions.find(o => o.value === value);
-    this.setData({ selectedPetAge: value, selectedPetAgeName: opt ? opt.label : '' });
-    this.updateMoreFilterCount();
+  // 需求输入
+  onTextInput(e) {
+    this.setData({ userText: e.detail.value });
   },
 
-  onSpecialNeedsTap(e) {
-    const value = e.currentTarget.dataset.value;
-    let selected = [...this.data.selectedSpecialNeeds];
-    const idx = selected.indexOf(value);
-    if (idx === -1) {
-      selected.push(value);
-    } else {
-      selected.splice(idx, 1);
-    }
-    const names = selected.map(v => {
-      const opt = this.data.specialNeedsOptions.find(o => o.value === v);
-      return opt ? opt.label : '';
-    }).filter(Boolean);
-    // 构建选中状态映射，避免模板中使用 indexOf
-    const needsMap = {};
-    selected.forEach(v => { needsMap[v] = true; });
-    this.setData({ selectedSpecialNeeds: selected, selectedSpecialNeedsNames: names, specialNeedsMap: needsMap });
-    this.updateMoreFilterCount();
-  },
-
-  onPriceMinInput(e) {
-    this.setData({ priceMin: e.detail.value });
-  },
-
-  onPriceMaxInput(e) {
-    this.setData({ priceMax: e.detail.value });
-  },
-
-  onCustomNeedsInput(e) {
-    this.setData({ customNeeds: e.detail.value });
-  },
-
-  onTimeTap(e) {
-    const value = e.currentTarget.dataset.value;
-    const opt = this.data.timeOptions.find(o => o.value === value);
-    this.setData({ selectedTime: value, selectedTimeName: opt ? opt.label : '' });
-    this.updateMoreFilterCount();
-  },
-
-  onLocationTap() {
-    const regions = ['全部区域', '南山区', '福田区', '罗湖区', '宝安区', '龙岗区', '龙华区', '其他'];
-    wx.showActionSheet({
-      itemList: regions,
-      success: (res) => {
-        const selected = regions[res.tapIndex];
-        this.setData({ location: selected === '全部区域' ? '' : selected });
-        this.updateMoreFilterCount();
-      },
-    });
-  },
-
-  clearLocation() {
-    this.setData({ location: '' });
-    this.updateMoreFilterCount();
-  },
-
-  updateMoreFilterCount() {
-    const { selectedPetType, selectedPetSize, selectedPetAge, selectedTime, location, selectedSpecialNeeds, customNeeds } = this.data;
-    let count = 0;
-    if (selectedPetType) count++;
-    if (selectedPetSize) count++;
-    if (selectedPetAge) count++;
-    if (selectedTime) count++;
-    if (location) count++;
-    if (selectedSpecialNeeds.length > 0) count++;
-    if (customNeeds) count++;
-    this.setData({ moreFilterCount: count });
-  },
-
-  toggleMoreFilters() {
-    this.setData({ showMoreFilters: !this.data.showMoreFilters });
-  },
-
-  onMatchTap() {
-    this.doFilter();
-  },
-
-  doFilter() {
-    const {
-      allServices, selectedCategory, priceMin, priceMax, selectedTime, location,
-      selectedPetType, selectedPetSize, selectedPetAge, selectedSpecialNeeds, customNeeds
-    } = this.data;
-
-    const hasFilter = !!(
-      selectedCategory || priceMin || priceMax || selectedTime || location ||
-      selectedPetType || selectedPetSize || selectedPetAge || selectedSpecialNeeds.length ||
-      customNeeds
-    );
-
-    if (!hasFilter) {
-      this.setData({ resultList: allServices, hasFilter: false });
+  // 核心：触发智能匹配
+  async onMatchTap() {
+    if (this.data.loading) return;
+    if (!this.data.selectedPet) {
+      wx.showToast({ title: '请先选择宠物', icon: 'none' });
       return;
     }
 
-    let result = [...allServices];
+    this.setData({ loading: true, resultList: [], hasResult: false });
 
-    // 硬性筛选（不满足条件的直接排除）
-    if (selectedCategory) {
-      result = result.filter(s => s.category === selectedCategory);
-    }
-    if (priceMin) {
-      result = result.filter(s => Number(s.price) >= Number(priceMin));
-    }
-    if (priceMax) {
-      result = result.filter(s => Number(s.price) <= Number(priceMax));
-    }
-    if (location) {
-      result = result.filter(s => s.region && s.region.includes(location));
-    }
+    try {
+      // 1. 调用 AI 解析需求
+      const pet = this.data.selectedPet;
+      const petInfo = {
+        name: pet.name || '',
+        species: pet.species || '',
+        age: pet.age || '',
+        breed: pet.breed || '',
+      };
 
-    // 智能匹配度计算（多维度加权评分）
-    result = result.map(s => {
-      let score = 50; // 基础分
+      const aiRes = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: {
+          action: 'smart_match_parse',
+          userText: this.data.userText,
+          petInfo,
+        },
+      });
 
-      // 服务类型匹配（权重 20）
-      if (selectedCategory && s.category === selectedCategory) {
-        score += 20;
+      const { success, parsed, msg } = aiRes.result || {};
+      if (!success || !parsed) {
+        wx.showToast({ title: msg || 'AI 解析失败', icon: 'none' });
+        this.setData({ loading: false });
+        return;
       }
 
-      // 价格区间匹配（权重 10）
-      if (priceMin && Number(s.price) >= Number(priceMin)) score += 5;
-      if (priceMax && Number(s.price) <= Number(priceMax)) score += 5;
-
-      // 地区匹配（权重 10）
-      if (location && s.region && s.region.includes(location)) {
-        score += 10;
+      // 2. 获取用户位置
+      let userLocation = null;
+      try {
+        const loc = await wx.getLocation({ type: 'gcj02' });
+        userLocation = { latitude: loc.latitude, longitude: loc.longitude };
+      } catch (e) {
+        // 定位失败不阻断
       }
 
-      // 时间段匹配（权重 10）
-      if (selectedTime && s.availableTime && s.availableTime.includes(selectedTime)) {
-        score += 10;
+      // 3. 查询所有已审核机构及其服务
+      const [agenciesRes, servicesRes] = await Promise.all([
+        withTimeout(
+          db.collection('agency_profiles').where({ auditStatus: 'approved' }).get(),
+          8000
+        ),
+        withTimeout(
+          db.collection('agency_services').orderBy('createTime', 'desc').limit(100).get(),
+          8000
+        ),
+      ]);
+
+      // 4. 构建 (agency, service) 对
+      const agencies = agenciesRes.data || [];
+      const services = servicesRes.data || [];
+      const pairs = services.map(s => {
+        const agency = agencies.find(a => a._id === s.agencyProfileId);
+        return { service: s, agency };
+      }).filter(p => p.agency);
+
+      // 5. 硬性过滤
+      let filtered = pairs;
+      if (parsed.serviceCategory) {
+        filtered = filtered.filter(({ service }) => service.category === parsed.serviceCategory);
       }
 
-      // 宠物类型匹配（权重 15）
-      if (selectedPetType && s.suitablePetTypes && s.suitablePetTypes.includes(selectedPetType)) {
+      // 6. 评分 + 排序
+      const scored = filtered.map(p => ({
+        ...p,
+        matchScore: this._calcScore(p, parsed, userLocation),
+      }));
+
+      const results = scored
+        .filter(r => r.matchScore >= 30)
+        .sort((a, b) => b.matchScore - a.matchScore)
+        .slice(0, 10);
+
+      // 7. 补充机构图片、生成匹配理由
+      const aiReasons = {};
+      for (const r of results) {
+        r.service.catTitle = CAT_TITLE_MAP[r.service.category] || '服务';
+        if (r.service.images && r.service.images.length) {
+          r.service.coverImage = (await resolveTempUrls([r.service.images[0]]))[0];
+        }
+        // 生成匹配理由
+        aiReasons[r.service._id] = this._generateReason(r, parsed);
+      }
+
+      this.setData({
+        resultList: results,
+        aiReasons,
+        parsedIntent: parsed,
+        loading: false,
+        hasResult: true,
+        resultCount: results.length,
+      });
+    } catch (e) {
+      console.warn('[SmartMatch] onMatchTap', e);
+      wx.showToast({ title: '匹配失败，请重试', icon: 'none' });
+      this.setData({ loading: false });
+    }
+  },
+
+  // 评分算法
+  _calcScore({ service, agency }, parsed, userLocation) {
+    let score = 5;
+
+    // 1. 服务类型匹配 (+25)
+    if (parsed.serviceCategory && service.category === parsed.serviceCategory) {
+      score += 25;
+    }
+
+    // 2. 关键词匹配 (+20)
+    const textPool = [
+      service.name, service.desc,
+      agency.orgIntro, agency.serviceScope, agency.orgName
+    ].join(' ').toLowerCase();
+    const keywordHits = (parsed.keywords || []).filter(kw => textPool.includes(kw.toLowerCase()));
+    score += Math.min(keywordHits.length * 5, 20);
+
+    // 3. 区域匹配 (+15)
+    if (userLocation && agency.region) {
+      const userRegion = userLocation.region || '';
+      if (agency.region.includes(userRegion) || userRegion.includes(agency.region)) {
         score += 15;
       }
+    }
 
-      // 宠物体型匹配（权重 10）
-      if (selectedPetSize && s.suitablePetSizes && s.suitablePetSizes.includes(selectedPetSize)) {
+    // 4. 价格匹配 (+15)
+    if (parsed.budget && parsed.budget.max) {
+      const price = Number(service.price) || 0;
+      if (price >= (parsed.budget.min || 0) && price <= parsed.budget.max) {
+        score += 15;
+      } else if (parsed.budget.min && price < parsed.budget.min) {
         score += 10;
       }
+    }
 
-      // 宠物年龄匹配（权重 10）
-      if (selectedPetAge && s.suitablePetAges && s.suitablePetAges.includes(selectedPetAge)) {
-        score += 10;
-      }
+    // 5. 环境展示度 (+10)
+    if (agency.envImages && agency.envImages.length > 0) {
+      score += 10;
+    } else {
+      score += 3;
+    }
 
-      // 特殊需求匹配（权重 15）
-      if (selectedSpecialNeeds.length && s.specialNeeds && s.specialNeeds.length) {
-        const matchCount = selectedSpecialNeeds.filter(n => s.specialNeeds.includes(n)).length;
-        const matchRatio = matchCount / selectedSpecialNeeds.length;
-        score += Math.round(15 * matchRatio);
-      }
+    // 6. 偏好匹配 (+10)
+    if (parsed.preferences && parsed.preferences.length > 0) {
+      const prefPool = [agency.orgIntro, agency.serviceScope, agency.cageDesc]
+        .filter(Boolean).join(' ').toLowerCase();
+      const prefHits = parsed.preferences.filter(p => prefPool.includes(p.toLowerCase()));
+      score += Math.min(prefHits.length * 5, 10);
+    }
 
-      // 评分上限 100
-      return { ...s, matchScore: Math.min(score, 100) };
-    });
+    // 7. 紧急度加成 (+5)
+    if (parsed.urgency === 'urgent' && service.category === 'foster' && agency.totalCages > 0) {
+      score += 5;
+    }
 
-    // 按匹配度降序排序
-    result.sort((a, b) => b.matchScore - a.matchScore);
-
-    this.setData({ resultList: result, hasFilter: true });
+    return score;
   },
 
-  clearFilters() {
-    this.setData({
-      selectedPetType: '',
-      selectedPetTypeName: '',
-      selectedPetSize: '',
-      selectedPetSizeName: '',
-      selectedPetAge: '',
-      selectedPetAgeName: '',
-      selectedCategory: '',
-      selectedCategoryName: '',
-      priceMin: '',
-      priceMax: '',
-      selectedTime: '',
-      selectedTimeName: '',
-      location: '',
-      selectedSpecialNeeds: [],
-      selectedSpecialNeedsNames: [],
-      specialNeedsMap: {},
-      customNeeds: '',
-      moreFilterCount: 0,
-      resultList: this.data.allServices,
-      hasFilter: false,
-    });
+  // 生成匹配理由
+  _generateReason({ service, agency, matchScore }, parsed) {
+    const reasons = [];
+    if (parsed.serviceCategory && service.category === parsed.serviceCategory) {
+      reasons.push('服务类型完全匹配');
+    }
+    if (parsed.preferences && parsed.preferences.length > 0) {
+      const prefPool = [agency.orgIntro, agency.serviceScope, agency.cageDesc]
+        .filter(Boolean).join(' ').toLowerCase();
+      const hits = parsed.preferences.filter(p => prefPool.includes(p.toLowerCase()));
+      if (hits.length > 0) reasons.push('满足' + hits.join('、') + '等偏好');
+    }
+    if (parsed.budget && parsed.budget.max) {
+      const price = Number(service.price) || 0;
+      if (price <= parsed.budget.max) reasons.push('价格在预算范围内');
+    }
+    if (reasons.length === 0) reasons.push('综合评分较高');
+    return reasons.slice(0, 2).join('，');
   },
 
-  onSvcTap(e) {
-    const id = e.currentTarget.dataset.id;
-    wx.navigateTo({ url: `/pages/service-detail/service-detail?id=${id}` });
+  // 操作跳转
+  onDetailTap(e) {
+    const agencyId = e.currentTarget.dataset.agencyid;
+    if (agencyId) {
+      wx.navigateTo({ url: `/pages/agency-detail/agency-detail?id=${agencyId}` });
+    }
+  },
+
+  onBookTap(e) {
+    const serviceId = e.currentTarget.dataset.serviceid;
+    if (serviceId) {
+      wx.navigateTo({ url: `/pages/service-detail/service-detail?id=${serviceId}` });
+    }
+  },
+
+  onReMatch() {
+    this.setData({ resultList: [], hasResult: false, parsedIntent: null });
   },
 
   goBack() {
