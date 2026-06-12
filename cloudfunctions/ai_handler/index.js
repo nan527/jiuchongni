@@ -1419,7 +1419,7 @@ async function smartMatchParse(event) {
 - preferences：用户的特殊偏好（如"安静"、"有监控"、"干净"），用于与机构描述匹配
 - urgency：提到"急"、"马上"、"今天"等为 urgent，否则 normal`;
 
-    const res = await axios.post('https://api.siliconflow.cn/v1/chat/completions', {
+    const res = await axios.post('https://token-plan-cn.xiaomimimo.com/v1/chat/completions', {
       model: 'mimo-v2.5-pro',
       messages: [
         { role: 'system', content: systemPrompt },
