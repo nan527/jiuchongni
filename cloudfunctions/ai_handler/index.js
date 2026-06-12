@@ -1438,7 +1438,7 @@ async function smartMatchParse(event) {
     // 尝试提取 JSON（兼容 AI 可能返回 markdown 代码块的情况）
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return { success: false, msg: 'AI 返回格式异常' };
+      return { success: false, msg: 'AI 返回格式异常: ' + raw.slice(0, 200) };
     }
     const parsed = JSON.parse(jsonMatch[0]);
     return { success: true, parsed };
