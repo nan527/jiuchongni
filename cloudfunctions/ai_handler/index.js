@@ -1383,21 +1383,23 @@ async function insertTestHealth(event) {
  */
 async function smartMatchParse(event) {
   const { userText = '', petInfo = {} } = event;
+  const trimmedText = (userText || '').slice(0, 500);
   const db = cloud.database();
 
-  // 获取 mimo-v2.5-pro 模型配置
-  const configRes = await db.collection('api_configs')
-    .where({ model: 'mimo-v2.5-pro', enabled: true })
-    .get();
-  const apiKey = configRes.data[0]?.apiKey;
-  if (!apiKey) {
-    return { success: false, msg: 'AI 模型未配置' };
-  }
+  try {
+    // 获取 mimo-v2.5-pro 模型配置
+    const configRes = await db.collection('api_configs')
+      .where({ model: 'mimo-v2.5-pro', enabled: true })
+      .get();
+    const apiKey = configRes.data[0]?.apiKey;
+    if (!apiKey) {
+      return { success: false, msg: 'AI 模型未配置' };
+    }
 
-  const systemPrompt = `你是一个宠物服务需求分析助手。根据用户描述和宠物信息，提取结构化的服务需求。
+    const systemPrompt = `你是一个宠物服务需求分析助手。根据用户描述和宠物信息，提取结构化的服务需求。
 
 宠物信息：${JSON.stringify(petInfo)}
-用户需求：${userText || '(用户未填写文字需求，请仅根据宠物信息推荐)'}
+用户需求：${trimmedText || '(用户未填写文字需求，请仅根据宠物信息推荐)'}
 
 请返回 JSON 格式（不要包含其他文字）：
 {
@@ -1417,12 +1419,11 @@ async function smartMatchParse(event) {
 - preferences：用户的特殊偏好（如"安静"、"有监控"、"干净"），用于与机构描述匹配
 - urgency：提到"急"、"马上"、"今天"等为 urgent，否则 normal`;
 
-  try {
     const res = await axios.post('https://api.siliconflow.cn/v1/chat/completions', {
       model: 'mimo-v2.5-pro',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: userText || '请根据宠物信息推荐服务' },
+        { role: 'user', content: trimmedText || '请根据宠物信息推荐服务' },
       ],
       temperature: 0.3,
       max_tokens: 500,
@@ -1440,7 +1441,7 @@ async function smartMatchParse(event) {
     const parsed = JSON.parse(jsonMatch[0]);
     return { success: true, parsed };
   } catch (e) {
-    console.warn('[smartMatchParse]', e.message);
+    console.error('[smartMatchParse]', e.message);
     return { success: false, msg: 'AI 解析失败: ' + e.message };
   }
 }
