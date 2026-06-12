@@ -1,6 +1,6 @@
 // pages/smart-match/smart-match.js
 const { CAT_TITLE_MAP, getStatusBarHeight } = require('../../utils/helpers');
-const { resolveAgencyImages, resolveTempUrls } = require('../../utils/fileHelper');
+const { resolveTempUrls } = require('../../utils/fileHelper');
 const authService = require('../../services/authService');
 
 const db = wx.cloud.database();
@@ -179,13 +179,18 @@ Page({
         .slice(0, 10);
 
       // 7. 补充机构图片、生成匹配理由
+      // Batch resolve cover images
+      const allFileIDs = results
+        .filter(r => r.service.images && r.service.images.length)
+        .map(r => r.service.images[0]);
+      const resolvedUrls = allFileIDs.length > 0 ? await resolveTempUrls(allFileIDs) : [];
+      let urlIdx = 0;
       const aiReasons = {};
       for (const r of results) {
         r.service.catTitle = CAT_TITLE_MAP[r.service.category] || '服务';
         if (r.service.images && r.service.images.length) {
-          r.service.coverImage = (await resolveTempUrls([r.service.images[0]]))[0];
+          r.service.coverImage = resolvedUrls[urlIdx++] || '';
         }
-        // 生成匹配理由
         aiReasons[r.service._id] = this._generateReason(r, parsed);
       }
 
@@ -221,15 +226,7 @@ Page({
     const keywordHits = (parsed.keywords || []).filter(kw => textPool.includes(kw.toLowerCase()));
     score += Math.min(keywordHits.length * 5, 20);
 
-    // 3. 区域匹配 (+15)
-    if (userLocation && agency.region) {
-      const userRegion = userLocation.region || '';
-      if (agency.region.includes(userRegion) || userRegion.includes(agency.region)) {
-        score += 15;
-      }
-    }
-
-    // 4. 价格匹配 (+15)
+    // 3. 价格匹配 (+15)
     if (parsed.budget && parsed.budget.max) {
       const price = Number(service.price) || 0;
       if (price >= (parsed.budget.min || 0) && price <= parsed.budget.max) {
