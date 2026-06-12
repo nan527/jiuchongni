@@ -1433,18 +1433,19 @@ async function smartMatchParse(event) {
     });
 
     console.log('[smartMatchParse] API 响应状态:', res.status);
-    console.log('[smartMatchParse] API 响应体:', JSON.stringify(res.data).slice(0, 500));
+    console.log('[smartMatchParse] API 完整响应:', JSON.stringify(res.data).slice(0, 1000));
 
     // 检查响应结构
-    if (!res.data || !res.data.choices || !res.data.choices[0] || !res.data.choices[0].message) {
-      return { success: false, msg: 'API 响应结构异常: ' + JSON.stringify(res.data).slice(0, 300) };
+    if (!res.data || !res.data.choices || !res.data.choices[0]) {
+      return { success: false, msg: 'API 响应结构异常: ' + JSON.stringify(res.data).slice(0, 500) };
     }
 
-    const raw = res.data.choices[0].message.content || '';
+    const choice = res.data.choices[0];
+    const raw = (choice.message && choice.message.content) || choice.text || '';
     console.log('[smartMatchParse] AI 原始返回:', raw);
 
     if (!raw) {
-      return { success: false, msg: 'AI 返回内容为空' };
+      return { success: false, msg: 'AI 返回内容为空, choice: ' + JSON.stringify(choice).slice(0, 500) };
     }
 
     // 尝试提取 JSON（兼容 AI 可能返回 markdown 代码块的情况）
