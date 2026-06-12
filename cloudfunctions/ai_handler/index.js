@@ -15,6 +15,10 @@ exports.main = async (event, context) => {
   switch (action) {
     case 'analyze_health':
       return await analyzeHealth(event);
+    case 'generate_caption':
+      return await generateCaption(event);
+    case 'ai_recommend':
+      return await aiRecommend(event);
     case 'get_openid':
       return { success: true, openid: cloud.getWXContext().OPENID };
     case 'find_user_by_openid':
@@ -33,6 +37,32 @@ exports.main = async (event, context) => {
       return await resetPassword(event);
     case 'bind_wechat':
       return await bindWechat(event);
+    case 'generate_image':
+      return await generateImage(event);
+    case 'download_and_save':
+      return await downloadAndSave(event);
+    case 'get_api_configs':
+      return await getApiConfigs(event);
+    case 'save_api_config':
+      return await saveApiConfig(event);
+    case 'check_quota':
+      return await checkQuota(event);
+    case 'use_quota':
+      return await useQuota(event);
+    case 'get_user_balance':
+      return await getUserBalance(event);
+    case 'recharge':
+      return await recharge(event);
+    case 'deduct_balance':
+      return await deductBalance(event);
+    case 'get_balance_logs':
+      return await getBalanceLogs(event);
+    case 'init_api_configs':
+      return await initApiConfigs();
+    case 'insert_test_health':
+      return await insertTestHealth(event);
+    case 'smart_match_parse':
+      return await smartMatchParse(event);
     default:
       return { success: false, msg: '未知操作: ' + action };
   }
@@ -178,6 +208,197 @@ async function analyzeHealth(event) {
 function extractTags(text) {
   const keywords = ['控制饮食', '多运动', '补充营养', '注意保暖', '定期体检', '减少零食'];
   return keywords.filter((kw) => text.includes(kw));
+}
+
+/**
+ * AI 配文生成
+ * 根据宠物信息和照片描述，生成个性化的社交媒体配文
+ * @param {Object} event - { petInfo, photoDescription, style }
+ */
+async function generateCaption(event) {
+  try {
+    const { petInfo, photoDescription, style } = event;
+
+    if (!petInfo) {
+      return { success: false, msg: '请先选择宠物' };
+    }
+
+    // 构建 prompt
+    const styleMap = {
+      warm: '温馨治愈风',
+      funny: '搞笑幽默风',
+      art: '文艺清新风',
+    };
+    const styleName = styleMap[style] || '温馨治愈风';
+
+    const prompt = `你是一位专业的宠物自媒体博主，擅长为宠物照片撰写吸引人的配文。
+
+宠物信息：
+- 品种：${petInfo.breed || petInfo.species || '未知'}
+- 年龄：${petInfo.age || '未知'}岁
+- 性格：${petInfo.character || '活泼可爱'}
+
+照片描述：${photoDescription || '宠物生活照'}
+
+请生成 3 条${styleName}的配文（每条 30-50 字），要求：
+1. 包含 2-3 个合适的 emoji
+2. 适合发朋友圈或小红书
+3. 语言生动有趣，能引起共鸣
+
+请按以下格式返回，每条配文占一行：
+[配文1]
+[配文2]
+[配文3]`;
+
+    const response = await callDeepSeekAPI(prompt);
+
+    // 解析返回的配文
+    const captions = parseCaptions(response);
+
+    return {
+      success: true,
+      captions,
+    };
+  } catch (err) {
+    console.error('[ai_handler] generateCaption 异常', err);
+    return {
+      success: false,
+      msg: 'AI 配文生成失败，请稍后重试',
+      captions: [],
+    };
+  }
+}
+
+/**
+ * 解析 AI 返回的配文
+ */
+function parseCaptions(text) {
+  if (!text) return [];
+
+  // 尝试提取 [...] 格式的配文
+  const bracketMatches = text.match(/\[([^\]]+)\]/g);
+  if (bracketMatches && bracketMatches.length >= 3) {
+    return bracketMatches.slice(0, 3).map(m => m.replace(/[\[\]]/g, '').trim());
+  }
+
+  // 如果没有 [] 格式，按行分割
+  const lines = text.split('\n').filter(line => line.trim() && !line.includes('配文'));
+  return lines.slice(0, 3).map(line => {
+    // 移除可能的序号前缀
+    return line.replace(/^\d+[\.\、\)\s]+/, '').trim();
+  });
+}
+
+/**
+ * AI 智能推荐
+ * 基于宠物信息和用户偏好，推荐最合适的机构
+ * @param {Object} event - { petInfo, agencies, userPrefs }
+ */
+async function aiRecommend(event) {
+  try {
+    const { petInfo, agencies, userPrefs } = event;
+
+    if (!petInfo) {
+      return { success: false, msg: '请先选择宠物' };
+    }
+
+    if (!agencies || agencies.length === 0) {
+      return { success: false, msg: '暂无推荐机构' };
+    }
+
+    // 构建 prompt
+    const prompt = `你是一位专业的宠物服务顾问，擅长为宠物主人推荐最合适的寄养机构。
+
+宠物信息：
+- 品种：${petInfo.breed || petInfo.species || '未知'}
+- 年龄：${petInfo.age || '未知'}岁
+- 特殊需求：${petInfo.specialNeeds || '无'}
+
+用户偏好：${(userPrefs || []).join('、') || '无特殊要求'}
+
+候选机构（共 ${agencies.length} 家）：
+${agencies.map((a, i) => `${i + 1}. ${a.name || '机构' + (i + 1)} - ${a.description || '专业宠物服务'}，类型：${a.type || '综合'}，评分：${a.score || '暂无'}`).join('\n')}
+
+请推荐前 3 家机构，并为每家机构生成：
+1. 推荐理由（20-30字，要体现为什么适合这只宠物）
+2. 匹配度评分（80-100分）
+3. 该机构的最大优势（10字以内）
+
+请严格按以下 JSON 格式返回（不要添加其他内容）：
+[
+  {"name": "机构名", "reason": "推荐理由", "score": 95, "advantage": "最大优势"},
+  {"name": "机构名", "reason": "推荐理由", "score": 90, "advantage": "最大优势"},
+  {"name": "机构名", "reason": "推荐理由", "score": 85, "advantage": "最大优势"}
+]`;
+
+    const response = await callDeepSeekAPI(prompt);
+
+    // 解析返回的推荐结果
+    const recommendations = parseRecommendations(response, agencies);
+
+    return {
+      success: true,
+      recommendations,
+    };
+  } catch (err) {
+    console.error('[ai_handler] aiRecommend 异常', err);
+    return {
+      success: false,
+      msg: 'AI 推荐失败，请稍后重试',
+      recommendations: [],
+    };
+  }
+}
+
+/**
+ * 解析 AI 返回的推荐结果
+ */
+function parseRecommendations(text, originalAgencies) {
+  if (!text) return [];
+
+  try {
+    // 尝试提取 JSON 数组
+    const jsonMatch = text.match(/\[[\s\S]*\]/);
+    if (jsonMatch) {
+      const parsed = JSON.parse(jsonMatch[0]);
+      if (Array.isArray(parsed) && parsed.length > 0) {
+        return parsed.slice(0, 3).map((item, i) => ({
+          name: item.name || originalAgencies[i]?.name || '推荐机构',
+          reason: item.reason || '综合评分较高',
+          score: Math.min(100, Math.max(80, item.score || 90)),
+          advantage: item.advantage || '服务优质',
+        }));
+      }
+    }
+  } catch (e) {
+    // JSON 解析失败，使用降级方案
+  }
+
+  // 降级：从原始机构中随机选 3 个
+  const shuffled = [...originalAgencies].sort(() => 0.5 - Math.random());
+  return shuffled.slice(0, 3).map((a, i) => ({
+    name: a.name || '推荐机构',
+    reason: '综合评分较高，适合您的宠物',
+    score: 95 - i * 5,
+    advantage: '服务优质',
+  }));
+}
+
+/**
+ * 调用 DeepSeek API
+ */
+async function callDeepSeekAPI(prompt) {
+  const response = await axios.post(API_URL, {
+    model: 'deepseek-chat',
+    messages: [{ role: 'user', content: prompt }],
+    temperature: 0.7,
+    max_tokens: 1000,
+  }, {
+    headers: { Authorization: `Bearer ${API_KEY}` },
+    timeout: 30000,
+  });
+
+  return response.data.choices[0].message.content;
 }
 
 /**
@@ -422,5 +643,804 @@ async function findUserByOpenid(event) {
   } catch (err) {
     console.error('[findUserByOpenid] 查询失败', err);
     return { success: false, msg: err.message, accounts: [], openid };
+  }
+}
+
+/**
+ * AI 图片生成（图生图）
+ * 支持 SiliconFlow、通义万相、自定义 API
+ * apiKey 从 api_configs 集合读取，不再由前端传入
+ * @param {Object} event - { model, imageUrl, prompt, style }
+ */
+async function generateImage(event) {
+  const { model, imageUrl, prompt, style } = event;
+  const db = cloud.database();
+
+  if (!model) {
+    return { success: false, msg: '请选择模型' };
+  }
+  if (!imageUrl) {
+    return { success: false, msg: '请先上传照片' };
+  }
+
+  // 从 api_configs 读取 API 配置
+  const configRes = await db.collection('api_configs').where({ model, enabled: true }).get();
+  if (!configRes.data || configRes.data.length === 0) {
+    return { success: false, msg: '该模型未配置 API Key，请联系管理员' };
+  }
+  const config = configRes.data[0];
+  const apiKey = config.apiKey;
+  if (!apiKey) {
+    return { success: false, msg: '该模型的 API Key 未填写，请联系管理员' };
+  }
+
+  const provider = config.provider || 'siliconflow';
+  const customEndpoint = config.customEndpoint || '';
+
+  try {
+    switch (provider) {
+      case 'siliconflow':
+        return await generateWithSiliconFlow(apiKey, imageUrl, prompt, style, model);
+      case 'tongyiwanxiang':
+        return await generateWithTongyiWanxiang(apiKey, imageUrl, prompt, style);
+      case 'custom':
+        return await generateWithCustomAPI(apiKey, customEndpoint, imageUrl, prompt, style);
+      default:
+        return { success: false, msg: '不支持的服务商: ' + provider };
+    }
+  } catch (err) {
+    console.error('[ai_handler] generateImage 异常', err);
+    return { success: false, msg: err.message || '图片生成失败，请稍后重试' };
+  }
+}
+
+/**
+ * SiliconFlow 图生图
+ * API 文档: https://docs.siliconflow.cn/api-reference/images/images-generations
+ */
+async function generateWithSiliconFlow(apiKey, imageUrl, prompt, style, model) {
+  // 下载图片并转为 base64
+  const imageRes = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 15000 });
+  const base64Image = Buffer.from(imageRes.data).toString('base64');
+  const mimeType = imageUrl.includes('.png') ? 'image/png' : 'image/jpeg';
+
+  // 风格映射为英文提示词增强
+  const styleEnhance = {
+    cartoon: 'cartoon style, cute, colorful, chibi, vivid colors',
+    watercolor: 'watercolor painting style, soft colors, artistic, delicate',
+    pixel: 'pixel art style, retro game, 8-bit, blocky',
+    oil: 'oil painting style, classical art, rich textures, thick brushstrokes',
+    anime: 'anime style, Japanese animation, vibrant, cel shading',
+    cyber: 'cyberpunk style, neon lights, futuristic, dark background',
+  };
+
+  const enhancedPrompt = `${prompt}, ${styleEnhance[style] || 'artistic style'}`;
+
+  // 默认使用 Kwai-Kolors/Kolors（支持图生图）
+  const selectedModel = model || 'Kwai-Kolors/Kolors';
+
+  const requestBody = {
+    model: selectedModel,
+    prompt: enhancedPrompt,
+    image: `data:${mimeType};base64,${base64Image}`,
+    image_size: '1024x1024',
+  };
+
+  // SDXL 系列支持 strength 参数
+  if (selectedModel.includes('stable-diffusion')) {
+    requestBody.image_strength = 0.55;
+    requestBody.num_inference_steps = 30;
+    requestBody.guidance_scale = 7.5;
+  }
+
+  const response = await axios.post(
+    'https://api.siliconflow.cn/v1/images/generations',
+    requestBody,
+    {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 120000,
+    }
+  );
+
+  const result = response.data;
+  if (result.data && result.data.length > 0 && result.data[0].url) {
+    return { success: true, imageUrl: result.data[0].url };
+  }
+
+  return { success: false, msg: 'SiliconFlow 未返回有效结果，响应: ' + JSON.stringify(result).slice(0, 200) };
+}
+
+/**
+ * 通义万相 图生图
+ * API 文档: https://help.aliyun.com/zh/dashscope/developer-reference/api-details
+ */
+async function generateWithTongyiWanxiang(apiKey, imageUrl, prompt, style) {
+  // apiKey 格式: "AccessKeyID,AccessKeySecret"
+  const [accessKeyId, accessKeySecret] = apiKey.split(',').map(s => s.trim());
+  if (!accessKeyId || !accessKeySecret) {
+    return { success: false, msg: '通义万相的 API Key 格式应为: AccessKeyID,AccessKeySecret' };
+  }
+
+  // 下载图片并转为 base64
+  const imageRes = await axios.get(imageUrl, { responseType: 'arraybuffer', timeout: 15000 });
+  const base64Image = Buffer.from(imageRes.data).toString('base64');
+
+  // 风格映射
+  const styleMap = {
+    cartoon: '卡通',
+    watercolor: '水彩',
+    pixel: '像素',
+    oil: '油画',
+    anime: '动漫',
+    cyber: '赛博朋克',
+  };
+
+  const styleName = styleMap[style] || '卡通';
+
+  // 生成签名（简化版，实际应使用阿里云 SDK）
+  // 注意：生产环境建议使用 @alicloud/dysmsapi 或 DashScope SDK
+  const requestBody = {
+    model: 'wanx-v1',
+    input: {
+      prompt: `${prompt}，${styleName}风格`,
+      base64: base64Image,
+    },
+    parameters: {
+      n: 1,
+      size: '1024*1024',
+    },
+  };
+
+  // 获取 Bearer Token（简化处理）
+  const tokenRes = await axios.post(
+    'https://dashscope.aliyuncs.com/api/v1/services/aigc/text-generation/generation',
+    {
+      model: 'qwen-turbo',
+      input: { messages: [{ role: 'user', content: 'test' }] },
+    },
+    {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 10000,
+    }
+  ).catch(() => null);
+
+  // 直接使用 DashScope API 调用通义万相
+  const response = await axios.post(
+    'https://dashscope.aliyuncs.com/api/v1/services/aigc/image2image/image-synthesis',
+    requestBody,
+    {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'X-DashScope-Async': 'enable',
+      },
+      timeout: 60000,
+    }
+  );
+
+  const result = response.data;
+
+  // 异步任务模式：需要轮询结果
+  if (result.output && result.output.task_id) {
+    const taskId = result.output.task_id;
+    // 轮询结果（最多等待 60 秒）
+    for (let i = 0; i < 12; i++) {
+      await new Promise(resolve => setTimeout(resolve, 5000));
+      const pollRes = await axios.get(
+        `https://dashscope.aliyuncs.com/api/v1/tasks/${taskId}`,
+        {
+          headers: { Authorization: `Bearer ${apiKey}` },
+          timeout: 10000,
+        }
+      );
+
+      const taskResult = pollRes.data;
+      if (taskResult.output && taskResult.output.task_status === 'SUCCEEDED') {
+        const results = taskResult.output.results || [];
+        if (results.length > 0 && results[0].url) {
+          return { success: true, imageUrl: results[0].url };
+        }
+      } else if (taskResult.output && taskResult.output.task_status === 'FAILED') {
+        return { success: false, msg: taskResult.output.message || '通义万相生成失败' };
+      }
+    }
+    return { success: false, msg: '通义万相生成超时' };
+  }
+
+  // 同步模式
+  if (result.output && result.output.results && result.output.results.length > 0) {
+    return { success: true, imageUrl: result.output.results[0].url };
+  }
+
+  return { success: false, msg: '通义万相未返回有效结果' };
+}
+
+/**
+ * 自定义 API 图生图
+ * 约定：POST 请求，body 包含 { imageUrl, prompt, style }
+ * 期望返回：{ url: "生成的图片URL" } 或 { imageUrl: "..." } 或 { base64: "..." }
+ */
+async function generateWithCustomAPI(apiKey, endpoint, imageUrl, prompt, style) {
+  if (!endpoint) {
+    return { success: false, msg: '请填写自定义 API 接口地址' };
+  }
+
+  const response = await axios.post(
+    endpoint,
+    { imageUrl, prompt, style },
+    {
+      headers: {
+        Authorization: `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+      },
+      timeout: 120000,
+    }
+  );
+
+  const result = response.data;
+
+  // 支持多种返回格式
+  if (result.url) {
+    return { success: true, imageUrl: result.url };
+  }
+  if (result.imageUrl) {
+    return { success: true, imageUrl: result.imageUrl };
+  }
+  if (result.base64) {
+    // 如果返回 base64，需要上传到云存储
+    const buffer = Buffer.from(result.base64, 'base64');
+    const cloudPath = `ai_works/custom_${Date.now()}.jpg`;
+    const uploadRes = await cloud.uploadFile({
+      cloudPath,
+      fileContent: buffer,
+    });
+    return { success: true, imageUrl: uploadRes.fileID, fileID: uploadRes.fileID };
+  }
+
+  return { success: false, msg: '自定义 API 返回格式不符合约定' };
+}
+
+/**
+ * 下载图片并保存到云存储（绕过小程序域名白名单限制）
+ * @param {Object} event - { imageUrl }
+ */
+async function downloadAndSave(event) {
+  const { imageUrl } = event;
+  if (!imageUrl) {
+    return { success: false, msg: '缺少图片 URL' };
+  }
+
+  try {
+    const response = await axios.get(imageUrl, {
+      responseType: 'arraybuffer',
+      timeout: 30000,
+    });
+
+    const cloudPath = `ai_works/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`;
+    const uploadRes = await cloud.uploadFile({
+      cloudPath,
+      fileContent: Buffer.from(response.data),
+    });
+
+    return { success: true, fileID: uploadRes.fileID };
+  } catch (err) {
+    console.error('[downloadAndSave] 失败', err);
+    return { success: false, msg: err.message || '下载保存失败' };
+  }
+}
+
+// ==================== API 配置管理 ====================
+
+/**
+ * 获取 API 配置列表
+ * 管理员：返回完整配置（含 apiKey）
+ * 普通用户：隐藏 apiKey，只返回模型信息
+ * @param {Object} event - { category, isAdmin }
+ */
+async function getApiConfigs(event) {
+  const { category, isAdmin } = event;
+  const db = cloud.database();
+  const where = category ? { category } : {};
+
+  try {
+    const res = await db.collection('api_configs').where(where).get();
+    let data = res.data || [];
+
+    // 普通用户隐藏 apiKey
+    if (!isAdmin) {
+      data = data.map(item => ({
+        _id: item._id,
+        category: item.category,
+        provider: item.provider,
+        model: item.model,
+        modelName: item.modelName,
+        tier: item.tier,
+        enabled: item.enabled,
+        dailyFreeQuota: item.dailyFreeQuota,
+        pricePerUse: item.pricePerUse,
+      }));
+    }
+
+    return { success: true, data };
+  } catch (err) {
+    console.error('[getApiConfigs] 失败', err);
+    return { success: false, msg: err.message || '获取配置失败' };
+  }
+}
+
+/**
+ * 管理员保存 API 配置
+ * @param {Object} event - { _id, apiKey, customEndpoint, enabled }
+ */
+async function saveApiConfig(event) {
+  const { _id, apiKey, customEndpoint, enabled } = event;
+  const db = cloud.database();
+
+  if (!_id) {
+    return { success: false, msg: '缺少配置 ID' };
+  }
+
+  try {
+    const updateData = { updatedAt: db.serverDate() };
+    if (apiKey !== undefined) updateData.apiKey = apiKey;
+    if (customEndpoint !== undefined) updateData.customEndpoint = customEndpoint;
+    if (enabled !== undefined) updateData.enabled = enabled;
+
+    await db.collection('api_configs').doc(_id).update({ data: updateData });
+    return { success: true, msg: '保存成功' };
+  } catch (err) {
+    console.error('[saveApiConfig] 失败', err);
+    return { success: false, msg: err.message || '保存失败' };
+  }
+}
+
+// ==================== 额度管理 ====================
+
+/**
+ * 获取今天的日期字符串
+ */
+function getTodayStr() {
+  const now = new Date();
+  const y = now.getFullYear();
+  const m = String(now.getMonth() + 1).padStart(2, '0');
+  const d = String(now.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+/**
+ * 检查用户今天的免费额度
+ * @param {Object} event - { model }
+ */
+async function checkQuota(event) {
+  const { model } = event;
+  const db = cloud.database();
+  const ctx = cloud.getWXContext();
+  const openid = ctx.OPENID;
+  const today = getTodayStr();
+
+  try {
+    // 获取模型配置
+    const configRes = await db.collection('api_configs').where({ model }).get();
+    if (!configRes.data || configRes.data.length === 0) {
+      return { success: false, msg: '模型未配置' };
+    }
+    const config = configRes.data[0];
+    const freeQuota = config.dailyFreeQuota || 0;
+
+    // 查询今天的使用次数
+    const quotaRes = await db.collection('ai_quotas')
+      .where({ _openid: openid, date: today, model })
+      .get();
+    const usedCount = quotaRes.data.length > 0 ? quotaRes.data[0].usedCount : 0;
+    const remaining = Math.max(0, freeQuota - usedCount);
+    const exceeded = freeQuota > 0 && usedCount >= freeQuota;
+
+    return {
+      success: true,
+      freeQuota,
+      usedCount,
+      remaining,
+      exceeded,
+      pricePerUse: config.pricePerUse || 0,
+    };
+  } catch (err) {
+    console.error('[checkQuota] 失败', err);
+    return { success: false, msg: err.message || '检查额度失败' };
+  }
+}
+
+/**
+ * 记录一次使用（增加使用次数）
+ * @param {Object} event - { model }
+ */
+async function useQuota(event) {
+  const { model } = event;
+  const db = cloud.database();
+  const _ = db.command;
+  const ctx = cloud.getWXContext();
+  const openid = ctx.OPENID;
+  const today = getTodayStr();
+
+  try {
+    // 查询是否已有今天的记录
+    const existing = await db.collection('ai_quotas')
+      .where({ _openid: openid, date: today, model })
+      .get();
+
+    if (existing.data && existing.data.length > 0) {
+      // 更新次数
+      await db.collection('ai_quotas').doc(existing.data[0]._id).update({
+        data: { usedCount: _.inc(1) }
+      });
+    } else {
+      // 新建记录
+      await db.collection('ai_quotas').add({
+        data: {
+          _openid: openid,
+          date: today,
+          model,
+          usedCount: 1,
+          createdAt: db.serverDate(),
+        }
+      });
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('[useQuota] 失败', err);
+    return { success: false, msg: err.message || '记录使用失败' };
+  }
+}
+
+// ==================== 余额管理 ====================
+
+/**
+ * 获取用户余额
+ * @param {Object} event - {}
+ */
+async function getUserBalance(event) {
+  const db = cloud.database();
+  const ctx = cloud.getWXContext();
+  const openid = ctx.OPENID;
+
+  try {
+    const res = await db.collection('users')
+      .where({ _openid: openid })
+      .field({ balance: true })
+      .get();
+
+    const balance = res.data[0]?.balance || 0;
+    return { success: true, balance };
+  } catch (err) {
+    console.error('[getUserBalance] 失败', err);
+    return { success: false, msg: err.message || '获取余额失败' };
+  }
+}
+
+/**
+ * 充值
+ * @param {Object} event - { amount, gift, actualPay }
+ */
+async function recharge(event) {
+  const { amount, gift = 0, actualPay } = event;
+  const db = cloud.database();
+  const _ = db.command;
+  const ctx = cloud.getWXContext();
+  const openid = ctx.OPENID;
+
+  if (!amount || amount <= 0) {
+    return { success: false, msg: '充值金额无效' };
+  }
+
+  const totalAmount = amount + gift;
+
+  try {
+    // 更新用户余额
+    await db.collection('users').where({ _openid: openid }).update({
+      data: { balance: _.inc(totalAmount) }
+    });
+
+    // 查询最新余额
+    const userRes = await db.collection('users')
+      .where({ _openid: openid })
+      .field({ balance: true })
+      .get();
+    const balanceAfter = userRes.data[0]?.balance || totalAmount;
+
+    // 记录流水
+    await db.collection('balance_logs').add({
+      data: {
+        _openid: openid,
+        type: 'recharge',
+        amount: totalAmount,
+        actualPay: actualPay || amount,
+        gift,
+        balanceAfter,
+        description: `充值${amount}元${gift > 0 ? '，送' + gift + '元' : ''}`,
+        createdAt: db.serverDate(),
+      }
+    });
+
+    return { success: true, balance: balanceAfter, msg: '充值成功' };
+  } catch (err) {
+    console.error('[recharge] 失败', err);
+    return { success: false, msg: err.message || '充值失败' };
+  }
+}
+
+/**
+ * 扣费
+ * @param {Object} event - { amount, description }
+ */
+async function deductBalance(event) {
+  const { amount, description = '消费扣费' } = event;
+  const db = cloud.database();
+  const _ = db.command;
+  const ctx = cloud.getWXContext();
+  const openid = ctx.OPENID;
+
+  if (!amount || amount <= 0) {
+    return { success: false, msg: '扣费金额无效' };
+  }
+
+  try {
+    // 检查余额是否充足
+    const userRes = await db.collection('users')
+      .where({ _openid: openid })
+      .field({ balance: true })
+      .get();
+    const currentBalance = userRes.data[0]?.balance || 0;
+
+    if (currentBalance < amount) {
+      return { success: false, msg: '余额不足，请先充值', balance: currentBalance };
+    }
+
+    // 扣减余额
+    await db.collection('users').where({ _openid: openid }).update({
+      data: { balance: _.inc(-amount) }
+    });
+
+    const balanceAfter = currentBalance - amount;
+
+    // 记录流水
+    await db.collection('balance_logs').add({
+      data: {
+        _openid: openid,
+        type: 'deduct',
+        amount: -amount,
+        balanceAfter,
+        description,
+        createdAt: db.serverDate(),
+      }
+    });
+
+    return { success: true, balance: balanceAfter };
+  } catch (err) {
+    console.error('[deductBalance] 失败', err);
+    return { success: false, msg: err.message || '扣费失败' };
+  }
+}
+
+/**
+ * 获取余额流水记录
+ * @param {Object} event - { page, pageSize }
+ */
+async function getBalanceLogs(event) {
+  const { page = 1, pageSize = 20 } = event;
+  const db = cloud.database();
+  const ctx = cloud.getWXContext();
+  const openid = ctx.OPENID;
+
+  try {
+    const res = await db.collection('balance_logs')
+      .where({ _openid: openid })
+      .orderBy('createdAt', 'desc')
+      .skip((page - 1) * pageSize)
+      .limit(pageSize)
+      .get();
+
+    return { success: true, data: res.data || [] };
+  } catch (err) {
+    console.error('[getBalanceLogs] 失败', err);
+    return { success: false, msg: err.message || '获取流水失败' };
+  }
+}
+
+// ==================== 初始化 API 配置 ====================
+
+/**
+ * 初始化 API 配置（首次使用时调用，创建三条预设记录）
+ */
+async function initApiConfigs() {
+  const db = cloud.database();
+
+  const presets = [
+    {
+      category: 'image',
+      provider: 'siliconflow',
+      model: 'Kwai-Kolors/Kolors',
+      modelName: '快手 Kolors',
+      tier: 'low',
+      apiKey: '',
+      enabled: true,
+      dailyFreeQuota: 5,
+      pricePerUse: 0.01,
+    },
+    {
+      category: 'image',
+      provider: 'siliconflow',
+      model: 'Qwen/Qwen-Image-Edit-2509',
+      modelName: '通义千问',
+      tier: 'medium',
+      apiKey: '',
+      enabled: true,
+      dailyFreeQuota: 0,
+      pricePerUse: 0.50,
+    },
+    {
+      category: 'image',
+      provider: 'siliconflow',
+      model: 'stabilityai/stable-diffusion-xl-base-1.0',
+      modelName: 'SDXL (高清)',
+      tier: 'high',
+      apiKey: '',
+      enabled: true,
+      dailyFreeQuota: 0,
+      pricePerUse: 1.00,
+    },
+    {
+      category: 'analysis',
+      provider: 'custom',
+      model: 'analysis-reserved',
+      modelName: '分析 API（预留）',
+      tier: 'low',
+      apiKey: '',
+      enabled: false,
+      dailyFreeQuota: 0,
+      pricePerUse: 0,
+    },
+  ];
+
+  try {
+    // 检查每个预设模型是否存在，不存在则创建
+    let created = 0;
+    for (const preset of presets) {
+      const existing = await db.collection('api_configs').where({ model: preset.model }).get();
+      if (!existing.data || existing.data.length === 0) {
+        await db.collection('api_configs').add({
+          data: { ...preset, createdAt: db.serverDate(), updatedAt: db.serverDate() }
+        });
+        created++;
+      }
+    }
+
+    return { success: true, msg: `初始化完成，新增 ${created} 条` };
+  } catch (err) {
+    console.error('[initApiConfigs] 失败', err);
+    return { success: false, msg: err.message || '初始化失败' };
+  }
+}
+
+// ===== 临时：为小白插入测试健康数据 =====
+async function insertTestHealth(event) {
+  const { petId } = event;
+  const db = cloud.database();
+  const wxContext = cloud.getWXContext();
+  const ownerId = wxContext.OPENID;
+
+  if (!petId) return { success: false, msg: '缺少 petId' };
+
+  const records = [
+    // 体重（近2个月）
+    { type: 'weight', value: '4.2', record_date: new Date('2026-04-15'), note: '刚到家体重' },
+    { type: 'weight', value: '4.3', record_date: new Date('2026-04-28'), note: '' },
+    { type: 'weight', value: '4.1', record_date: new Date('2026-05-05'), note: '有点瘦了' },
+    { type: 'weight', value: '4.4', record_date: new Date('2026-05-15'), note: '长胖了一点' },
+    { type: 'weight', value: '4.6', record_date: new Date('2026-05-25'), note: '' },
+    { type: 'weight', value: '4.5', record_date: new Date('2026-06-02'), note: '控制饮食' },
+    { type: 'weight', value: '4.9', record_date: new Date('2026-06-10'), note: '' },
+    { type: 'weight', value: '5.0', record_date: new Date('2026-06-11'), note: '稍微胖了' },
+    // 疫苗
+    { type: 'vaccine', value: '猫三联', vaccine_name: '猫三联', institution: '爱宠宠物医院', record_date: new Date('2026-04-20'), note: '首次接种' },
+    { type: 'vaccine', value: '狂犬疫苗', vaccine_name: '狂犬疫苗', institution: '爱宠宠物医院', record_date: new Date('2026-05-10'), note: '' },
+    { type: 'vaccine', value: '猫三联(加强)', vaccine_name: '猫三联', institution: '爱宠宠物医院', record_date: new Date('2026-06-08'), note: '第二针加强' },
+    // 驱虫
+    { type: 'deworming', value: '大宠爱', medicine_name: '大宠爱', record_date: new Date('2026-04-25'), note: '体外驱虫' },
+    { type: 'deworming', value: '拜耳内虫逃', medicine_name: '拜耳内虫逃', record_date: new Date('2026-05-12'), note: '体内驱虫' },
+    { type: 'deworming', value: '大宠爱', medicine_name: '大宠爱', record_date: new Date('2026-06-05'), note: '体外驱虫' },
+    // 体检
+    { type: 'checkup', value: '常规体检', result: '健康状态良好，牙齿正常，耳朵干净', institution: '爱宠宠物医院', record_date: new Date('2026-04-20'), note: '首次体检' },
+    // 饮食
+    { type: 'food', value: '猫粮50g+冻干', food_intake: '皇家K36幼猫粮50g/天，偶尔喂鸡胸肉冻干', record_date: new Date('2026-05-01'), note: '' },
+    { type: 'food', value: '猫粮55g+罐头', food_intake: '皇家K36幼猫粮55g/天，每周2次主食罐头', record_date: new Date('2026-06-01'), note: '增加食量' },
+  ];
+
+  let count = 0;
+  for (const r of records) {
+    await db.collection('health_records').add({
+      data: {
+        pet_id: petId,
+        ownerId,
+        recorder_role: 'owner',
+        ...r,
+      },
+    });
+    count++;
+  }
+  return { success: true, msg: `成功插入 ${count} 条健康记录` };
+}
+
+/**
+ * 智能匹配：AI 解析用户自然语言需求为结构化 JSON
+ * 输入: { userText: string, petInfo: { name, species, age, breed } }
+ * 输出: { serviceCategory, keywords, budget, duration, preferences, petType, urgency }
+ */
+async function smartMatchParse(event) {
+  const { userText = '', petInfo = {} } = event;
+  const db = cloud.database();
+
+  // 获取 mimo-v2.5-pro 模型配置
+  const configRes = await db.collection('api_configs')
+    .where({ model: 'mimo-v2.5-pro', enabled: true })
+    .get();
+  const apiKey = configRes.data[0]?.apiKey;
+  if (!apiKey) {
+    return { success: false, msg: 'AI 模型未配置' };
+  }
+
+  const systemPrompt = `你是一个宠物服务需求分析助手。根据用户描述和宠物信息，提取结构化的服务需求。
+
+宠物信息：${JSON.stringify(petInfo)}
+用户需求：${userText || '(用户未填写文字需求，请仅根据宠物信息推荐)'}
+
+请返回 JSON 格式（不要包含其他文字）：
+{
+  "serviceCategory": "foster|grooming|medical|door|extra|null",
+  "keywords": ["关键词1", "关键词2", ...],
+  "budget": { "min": 数字或null, "max": 数字或null },
+  "duration": "时长描述或null",
+  "preferences": ["偏好1", "偏好2", ...],
+  "petType": "cat|dog|other",
+  "urgency": "normal|urgent"
+}
+
+规则：
+- serviceCategory：foster=寄养, grooming=美容洗护, medical=医疗, door=上门服务, extra=商品增值, null=不限
+- keywords：提取 3-5 个核心关键词（名词/形容词），用于文本匹配
+- budget：如果用户提到价格/预算/实惠等，提取范围；否则为 null
+- preferences：用户的特殊偏好（如"安静"、"有监控"、"干净"），用于与机构描述匹配
+- urgency：提到"急"、"马上"、"今天"等为 urgent，否则 normal`;
+
+  try {
+    const res = await axios.post('https://api.siliconflow.cn/v1/chat/completions', {
+      model: 'mimo-v2.5-pro',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: userText || '请根据宠物信息推荐服务' },
+      ],
+      temperature: 0.3,
+      max_tokens: 500,
+    }, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      timeout: 15000,
+    });
+
+    const raw = res.data.choices[0].message.content;
+    // 尝试提取 JSON（兼容 AI 可能返回 markdown 代码块的情况）
+    const jsonMatch = raw.match(/\{[\s\S]*\}/);
+    if (!jsonMatch) {
+      return { success: false, msg: 'AI 返回格式异常' };
+    }
+    const parsed = JSON.parse(jsonMatch[0]);
+    return { success: true, parsed };
+  } catch (e) {
+    console.warn('[smartMatchParse]', e.message);
+    return { success: false, msg: 'AI 解析失败: ' + e.message };
   }
 }
