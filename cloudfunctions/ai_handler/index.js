@@ -1433,17 +1433,34 @@ async function smartMatchParse(event) {
     });
 
     console.log('[smartMatchParse] API 响应状态:', res.status);
-    const raw = res.data.choices[0].message.content;
+    console.log('[smartMatchParse] API 响应体:', JSON.stringify(res.data).slice(0, 500));
+
+    // 检查响应结构
+    if (!res.data || !res.data.choices || !res.data.choices[0] || !res.data.choices[0].message) {
+      return { success: false, msg: 'API 响应结构异常: ' + JSON.stringify(res.data).slice(0, 300) };
+    }
+
+    const raw = res.data.choices[0].message.content || '';
     console.log('[smartMatchParse] AI 原始返回:', raw);
+
+    if (!raw) {
+      return { success: false, msg: 'AI 返回内容为空' };
+    }
+
     // 尝试提取 JSON（兼容 AI 可能返回 markdown 代码块的情况）
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
-      return { success: false, msg: 'AI 返回格式异常: ' + raw.slice(0, 200) };
+      return { success: false, msg: 'AI 返回格式异常: ' + raw.slice(0, 300) };
     }
-    const parsed = JSON.parse(jsonMatch[0]);
-    return { success: true, parsed };
+
+    try {
+      const parsed = JSON.parse(jsonMatch[0]);
+      return { success: true, parsed };
+    } catch (parseErr) {
+      return { success: false, msg: 'JSON 解析失败: ' + jsonMatch[0].slice(0, 300) };
+    }
   } catch (e) {
     console.error('[smartMatchParse]', e.message);
-    return { success: false, msg: 'AI 解析失败: ' + e.message };
+    return { success: false, msg: '请求失败: ' + e.message };
   }
 }
