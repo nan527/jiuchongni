@@ -1432,7 +1432,9 @@ async function smartMatchParse(event) {
       timeout: 30000,
     });
 
+    console.log('[smartMatchParse] API 响应状态:', res.status);
     const raw = res.data.choices[0].message.content;
+    console.log('[smartMatchParse] AI 原始返回:', raw);
     // 尝试提取 JSON（兼容 AI 可能返回 markdown 代码块的情况）
     const jsonMatch = raw.match(/\{[\s\S]*\}/);
     if (!jsonMatch) {
