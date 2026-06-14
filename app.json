@@ -96,7 +96,10 @@
     "van-radio-group": "/miniprogram_npm/@vant/weapp/radio-group/index",
     "van-checkbox": "/miniprogram_npm/@vant/weapp/checkbox/index",
     "van-checkbox-group": "/miniprogram_npm/@vant/weapp/checkbox-group/index",
-    "van-divider": "/miniprogram_npm/@vant/weapp/divider/index"
+    "van-divider": "/miniprogram_npm/@vant/weapp/divider/index",
+    "custom-nav-bar": "/components/custom-nav-bar/custom-nav-bar",
+    "empty-state": "/components/empty-state/empty-state",
+    "review-popup": "/components/review-popup/review-popup"
   },
   "style": "v2",
   "sitemapLocation": "sitemap.json"
