@@ -19,7 +19,7 @@
         bind:clear="onSearchClear"
         use-action-slot
       >
-        <view slot="action" bindtap="goToSearch">搜索</view>
+        <view slot="action" class="search-btn" bindtap="goToSearch">搜索</view>
       </van-search>
 
       <!-- 搜索建议 -->

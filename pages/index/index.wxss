@@ -301,3 +301,11 @@
   color: #999;
   margin-left: 16rpx;
 }
+
+/* ===== 搜索按钮 ===== */
+.search-btn {
+  color: #FF9800;
+  font-size: 28rpx;
+  font-weight: 500;
+  padding: 8rpx 16rpx;
+}

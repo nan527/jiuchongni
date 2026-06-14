@@ -14,6 +14,11 @@ Page({
   },
 
   onShow() {
+    // 页面显示时重置搜索状态，避免返回时出现重复搜索栏
+    this.setData({
+      showSuggestions: false,
+      searchKeyword: ''
+    });
     this.loadAgencies();
     this.loadServices();
   },

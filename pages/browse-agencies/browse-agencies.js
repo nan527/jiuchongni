@@ -26,12 +26,13 @@ Page({
     const menuBtn = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
-    this.loadAgencies();
 
-    // 如果有keyword参数，执行搜索
+    // 如果有keyword参数，直接执行搜索
     if (options.keyword) {
       this.setData({ searchVal: options.keyword });
       this.searchAgencies(options.keyword);
+    } else {
+      this.loadAgencies();
     }
   },
 
