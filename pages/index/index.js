@@ -8,6 +8,9 @@ Page({
     agencyLoading: true,
     svcList: [],
     svcLoading: true,
+    searchKeyword: '',
+    searchSuggestions: [],
+    showSuggestions: false,
   },
 
   onShow() {
@@ -64,6 +67,64 @@ Page({
 
   onSearchTap() {
     wx.navigateTo({ url: '/pages/browse-agencies/browse-agencies' });
+  },
+
+  // 搜索输入变化
+  onSearchChange(e) {
+    const keyword = e.detail
+    this.setData({ searchKeyword: keyword })
+
+    // 如果有关键词，显示搜索建议
+    if (keyword.trim()) {
+      this.getSearchSuggestions(keyword)
+    } else {
+      this.setData({ showSuggestions: false })
+    }
+  },
+
+  // 获取搜索建议
+  getSearchSuggestions(keyword) {
+    // 从机构列表中筛选匹配的建议
+    const suggestions = (this.data.agencyList || []).filter(agency =>
+      agency.orgName.includes(keyword) ||
+      (agency.address && agency.address.includes(keyword))
+    ).slice(0, 5)
+
+    this.setData({
+      searchSuggestions: suggestions,
+      showSuggestions: suggestions.length > 0
+    })
+  },
+
+  // 执行搜索
+  onSearch() {
+    const { searchKeyword } = this.data
+    if (searchKeyword.trim()) {
+      wx.navigateTo({
+        url: `/pages/browse-agencies/browse-agencies?keyword=${searchKeyword}`
+      })
+    }
+  },
+
+  // 搜索框获得焦点
+  onSearchFocus() {
+    // 可选：显示搜索历史或热门搜索
+  },
+
+  // 清空搜索
+  onSearchClear() {
+    this.setData({
+      searchKeyword: '',
+      showSuggestions: false
+    })
+  },
+
+  // 点击搜索建议
+  onSuggestionTap(e) {
+    const { id } = e.currentTarget.dataset
+    wx.navigateTo({
+      url: `/pages/agency-detail/agency-detail?id=${id}`
+    })
   },
 
   // 功能入口
