@@ -276,6 +276,44 @@ Page({
     this.setData({ showReview: false, editReviewId: '' });
   },
 
+  onCloseReview() {
+    this.setData({ showReview: false, editReviewId: '' });
+  },
+
+  async onSubmitReview(e) {
+    const { orderId, rating, content } = e.detail;
+    const { editReviewId } = this.data;
+    if (!content.trim()) return wx.showToast({ title: '请输入评价内容', icon: 'none' });
+    if (this.data.submittingReview) return;
+    this.setData({ submittingReview: true });
+
+    try {
+      const db = wx.cloud.database();
+      if (editReviewId) {
+        await db.collection('user_orders').doc(editReviewId).update({
+          data: {
+            'review.rating': rating,
+            'review.content': content.trim(),
+          },
+        });
+        wx.showToast({ title: '修改成功' });
+      } else {
+        await db.collection('user_orders').doc(orderId).update({
+          data: {
+            review: { rating, content: content.trim(), createTime: db.serverDate() },
+          },
+        });
+        wx.showToast({ title: '评价成功' });
+      }
+      this.setData({ showReview: false, editReviewId: '' });
+      this.loadOrder(orderId);
+    } catch (e) {
+      wx.showToast({ title: '操作失败', icon: 'none' });
+    } finally {
+      this.setData({ submittingReview: false });
+    }
+  },
+
   onRatingChange(e) {
     this.setData({ reviewRating: e.detail });
   },

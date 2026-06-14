@@ -6,6 +6,7 @@
     "van-loading": "/miniprogram_npm/@vant/weapp/loading/index",
     "van-button": "/miniprogram_npm/@vant/weapp/button/index",
     "van-rate": "/miniprogram_npm/@vant/weapp/rate/index",
-    "van-popup": "/miniprogram_npm/@vant/weapp/popup/index"
+    "van-popup": "/miniprogram_npm/@vant/weapp/popup/index",
+    "review-popup": "/components/review-popup/review-popup"
   }
 }
