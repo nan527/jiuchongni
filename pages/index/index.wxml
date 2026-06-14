@@ -8,9 +8,34 @@
         <text class="hero-greeting__title">就宠你</text>
         <text class="hero-greeting__sub">让每一只毛孩都被温柔以待</text>
       </view>
-      <view class="hero-search" bindtap="onSearchTap">
-        <van-icon name="search" size="36rpx" color="#8C7A6B" />
-        <text class="hero-search__placeholder">搜索机构名称、地址</text>
+      <van-search
+        value="{{searchKeyword}}"
+        placeholder="搜索机构或服务"
+        shape="round"
+        background="transparent"
+        bind:change="onSearchChange"
+        bind:search="onSearch"
+        bind:focus="onSearchFocus"
+        bind:clear="onSearchClear"
+        use-action-slot
+      >
+        <view slot="action" bindtap="goToSearch">搜索</view>
+      </van-search>
+
+      <!-- 搜索建议 -->
+      <view class="search-suggestions" wx:if="{{showSuggestions}}">
+        <view
+          class="suggestion-item"
+          wx:for="{{searchSuggestions}}"
+          wx:key="_id"
+          data-id="{{item._id}}"
+          data-name="{{item.name}}"
+          bindtap="onSuggestionTap"
+        >
+          <van-icon name="search" size="28rpx" color="#999" />
+          <text class="suggestion-text">{{item.name}}</text>
+          <text class="suggestion-address">{{item.address}}</text>
+        </view>
       </view>
     </view>
   </view>
