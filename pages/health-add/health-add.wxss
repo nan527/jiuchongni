@@ -1,0 +1,111 @@
+/* pages/health-add/health-add.less */
+.add-page {
+  min-height: 100vh;
+  background: #FFF8F0;
+}
+/* ===== 渐变头部 ===== */
+.page-header {
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  padding: 0 32rpx 48rpx;
+  border-radius: 0 0 40rpx 40rpx;
+}
+.page-header__inner {
+  padding-top: 20rpx;
+}
+.page-header__title {
+  font-size: 44rpx;
+  font-weight: 700;
+  color: #fff;
+  display: block;
+}
+.page-header__sub {
+  font-size: 24rpx;
+  color: rgba(255, 255, 255, 0.85);
+  margin-top: 8rpx;
+  display: block;
+}
+/* ===== 类型选择 ===== */
+.type-scroll {
+  white-space: nowrap;
+  padding: 24rpx 28rpx 8rpx;
+}
+.type-chip {
+  display: inline-block;
+  padding: 12rpx 32rpx;
+  border-radius: 32rpx;
+  font-size: 26rpx;
+  color: #8C7A6B;
+  background: #FFFAF5;
+  margin-right: 16rpx;
+  font-weight: 500;
+  transition: all 0.2s ease;
+}
+.type-chip--active {
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  color: #fff;
+  box-shadow: 0 4rpx 16rpx rgba(255, 152, 0, 0.3);
+}
+/* ===== 表单卡片 ===== */
+.form-card {
+  margin: 20rpx 28rpx 0;
+  background: #FFFAF5;
+  border-radius: 24rpx;
+  padding: 28rpx 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+}
+.form-field {
+  margin-bottom: 28rpx;
+}
+.form-field:last-child {
+  margin-bottom: 0;
+}
+.form-field__label {
+  font-size: 26rpx;
+  color: #3D2C1E;
+  font-weight: 500;
+  display: block;
+  margin-bottom: 14rpx;
+}
+.form-field__required {
+  color: #FF5252;
+}
+.form-field__input {
+  background: #FFF8F0;
+  border: 2rpx solid #F0E6D8;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #3D2C1E;
+}
+.form-field__textarea {
+  background: #FFF8F0;
+  border: 2rpx solid #F0E6D8;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: #3D2C1E;
+  width: 100%;
+  min-height: 160rpx;
+  box-sizing: border-box;
+}
+.form-field__picker {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: #FFF8F0;
+  border: 2rpx solid #F0E6D8;
+  border-radius: 16rpx;
+  padding: 20rpx 24rpx;
+}
+.form-field__value {
+  font-size: 28rpx;
+  color: #3D2C1E;
+}
+.form-field__placeholder {
+  font-size: 28rpx;
+  color: #C4B8AC;
+}
+/* ===== 保存按钮 ===== */
+.save-area {
+  padding: 32rpx 28rpx 0;
+}

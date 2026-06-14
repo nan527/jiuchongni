@@ -1,0 +1,188 @@
+/* pages/agency-detail/agency-detail.wxss */
+/* ===== 自定义导航栏 ===== */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: #FF9800;
+}
+.nav-bar__inner {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 16rpx;
+}
+.nav-bar__back {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.nav-bar__right {
+  width: 72rpx;
+}
+.detail-page {
+  min-height: 100vh;
+  background: #FFF8F0;
+  padding-bottom: 60rpx;
+}
+/* ===== 机构头图 ===== */
+.agency-hero {
+  position: relative;
+  width: 100%;
+  height: 400rpx;
+}
+.agency-hero__img {
+  width: 100%;
+  height: 100%;
+  background: #F0E6D8;
+}
+.agency-hero__overlay {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding: 40rpx 32rpx 28rpx;
+  background: linear-gradient(transparent, rgba(61, 44, 30, 0.7));
+  display: flex;
+  flex-direction: column;
+  gap: 12rpx;
+}
+.agency-hero__name {
+  font-size: 38rpx;
+  font-weight: 700;
+  color: #fff;
+}
+/* ===== 信息行 ===== */
+.info-section {
+  background: #FFFAF5;
+  margin: 20rpx 32rpx 0;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+}
+.info-row {
+  display: flex;
+  align-items: center;
+  padding: 12rpx 0;
+}
+.info-row + .info-row {
+  border-top: 1rpx solid #F0E6D8;
+}
+.info-row__text {
+  font-size: 26rpx;
+  color: #3D2C1E;
+  margin-left: 16rpx;
+  flex: 1;
+}
+/* ===== 通用标题 ===== */
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D2C1E;
+  display: block;
+  margin-bottom: 20rpx;
+}
+/* ===== 机构简介 ===== */
+.intro-section {
+  background: #FFFAF5;
+  margin: 20rpx 32rpx 0;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+}
+.intro-text {
+  font-size: 26rpx;
+  color: #8C7A6B;
+  line-height: 1.7;
+}
+/* ===== 环境照片 ===== */
+.env-section {
+  margin: 20rpx 32rpx 0;
+}
+.env-scroll {
+  white-space: nowrap;
+}
+.env-img {
+  width: 280rpx;
+  height: 200rpx;
+  border-radius: 20rpx;
+  margin-right: 16rpx;
+  background: #F0E6D8;
+}
+/* ===== 服务列表 ===== */
+.svc-section {
+  margin: 20rpx 32rpx 0;
+}
+.svc-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+.svc-item {
+  display: flex;
+  background: #FFFAF5;
+  border-radius: 20rpx;
+  overflow: hidden;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  transition: transform 0.15s ease;
+}
+.svc-item:active {
+  transform: scale(0.98);
+}
+.svc-item__img {
+  width: 180rpx;
+  height: 180rpx;
+  flex-shrink: 0;
+  background: #F0E6D8;
+}
+.svc-item__info {
+  flex: 1;
+  padding: 16rpx 20rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.svc-item__name {
+  font-size: 28rpx;
+  font-weight: 600;
+  color: #3D2C1E;
+  margin-top: 8rpx;
+  display: -webkit-box;
+  -webkit-line-clamp: 1;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+.svc-item__price-row {
+  display: flex;
+  align-items: baseline;
+  margin-top: 8rpx;
+}
+.svc-item__price {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #FF9800;
+}
+.svc-item__unit {
+  font-size: 22rpx;
+  color: #8C7A6B;
+  margin-left: 4rpx;
+}
+/* ===== 空状态 ===== */
+.empty-svc {
+  padding: 40rpx 0;
+  text-align: center;
+}
+.empty-svc__text {
+  font-size: 26rpx;
+  color: #8C7A6B;
+}
+/* ===== 加载状态 ===== */
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 80rpx 0;
+}
