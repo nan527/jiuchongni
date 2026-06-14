@@ -106,6 +106,20 @@ Page({
     }
   },
 
+  // 跳转到搜索页
+  goToSearch() {
+    const { searchKeyword } = this.data
+    if (searchKeyword.trim()) {
+      wx.navigateTo({
+        url: `/pages/browse-agencies/browse-agencies?keyword=${searchKeyword}`
+      })
+    } else {
+      wx.navigateTo({
+        url: '/pages/browse-agencies/browse-agencies'
+      })
+    }
+  },
+
   // 搜索框获得焦点
   onSearchFocus() {
     // 可选：显示搜索历史或热门搜索
