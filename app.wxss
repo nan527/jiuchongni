@@ -42,35 +42,35 @@ page {
 }
 
 .header {
-  padding: 20px 16px;
+  padding: 40rpx 32rpx;
   background: #fff;
-  margin-bottom: 12px;
+  margin-bottom: 24rpx;
 }
 
 .title {
-  font-size: 20px;
+  font-size: 40rpx;
   font-weight: bold;
   color: var(--text-main);
   display: block;
 }
 
 .subtitle {
-  font-size: 14px;
+  font-size: 28rpx;
   color: var(--text-gray);
-  margin-top: 4px;
+  margin-top: 8rpx;
   display: block;
 }
 
 .card {
   background: #fff;
-  border-radius: 8px;
-  margin: 12px;
-  padding: 16px;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+  border-radius: 16rpx;
+  margin: 24rpx;
+  padding: 32rpx;
+  box-shadow: 0 4rpx 8rpx rgba(0,0,0,0.05);
 }
 
 .user-info-section {
-  padding: 40px 20px;
+  padding: 80rpx 40rpx;
   background: linear-gradient(180deg, #FF9800, #FFB74D);
   display: flex;
   align-items: center;
@@ -78,14 +78,14 @@ page {
 }
 
 .avatar-placeholder {
-  width: 60px;
-  height: 60px;
+  width: 120rpx;
+  height: 120rpx;
   background: rgba(255, 255, 255, 0.9);
   border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 15px;
+  margin-right: 30rpx;
 }
 
 .user-detail {
@@ -94,16 +94,16 @@ page {
 }
 
 .nickname {
-  font-size: 20px;
+  font-size: 40rpx;
   font-weight: bold;
 }
 
 .role-tag {
-  font-size: 12px;
+  font-size: 24rpx;
   background: rgba(255, 255, 255, 0.2);
-  padding: 2px 8px;
-  border-radius: 10px;
-  margin-top: 5px;
+  padding: 4rpx 16rpx;
+  border-radius: 20rpx;
+  margin-top: 10rpx;
   width: fit-content;
 }
 
