@@ -1,7 +1,7 @@
 /* pages/agency/agency.wxss */
 .agency-page {
   min-height: 100vh;
-  background: #f5f5f5;
+  background: #FFF8F0;
 }
 
 /* ===== 顶部机构卡片 ===== */
