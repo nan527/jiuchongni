@@ -110,6 +110,6 @@
   </view>
 
   <!-- 底部安全区 -->
-  <view style="height: 40rpx;"></view>
+  <view class="safe-area-bottom"></view>
 
 </view>

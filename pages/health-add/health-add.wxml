@@ -129,5 +129,5 @@
     >保存记录</van-button>
   </view>
 
-  <view style="height: 40rpx;"></view>
+  <view class="safe-area-bottom"></view>
 </view>

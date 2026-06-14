@@ -232,5 +232,5 @@
     <van-tabbar-item icon="shop-o">机构信息</van-tabbar-item>
   </van-tabbar>
 
-  <view style="height: 40rpx;"></view>
+  <view class="safe-area-bottom"></view>
 </view>
