@@ -36,8 +36,8 @@
     </view>
   </view>
 
-  <!-- 宠物信息卡片 -->
-  <view class="section-card">
+  <!-- 宠物信息卡片（机构服务） -->
+  <view class="section-card" wx:if="{{order.orderType !== 'express'}}">
     <view class="section-card__header">
       <van-icon name="friends-o" size="32rpx" color="#FF9800" />
       <text class="section-card__title">宠物信息</text>
@@ -55,6 +55,28 @@
           <text wx:if="{{order.petInfo.age}}"> · {{order.petInfo.age}}岁</text>
           <text wx:if="{{order.genderText}}"> · {{order.genderText}}</text>
         </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 收货信息卡片（快递服务） -->
+  <view class="section-card" wx:if="{{order.orderType === 'express'}}">
+    <view class="section-card__header">
+      <van-icon name="location-o" size="32rpx" color="#FF9800" />
+      <text class="section-card__title">收货信息</text>
+    </view>
+    <view class="info-rows">
+      <view class="info-row">
+        <text class="info-row__label">收货人</text>
+        <text class="info-row__value">{{order.receiverName || '-'}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-row__label">联系电话</text>
+        <text class="info-row__value">{{order.receiverPhone || order.phone || '-'}}</text>
+      </view>
+      <view class="info-row">
+        <text class="info-row__label">收货地址</text>
+        <text class="info-row__value">{{order.receiverAddress || '-'}}</text>
       </view>
     </view>
   </view>
@@ -179,7 +201,7 @@
   </view>
 
   <!-- 底部操作按钮 -->
-  <view class="action-bar" wx:if="{{order.orderStatus === 'unpaid' || order.orderStatus === 'to_confirm' || (order.orderStatus === 'completed' && !order.review)}}">
+  <view class="action-bar" wx:if="{{order.orderStatus === 'unpaid' || order.orderStatus === 'to_confirm' || order.orderStatus === 'to_pickup' || (order.orderStatus === 'completed' && !order.review)}}">
     <van-button
       wx:if="{{order.orderStatus === 'unpaid' && !order.countdownExpired}}"
       round
@@ -189,13 +211,13 @@
       bindtap="onPay"
     >立即付款</van-button>
     <van-button
-      wx:if="{{order.orderStatus === 'to_confirm'}}"
+      wx:if="{{order.orderStatus === 'to_confirm' || order.orderStatus === 'to_pickup'}}"
       round
       block
       type="primary"
       color="linear-gradient(135deg, #FF9800, #FFB74D)"
       bindtap="onConfirmComplete"
-    >{{order.category === 'foster' ? '确认取回' : '确认完成'}}</van-button>
+    >{{order.orderStatus === 'to_pickup' ? '确认取件' : (order.category === 'foster' ? '确认取回' : '确认完成')}}</van-button>
     <van-button
       wx:if="{{order.orderStatus === 'completed' && !order.review}}"
       round

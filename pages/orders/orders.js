@@ -14,6 +14,17 @@ const STATUS_FILTER = [
   { key: 'cancelled', label: '已取消' },
 ];
 
+const EXPRESS_STATUS_FILTER = [
+  { key: 'all', label: '全部' },
+  { key: 'unpaid', label: '待支付' },
+  { key: 'pending_ship', label: '待发货' },
+  { key: 'shipped', label: '已发货' },
+  { key: 'to_pickup', label: '待取件' },
+  { key: 'to_review', label: '待评价' },
+  { key: 'completed', label: '已完成' },
+  { key: 'cancelled', label: '已取消' },
+];
+
 const STATUS_CONFIG = {
   unpaid:      { label: '待付款',   color: '#EF6C00', bg: '#FFF8E1' },
   pending:     { label: '待接单',   color: '#1565C0', bg: '#E3F2FD' },
@@ -23,6 +34,15 @@ const STATUS_CONFIG = {
   to_review:   { label: '待评价',   color: '#7B1FA2', bg: '#F3E5F5' },
   completed:   { label: '已完成',   color: '#66BB6A', bg: '#E8F5E9' },
   cancelled:   { label: '已取消',   color: '#999',    bg: '#F5F5F5' },
+};
+
+const EXPRESS_STATUS_CONFIG = {
+  unpaid:       { label: '待支付', color: '#EF6C00', bg: '#FFF8E1' },
+  pending_ship: { label: '待发货', color: '#1565C0', bg: '#E3F2FD' },
+  shipped:      { label: '已发货', color: '#0277BD', bg: '#E0F7FA' },
+  to_pickup:    { label: '待取件', color: '#E65100', bg: '#FFF3E0' },
+  completed:    { label: '已完成', color: '#66BB6A', bg: '#E8F5E9' },
+  cancelled:    { label: '已取消', color: '#999',    bg: '#F5F5F5' },
 };
 
 const CAT_TEXT = {
@@ -99,7 +119,9 @@ Page({
   },
 
   onTabChange(e) {
-    this.setData({ activeTab: e.detail.index, activeStatus: 'all' });
+    const idx = e.detail.index;
+    const statusFilter = idx === 2 ? EXPRESS_STATUS_FILTER : STATUS_FILTER;
+    this.setData({ activeTab: idx, activeStatus: 'all', statusFilter });
     this.applyFilter();
   },
 
@@ -114,14 +136,15 @@ Page({
     let list = allOrders;
 
     if (activeTab === 1) list = list.filter(o => o.orderType === 'agency');
+    else if (activeTab === 2) list = list.filter(o => o.orderType === 'express');
 
-    if (activeStatus === 'unpaid') list = list.filter(o => o.orderStatus === 'unpaid');
-    else if (activeStatus === 'pending') list = list.filter(o => o.orderStatus === 'pending');
-    else if (activeStatus === 'in_progress') list = list.filter(o => o.orderStatus === 'in_progress');
-    else if (activeStatus === 'to_confirm') list = list.filter(o => o.orderStatus === 'to_confirm');
-    else if (activeStatus === 'to_review') list = list.filter(o => o.orderStatus === 'completed' && !o.review);
-    else if (activeStatus === 'completed') list = list.filter(o => o.orderStatus === 'completed');
-    else if (activeStatus === 'cancelled') list = list.filter(o => o.orderStatus === 'cancelled');
+    if (activeStatus !== 'all') {
+      if (activeStatus === 'to_review') {
+        list = list.filter(o => o.orderStatus === 'completed' && !o.review);
+      } else {
+        list = list.filter(o => o.orderStatus === activeStatus);
+      }
+    }
 
     this.setData({ filteredOrders: list });
   },
@@ -143,7 +166,8 @@ Page({
         .limit(50)
         .get();
       list = (res.data || []).filter(item => item.ownerId === userId).map(item => {
-        const config = STATUS_CONFIG[item.orderStatus] || {};
+        const configMap = item.orderType === 'express' ? EXPRESS_STATUS_CONFIG : STATUS_CONFIG;
+        const config = configMap[item.orderStatus] || {};
         return {
           ...item,
           statusConfig: config,
@@ -289,14 +313,16 @@ Page({
     }
   },
 
-  // 确认完成
+  // 确认完成 / 确认取件
   onConfirmComplete(e) {
     const id = e.currentTarget.dataset.id;
-    const category = e.currentTarget.dataset.category || '';
-    const isFoster = category === 'foster';
+    const order = this.data.allOrders.find(o => o._id === id);
+    if (!order) return;
+    const isPickup = order.orderStatus === 'to_pickup';
+    const isFoster = order.category === 'foster';
     wx.showModal({
-      title: isFoster ? '确认取回' : '确认完成',
-      content: isFoster ? '确认已取回宠物？' : '确认机构已完成该服务？',
+      title: isPickup ? '确认取件' : (isFoster ? '确认取回' : '确认完成'),
+      content: isPickup ? '确认已取到快递？' : (isFoster ? '确认已取回宠物？' : '确认机构已完成该服务？'),
       confirmColor: '#FF9800',
       success: async (res) => {
         if (!res.confirm) return;

@@ -83,51 +83,60 @@
 
           <!-- 匹配度条 -->
           <view class="result-card__score-bar">
-            <view class="result-card__score-fill {{item.matchScore >= 90 ? 'score-high' : item.matchScore >= 70 ? 'score-med' : 'score-low'}}" style="width: {{item.matchScore}}%;"></view>
-            <text class="result-card__score-text">匹配度 {{item.matchScore}}%</text>
+            <view class="result-card__score-fill {{item.matchPercent >= 90 ? 'score-high' : item.matchPercent >= 70 ? 'score-med' : 'score-low'}}" style="width: {{item.matchPercent}}%;"></view>
+            <text class="result-card__score-text">匹配度 {{item.matchPercent}}%</text>
           </view>
 
-          <!-- 机构信息 -->
-          <view class="result-card__body">
-            <view class="result-card__header">
-              <text class="result-card__agency-name">{{item.agency.orgName}}</text>
-              <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.service.catTitle}}</van-tag>
+          <view class="result-card__content">
+            <!-- 服务图片 -->
+            <image class="result-card__img" wx:if="{{item.service.coverImage}}" src="{{item.service.coverImage}}" mode="aspectFill" />
+
+            <!-- 机构信息 -->
+            <view class="result-card__body">
+              <view class="result-card__header">
+                <text class="result-card__agency-name">{{item.agency.orgName}}</text>
+                <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.service.catTitle}}</van-tag>
+              </view>
+              <text class="result-card__location" wx:if="{{item.agency.region}}">
+                <van-icon name="location-o" size="22rpx" color="#8C7A6B" /> {{item.agency.region}}
+              </text>
+              <text class="result-card__service">
+                {{item.service.name}} <text class="result-card__price">¥{{item.service.price}}/{{item.service.priceUnit || '次'}}</text>
+              </text>
+              <text class="result-card__reason" wx:if="{{aiReasons[item.service._id]}}">
+                {{aiReasons[item.service._id]}}
+              </text>
             </view>
-            <text class="result-card__location" wx:if="{{item.agency.region}}">
-              <van-icon name="location-o" size="22rpx" color="#8C7A6B" /> {{item.agency.region}}
-            </text>
-            <text class="result-card__service">
-              {{item.service.name}} <text class="result-card__price">¥{{item.service.price}}/{{item.service.priceUnit || '次'}}</text>
-            </text>
-            <text class="result-card__reason" wx:if="{{aiReasons[item.service._id]}}">
-              {{aiReasons[item.service._id]}}
-            </text>
           </view>
 
           <!-- 操作按钮 -->
           <view class="result-card__actions">
-            <van-button
-              size="small"
-              round
-              plain
-              color="#FF9800"
-              bindtap="onDetailTap"
-              data-agencyid="{{item.agency._id}}"
-              custom-style="flex:1;height:64rpx;font-size:24rpx;"
-            >
-              查看详情
-            </van-button>
-            <van-button
-              size="small"
-              round
-              type="primary"
-              color="#FF9800"
-              bindtap="onBookTap"
-              data-serviceid="{{item.service._id}}"
-              custom-style="flex:1;height:64rpx;font-size:24rpx;"
-            >
-              立即预约
-            </van-button>
+            <view style="flex:1;">
+              <van-button
+                size="small"
+                round
+                plain
+                color="#FF9800"
+                bindtap="onDetailTap"
+                data-agencyid="{{item.agency._id}}"
+                custom-style="width:100%;height:64rpx;font-size:24rpx;"
+              >
+                查看详情
+              </van-button>
+            </view>
+            <view style="flex:1;">
+              <van-button
+                size="small"
+                round
+                type="primary"
+                color="#FF9800"
+                bindtap="onBookTap"
+                data-serviceid="{{item.service._id}}"
+                custom-style="width:100%;height:64rpx;font-size:24rpx;"
+              >
+                立即预约
+              </van-button>
+            </view>
           </view>
         </view>
       </view>

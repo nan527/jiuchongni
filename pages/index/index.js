@@ -79,10 +79,6 @@ Page({
     wx.navigateTo({ url: '/pages/ai/ai' });
   },
 
-  toHealth() {
-    wx.showToast({ title: '健康管理即将上线', icon: 'none' });
-  },
-
   toSmartMatch() {
     wx.navigateTo({ url: '/pages/smart-match/smart-match' });
   },

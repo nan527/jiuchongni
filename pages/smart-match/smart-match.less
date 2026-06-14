@@ -243,8 +243,23 @@
 }
 
 /* 卡片内容 */
-.result-card__body {
+.result-card__content {
+  display: flex;
   padding: 20rpx 24rpx;
+}
+
+.result-card__img {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: 16rpx;
+  margin-right: 20rpx;
+  flex-shrink: 0;
+  background: #F0E6D8;
+}
+
+.result-card__body {
+  flex: 1;
+  min-width: 0;
 }
 
 .result-card__header {

@@ -1,0 +1,180 @@
+/* pages/admin/api-config.less */
+
+.api-config-page {
+  min-height: 100vh;
+  background: #F5F5F5;
+  padding-bottom: 60rpx;
+}
+
+/* ===== 导航栏（复用 admin 样式）===== */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+}
+
+.nav-bar__inner {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 16rpx;
+}
+
+.nav-bar__left {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-bar__right {
+  width: 72rpx;
+}
+
+.nav-bar__title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ===== 区块标题 ===== */
+.section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+  padding: 24rpx 32rpx 16rpx;
+}
+
+/* ===== 预留卡片 ===== */
+.reserved-card {
+  margin: 0 32rpx 8rpx;
+  padding: 48rpx 0;
+  background: #fff;
+  border-radius: 16rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16rpx;
+}
+
+.reserved-text {
+  font-size: 26rpx;
+  color: #BDBDBD;
+}
+
+/* ===== 加载状态 ===== */
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 80rpx 0;
+}
+
+/* ===== 模型卡片 ===== */
+.model-list {
+  padding: 0 32rpx;
+}
+
+.model-card {
+  background: #fff;
+  border-radius: 16rpx;
+  margin-bottom: 20rpx;
+  overflow: hidden;
+}
+
+.model-card__header {
+  padding: 24rpx 24rpx 16rpx;
+  border-bottom: 1rpx solid #F0F0F0;
+}
+
+.model-card__name-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 8rpx;
+}
+
+.model-card__name {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #333;
+}
+
+.tier-badge {
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
+  font-size: 20rpx;
+  font-weight: 600;
+}
+
+.tier-badge--high {
+  background: #FFEBEE;
+  color: #C62828;
+}
+
+.tier-badge--medium {
+  background: #FFF3E0;
+  color: #E65100;
+}
+
+.tier-badge--low {
+  background: #E8F5E9;
+  color: #2E7D32;
+}
+
+.model-card__model {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.model-card__body {
+  padding: 20rpx 24rpx 24rpx;
+}
+
+.api-key-row {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.api-key-label {
+  font-size: 24rpx;
+  color: #666;
+  flex-shrink: 0;
+}
+
+.api-key-input {
+  flex: 1;
+  height: 64rpx;
+  padding: 0 16rpx;
+  background: #F5F5F5;
+  border-radius: 8rpx;
+  font-size: 24rpx;
+  color: #333;
+}
+
+.api-key-toggle {
+  width: 56rpx;
+  height: 56rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.model-card__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.model-card__price {
+  font-size: 22rpx;
+  color: #999;
+}

@@ -105,6 +105,11 @@
   color: #E65100;
 }
 
+.badge-express {
+  background: #E0F7FA;
+  color: #0277BD;
+}
+
 .o-card__status {
   font-size: 22rpx;
   font-weight: 500;

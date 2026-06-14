@@ -50,7 +50,14 @@
     <view class="occupied-empty" wx:else>当前无在笼宠物</view>
   </view>
 
-  <van-tabs active="{{ activeTab }}" bind:change="onTabChange" color="#FF9800" line-width="60rpx" swipeable>
+  <!-- 服务类型切换 -->
+  <view class="type-switcher">
+    <view class="type-switcher__item {{orderViewType === 'agency' ? 'type-switcher__item--active' : ''}}" data-type="agency" bindtap="onOrderViewTypeChange">机构服务</view>
+    <view class="type-switcher__item {{orderViewType === 'express' ? 'type-switcher__item--active' : ''}}" data-type="express" bindtap="onOrderViewTypeChange">快递服务</view>
+  </view>
+
+  <!-- 机构服务订单 tabs -->
+  <van-tabs wx:if="{{orderViewType === 'agency'}}" active="{{ activeTab }}" bind:change="onTabChange" color="#FF9800" line-width="60rpx" swipeable>
 
     <!-- Tab: 待接单 -->
     <van-tab title="待接单" info="{{ pendingList.length || '' }}">
@@ -169,6 +176,137 @@
               </view>
             </view>
             <!-- 用户评价展示 -->
+            <view class="ao-card__review" wx:if="{{ item.review }}">
+              <view class="review-header">
+                <van-icon name="comment-o" size="28rpx" color="#FF9800"></van-icon>
+                <text class="review-title">用户评价</text>
+                <view class="review-stars">
+                  <van-icon wx:for="{{ item.review.rating }}" wx:for-index="starIdx" wx:key="starIdx" name="star" size="24rpx" color="#FF9800"></van-icon>
+                </view>
+              </view>
+              <text class="review-content">{{ item.review.content }}</text>
+            </view>
+          </view>
+        </view>
+      </view>
+    </van-tab>
+
+  </van-tabs>
+
+  <!-- 快递服务订单 tabs -->
+  <van-tabs wx:if="{{orderViewType === 'express'}}" active="{{ activeTab }}" bind:change="onTabChange" color="#FF9800" line-width="60rpx" swipeable>
+
+    <!-- Tab: 待发货 -->
+    <van-tab title="待发货" info="{{ expressPendingList.length || '' }}">
+      <view class="tab-body">
+        <view class="empty-box" wx:if="{{ !loading && expressPendingList.length === 0 }}">
+          <van-icon name="orders-o" size="80rpx" color="#ddd"></van-icon>
+          <text class="empty-text">暂无待发货订单</text>
+        </view>
+        <view class="order-list" wx:if="{{ expressPendingList.length > 0 }}">
+          <view class="ao-card" wx:for="{{ expressPendingList }}" wx:key="_id">
+            <view class="ao-card__header">
+              <text class="ao-card__svc">{{ item.serviceName }}</text>
+              <van-tag type="warning" size="medium">待发货</van-tag>
+            </view>
+            <view class="ao-card__body">
+              <image class="ao-card__img" src="{{ item.images[0] || '/static/pet/logo.png' }}" mode="aspectFill" />
+              <view class="ao-card__info">
+                <text class="ao-card__pet">收货人: {{ item.receiverName || '-' }}</text>
+                <text class="ao-card__contact">电话: {{ item.receiverPhone || item.phone || '-' }}</text>
+                <text class="ao-card__contact">地址: {{ item.receiverAddress || '-' }}</text>
+                <text class="ao-card__remark" wx:if="{{ item.remark }}">备注: {{ item.remark }}</text>
+                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__time">{{ item.createTimeStr }}</text>
+              </view>
+            </view>
+            <view class="ao-card__actions">
+              <van-button size="small" round type="primary" color="#FF9800" data-id="{{ item._id }}" data-status="shipped" bindtap="onUpdateStatus">发货</van-button>
+            </view>
+          </view>
+        </view>
+      </view>
+    </van-tab>
+
+    <!-- Tab: 已发货 -->
+    <van-tab title="已发货" info="{{ expressShippedList.length || '' }}">
+      <view class="tab-body">
+        <view class="empty-box" wx:if="{{ !loading && expressShippedList.length === 0 }}">
+          <van-icon name="logistics" size="80rpx" color="#ddd"></van-icon>
+          <text class="empty-text">暂无已发货订单</text>
+        </view>
+        <view class="order-list" wx:if="{{ expressShippedList.length > 0 }}">
+          <view class="ao-card" wx:for="{{ expressShippedList }}" wx:key="_id">
+            <view class="ao-card__header">
+              <text class="ao-card__svc">{{ item.serviceName }}</text>
+              <van-tag color="#E0F7FA" text-color="#0277BD" size="medium">已发货</van-tag>
+            </view>
+            <view class="ao-card__body">
+              <image class="ao-card__img" src="{{ item.images[0] || '/static/pet/logo.png' }}" mode="aspectFill" />
+              <view class="ao-card__info">
+                <text class="ao-card__pet">收货人: {{ item.receiverName || '-' }}</text>
+                <text class="ao-card__contact">电话: {{ item.receiverPhone || item.phone || '-' }}</text>
+                <text class="ao-card__contact">地址: {{ item.receiverAddress || '-' }}</text>
+                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__time">{{ item.createTimeStr }}</text>
+              </view>
+            </view>
+          </view>
+        </view>
+      </view>
+    </van-tab>
+
+    <!-- Tab: 待取件 -->
+    <van-tab title="待取件" info="{{ expressToPickupList.length || '' }}">
+      <view class="tab-body">
+        <view class="empty-box" wx:if="{{ !loading && expressToPickupList.length === 0 }}">
+          <van-icon name="todo-list-o" size="80rpx" color="#ddd"></van-icon>
+          <text class="empty-text">暂无待取件订单</text>
+        </view>
+        <view class="order-list" wx:if="{{ expressToPickupList.length > 0 }}">
+          <view class="ao-card" wx:for="{{ expressToPickupList }}" wx:key="_id">
+            <view class="ao-card__header">
+              <text class="ao-card__svc">{{ item.serviceName }}</text>
+              <van-tag color="#FFF3E0" text-color="#E65100" size="medium">待取件</van-tag>
+            </view>
+            <view class="ao-card__body">
+              <image class="ao-card__img" src="{{ item.images[0] || '/static/pet/logo.png' }}" mode="aspectFill" />
+              <view class="ao-card__info">
+                <text class="ao-card__pet">收货人: {{ item.receiverName || '-' }}</text>
+                <text class="ao-card__contact">电话: {{ item.receiverPhone || item.phone || '-' }}</text>
+                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__time">{{ item.createTimeStr }}</text>
+              </view>
+            </view>
+            <view class="ao-card__actions">
+              <van-button size="small" round type="primary" color="#FF9800" data-id="{{ item._id }}" data-status="completed" bindtap="onUpdateStatus">确认取件</van-button>
+            </view>
+          </view>
+        </view>
+      </view>
+    </van-tab>
+
+    <!-- Tab: 已完成 -->
+    <van-tab title="已完成">
+      <view class="tab-body">
+        <view class="empty-box" wx:if="{{ !loading && expressCompletedList.length === 0 }}">
+          <van-icon name="checked" size="80rpx" color="#ddd"></van-icon>
+          <text class="empty-text">暂无已完成订单</text>
+        </view>
+        <view class="order-list" wx:if="{{ expressCompletedList.length > 0 }}">
+          <view class="ao-card" wx:for="{{ expressCompletedList }}" wx:key="_id">
+            <view class="ao-card__header">
+              <text class="ao-card__svc">{{ item.serviceName }}</text>
+              <van-tag type="success" size="medium">已完成</van-tag>
+            </view>
+            <view class="ao-card__body">
+              <image class="ao-card__img" src="{{ item.images[0] || '/static/pet/logo.png' }}" mode="aspectFill" />
+              <view class="ao-card__info">
+                <text class="ao-card__pet">收货人: {{ item.receiverName || '-' }}</text>
+                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__time">{{ item.createTimeStr }}</text>
+              </view>
+            </view>
             <view class="ao-card__review" wx:if="{{ item.review }}">
               <view class="review-header">
                 <van-icon name="comment-o" size="28rpx" color="#FF9800"></van-icon>

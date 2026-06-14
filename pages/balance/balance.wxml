@@ -1,0 +1,64 @@
+<!-- pages/balance/balance.wxml -->
+<view class="balance-page" style="padding-top: {{ navBarHeight + 10 }}px;">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__left" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">我的余额</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
+  <!-- 余额卡片 -->
+  <view class="balance-card">
+    <text class="balance-card__label">账户余额</text>
+    <view class="balance-card__amount">
+      <text class="balance-card__symbol">¥</text>
+      <text class="balance-card__num">{{balance}}</text>
+    </view>
+  </view>
+
+  <!-- 充值档位 -->
+  <view class="section-title">充值金额</view>
+  <view class="recharge-grid">
+    <view
+      class="recharge-item {{selectedAmount === item.amount ? 'recharge-item--active' : ''}}"
+      wx:for="{{rechargeOptions}}"
+      wx:key="amount"
+      bindtap="onSelectAmount"
+      data-amount="{{item.amount}}"
+    >
+      <text class="recharge-item__amount">{{item.amount}}元</text>
+      <text class="recharge-item__gift" wx:if="{{item.gift > 0}}">送{{item.gift}}元</text>
+      <text class="recharge-item__gift" wx:else>&nbsp;</text>
+    </view>
+  </view>
+
+  <!-- 充值按钮 -->
+  <view class="recharge-btn-wrap">
+    <van-button round block color="linear-gradient(135deg, #FF9800, #FFB74D)" bindtap="onRecharge" loading="{{recharging}}">
+      立即充值
+    </van-button>
+  </view>
+
+  <!-- 充值记录 -->
+  <view class="section-title">充值记录</view>
+  <view class="logs-list" wx:if="{{logs.length > 0}}">
+    <view class="log-item" wx:for="{{logs}}" wx:key="_id">
+      <view class="log-item__info">
+        <text class="log-item__desc">{{item.description}}</text>
+        <text class="log-item__time">{{item.timeStr}}</text>
+      </view>
+      <text class="log-item__amount {{item.type === 'recharge' ? 'log-item__amount--plus' : 'log-item__amount--minus'}}">
+        {{item.type === 'recharge' ? '+' : ''}}{{item.amountText}}
+      </text>
+    </view>
+  </view>
+  <view class="empty-wrap" wx:else>
+    <text class="empty-text">暂无记录</text>
+  </view>
+
+</view>

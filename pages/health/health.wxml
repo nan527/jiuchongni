@@ -64,13 +64,8 @@
         <text class="section-header__title">体重趋势</text>
         <text class="section-header__sub">近{{weightChart.length}}次记录</text>
       </view>
-      <view class="weight-chart">
-        <view class="weight-chart__bar-wrap" wx:for="{{weightChart}}" wx:key="date">
-          <view class="weight-chart__bar {{item.isMax ? 'weight-chart__bar--max' : ''}} {{item.isMin ? 'weight-chart__bar--min' : ''}}"
-                style="height:{{item.height}};"></view>
-          <text class="weight-chart__value">{{item.value}}</text>
-          <text class="weight-chart__date">{{item.date}}</text>
-        </view>
+      <view class="weight-chart-wrap">
+        <canvas id="weightCanvas" type="2d" class="weight-canvas" />
       </view>
       <view class="weight-chart__legend">
         <view class="weight-chart__legend-item">
@@ -200,14 +195,61 @@
       </view>
     </view>
 
-    <!-- AI 建议 -->
-    <view class="ai-card" wx:if="{{aiSuggestion}}">
-      <view class="section-header">
-        <text class="section-header__title">AI 健康建议</text>
+    <!-- AI 健康风险预警 -->
+    <view class="risk-card">
+      <view class="risk-card__header">
+        <van-icon name="shield-o" size="36rpx" color="#FF9800" />
+        <text class="risk-card__title">AI 健康预警</text>
       </view>
-      <view class="ai-card__body">
-        <van-icon name="bulb-o" size="36rpx" color="#FF9800" />
-        <text class="ai-card__text">{{aiSuggestion}}</text>
+
+      <!-- 有分析结果 -->
+      <block wx:if="{{riskAlerts.length > 0 && !riskLoading}}">
+        <view class="risk-card__date" wx:if="{{riskDate}}">分析时间：{{riskDate}}</view>
+        <view class="risk-card__summary" wx:if="{{riskSummary}}">{{riskSummary}}</view>
+        <view class="risk-item risk-item--{{item.level}}" wx:for="{{riskAlerts}}" wx:key="index">
+          <view class="risk-item__dot"></view>
+          <view class="risk-item__body">
+            <text class="risk-item__title">{{item.title}}</text>
+            <text class="risk-item__desc">{{item.desc}}</text>
+          </view>
+        </view>
+      </block>
+
+      <!-- 无结果 + 未分析过 -->
+      <view wx:if="{{riskAlerts.length === 0 && !riskLoading && !riskDate}}" class="risk-card__hint">
+        <text>点击下方按钮，AI 将分析宠物健康数据，主动发现潜在风险</text>
+      </view>
+
+      <!-- 无结果 + 之前分析过 -->
+      <view wx:if="{{riskAlerts.length === 0 && !riskLoading && riskDate}}" class="risk-card__empty">
+        <text>暂未发现健康风险，继续保持</text>
+      </view>
+
+      <!-- 加载中 -->
+      <view wx:if="{{riskLoading}}" class="risk-card__loading">
+        <van-loading size="40rpx" color="#FF9800" />
+        <text class="risk-card__loading-text">AI 正在分析健康数据...</text>
+      </view>
+
+      <!-- 错误 -->
+      <view wx:if="{{riskError && !riskLoading}}" class="risk-card__error">
+        <text>{{riskError}}</text>
+      </view>
+
+      <!-- 分析按钮 -->
+      <view class="risk-card__btn-wrap">
+        <van-button
+          size="small"
+          round
+          type="primary"
+          color="#FF9800"
+          loading="{{riskLoading}}"
+          loading-text="分析中"
+          bindtap="runRiskAnalysis"
+          custom-style="height:64rpx;font-size:24rpx;"
+        >
+          {{riskDate ? '重新分析' : '立即分析'}}
+        </van-button>
       </view>
     </view>
 

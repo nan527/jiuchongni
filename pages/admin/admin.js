@@ -62,6 +62,10 @@ Page({
     wx.navigateTo({ url: '/pages/admin/dashboard' });
   },
 
+  toApiConfig() {
+    wx.navigateTo({ url: '/pages/admin/api-config' });
+  },
+
   handleLogout() {
     wx.showModal({
       title: '提示',

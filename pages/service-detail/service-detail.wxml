@@ -75,35 +75,45 @@
       <text class="cage-panel__warn" wx:if="{{ cageInfo.totalCages > 0 && cageInfo.availableCages <= 0 }}">当前笼位已满，暂不可下单</text>
     </view>
 
-    <view class="pet-empty-tip" wx:if="{{ myPets.length === 0 }}">
-      <text class="pet-empty-tip__text">暂无宠物档案，请先添加宠物</text>
-      <view class="pet-empty-tip__btn" bindtap="toPetArchive">
-        <van-icon name="plus" size="24rpx" color="#FF9800"></van-icon>
-        <text style="color:#FF9800;font-size:26rpx;margin-left:8rpx;">去添加</text>
-      </view>
-    </view>
+    <!-- 商品类：收货地址 -->
+    <block wx:if="{{ svc.category === 'extra' }}">
+      <van-field label="收货人" placeholder="请输入收货人姓名" value="{{ receiverName }}" bind:change="onReceiverNameChange" required></van-field>
+      <van-field label="收货电话" placeholder="请输入收货人手机号" value="{{ receiverPhone }}" bind:change="onReceiverPhoneChange" type="number" required></van-field>
+      <van-field label="收货地址" placeholder="请输入详细收货地址" value="{{ receiverAddress }}" bind:change="onReceiverAddressChange" type="textarea" autosize="{{ { minHeight: 60 } }}" required></van-field>
+    </block>
 
-    <view class="pet-selector" wx:if="{{ myPets.length > 0 }}">
-      <view
-        class="pet-opt {{ selectedPetId === item._id ? 'pet-opt--active' : '' }}"
-        wx:for="{{ myPets }}"
-        wx:key="_id"
-        data-id="{{ item._id }}"
-        bindtap="onSelectPet"
-      >
-        <image class="pet-opt__avatar" src="{{ item.photo || '/static/tab-pet-orange.png' }}" mode="aspectFill" />
-        <view class="pet-opt__info">
-          <text class="pet-opt__name">{{ item.name }}</text>
-          <text class="pet-opt__detail">{{ item.species }}{{ item.age ? ' · ' + item.age + '岁' : '' }}</text>
+    <!-- 非商品类：选择宠物 -->
+    <block wx:else>
+      <view class="pet-empty-tip" wx:if="{{ myPets.length === 0 }}">
+        <text class="pet-empty-tip__text">暂无宠物档案，请先添加宠物</text>
+        <view class="pet-empty-tip__btn" bindtap="toPetArchive">
+          <van-icon name="plus" size="24rpx" color="#FF9800"></van-icon>
+          <text style="color:#FF9800;font-size:26rpx;margin-left:8rpx;">去添加</text>
         </view>
-        <van-icon wx:if="{{ selectedPetId === item._id }}" name="success" size="40rpx" color="#FF9800"></van-icon>
       </view>
-    </view>
 
-    <view class="selected-pet" wx:if="{{ selectedPetId }}">
-      <text class="selected-pet__label">已选宠物：</text>
-      <text class="selected-pet__name">{{ petName }}</text>
-    </view>
+      <view class="pet-selector" wx:if="{{ myPets.length > 0 }}">
+        <view
+          class="pet-opt {{ selectedPetId === item._id ? 'pet-opt--active' : '' }}"
+          wx:for="{{ myPets }}"
+          wx:key="_id"
+          data-id="{{ item._id }}"
+          bindtap="onSelectPet"
+        >
+          <image class="pet-opt__avatar" src="{{ item.photo || '/static/tab-pet-orange.png' }}" mode="aspectFill" />
+          <view class="pet-opt__info">
+            <text class="pet-opt__name">{{ item.name }}</text>
+            <text class="pet-opt__detail">{{ item.species }}{{ item.age ? ' · ' + item.age + '岁' : '' }}</text>
+          </view>
+          <van-icon wx:if="{{ selectedPetId === item._id }}" name="success" size="40rpx" color="#FF9800"></van-icon>
+        </view>
+      </view>
+
+      <view class="selected-pet" wx:if="{{ selectedPetId }}">
+        <text class="selected-pet__label">已选宠物：</text>
+        <text class="selected-pet__name">{{ petName }}</text>
+      </view>
+    </block>
 
     <block wx:if="{{ svc.category === 'foster' }}">
       <picker mode="date" start="{{ today }}" value="{{ checkinDate }}" bindchange="onCheckinDateChange">

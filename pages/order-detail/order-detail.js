@@ -14,6 +14,15 @@ const STATUS_CONFIG = {
   cancelled:   { label: '已取消',   color: '#999',    bg: '#F5F5F5' },
 };
 
+const EXPRESS_STATUS_CONFIG = {
+  unpaid:       { label: '待支付', color: '#EF6C00', bg: '#FFF8E1' },
+  pending_ship: { label: '待发货', color: '#1565C0', bg: '#E3F2FD' },
+  shipped:      { label: '已发货', color: '#0277BD', bg: '#E0F7FA' },
+  to_pickup:    { label: '待取件', color: '#E65100', bg: '#FFF3E0' },
+  completed:    { label: '已完成', color: '#66BB6A', bg: '#E8F5E9' },
+  cancelled:    { label: '已取消', color: '#999',    bg: '#F5F5F5' },
+};
+
 const CAT_TEXT = {
   foster: '宠物寄养',
   grooming: '美容洗护',
@@ -109,7 +118,8 @@ Page({
   },
 
   _buildOrder(raw) {
-    const config = STATUS_CONFIG[raw.orderStatus] || {};
+    const configMap = raw.orderType === 'express' ? EXPRESS_STATUS_CONFIG : STATUS_CONFIG;
+    const config = configMap[raw.orderStatus] || {};
     const petInfo = raw.petInfo || {};
     return {
       ...raw,
@@ -190,13 +200,14 @@ Page({
     wx.navigateTo({ url: `/pages/payment/payment?id=${this.data.order._id}` });
   },
 
-  // 确认完成
+  // 确认完成 / 确认取件
   onConfirmComplete() {
     const order = this.data.order;
+    const isPickup = order.orderStatus === 'to_pickup';
     const isFoster = order.category === 'foster';
     wx.showModal({
-      title: isFoster ? '确认取回' : '确认完成',
-      content: isFoster ? '确认已取回宠物？' : '确认机构已完成该服务？',
+      title: isPickup ? '确认取件' : (isFoster ? '确认取回' : '确认完成'),
+      content: isPickup ? '确认已取到快递？' : (isFoster ? '确认已取回宠物？' : '确认机构已完成该服务？'),
       confirmColor: '#FF9800',
       success: async (res) => {
         if (!res.confirm) return;

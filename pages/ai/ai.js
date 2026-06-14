@@ -2,25 +2,7 @@
 const authService = require('../../services/authService');
 const { getStatusBarHeight } = require('../../utils/helpers');
 
-const MATCH_REASONS = [
-  '综合评分最高，环境和服务都很出色',
-  '距离最近，交通便利，口碑良好',
-  '擅长照顾{breed}，用户好评率95%',
-  '价格合理，服务全面，性价比高',
-  '专业{breed}护理团队，经验丰富',
-  '环境干净卫生，宠物活动空间大',
-  '提供24小时视频监控，随时查看宠物',
-  '有专业的宠物医疗团队，安全有保障',
-];
-
-const CAPTION_TEMPLATES = [
-  '阳光洒在{name}身上，这一刻，时光都变得温柔了。',
-  '{name}的小眼神，仿佛在说"铲屎官，快来摸我！"',
-  '记录{name}的日常，每一帧都是心动的感觉～',
-  '有{name}陪伴的日子，连空气都是甜的。',
-  '{name}今天也是元气满满的小可爱呢！',
-  '生活不止眼前的苟且，还有{name}和远方。',
-];
+const db = wx.cloud.database();
 
 Page({
   data: {
@@ -29,32 +11,28 @@ Page({
     myPets: [],
 
     // 弹窗控制
-    showMatch: false,
-    showAlbum: false,
     showAvatar: false,
-    showDashboard: false,
 
-    // AI 匹配
-    matchPetIdx: -1,
-    matchPrefs: [],
-    matchLoading: false,
-    matchResults: [],
-    matchTried: false,
-    prefOptions: ['环境好', '价格实惠', '距离近', '口碑好', '专业护理', '24h监控', '医疗配套', '接送服务'],
+    // 图片上传
+    avatarOriginalUrl: '',
+    avatarOriginalFileID: '',
 
-    // 宠物相册
-    albumTab: 0,
-    albumPhotos: [],
-    captionPhotoIdx: -1,
-    captionLoading: false,
-    captionResult: '',
-
-    // 数字分身
+    // 风格与提示词
     avatarStyle: '',
     avatarStyleName: '',
+    customPrompt: '',
+
+    // 模型选择
+    selectedModel: '',
+    aiModels: [],
+
+    // 生成状态
     avatarLoading: false,
     avatarGenerated: false,
     avatarPreviewUrl: '',
+    resultFileID: '',
+
+    // 风格列表
     avatarStyles: [
       { key: 'cartoon', name: '可爱卡通', icon: 'smile-o', bg: '#FFF3E0', color: '#FF9800' },
       { key: 'watercolor', name: '水彩手绘', icon: 'brush-o', bg: '#E3F2FD', color: '#2196F3' },
@@ -64,31 +42,11 @@ Page({
       { key: 'cyber', name: '赛博朋克', icon: 'fire-o', bg: '#E0F7FA', color: '#00BCD4' },
     ],
 
-    // 数据看板
-    dashData: {
-      monthExpense: 1280,
-      expenseTrend: 15,
-      healthScore: 96,
-      serviceCount: 8,
-      fosterDays: 23,
-      serviceDist: { foster: 45, grooming: 25, medical: 20, other: 10 },
-    },
-    expenseChartData: [
-      { month: 1, value: 580, percent: 30 },
-      { month: 2, value: 820, percent: 42 },
-      { month: 3, value: 1100, percent: 57 },
-      { month: 4, value: 760, percent: 39 },
-      { month: 5, value: 1500, percent: 78 },
-      { month: 6, value: 1280, percent: 66 },
-    ],
-    healthChartData: [
-      { month: 1, score: 92 },
-      { month: 2, score: 94 },
-      { month: 3, score: 90 },
-      { month: 4, score: 95 },
-      { month: 5, score: 93 },
-      { month: 6, score: 96 },
-    ],
+    // 我的作品
+    myWorks: [],
+    shareWorkUrl: '',
+    batchMode: false,
+    selectedWorks: [],
   },
 
   onLoad() {
@@ -97,32 +55,177 @@ Page({
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
     this.loadMyPets();
+    this.loadMyWorks();
+    this.loadApiConfigs();
   },
 
   onGoBack() {
     wx.navigateBack();
   },
 
+  onShareAppMessage() {
+    const shareUrl = this.data.shareWorkUrl || this.data.avatarPreviewUrl || '';
+    return {
+      title: '看看我的AI数字分身！',
+      path: '/pages/ai/ai',
+      imageUrl: shareUrl,
+    };
+  },
+
   async loadMyPets() {
     try {
       const userInfo = await authService.checkLogin();
       if (!userInfo) return;
-      const db = wx.cloud.database();
-      const res = await db.collection('pets')
+
+      const petsRes = await db.collection('pets')
         .where({ ownerId: userInfo._id })
         .orderBy('createTime', 'desc')
         .limit(10)
         .get();
-      const pets = (res.data || []).map(p => ({
+
+      const pets = (petsRes.data || []).map(p => ({
         name: p.name,
-        breed: p.breed || '',
+        breed: p.breed || p.species || '',
         avatar: p.avatar || '',
         _id: p._id,
+        character: p.character || '',
+        age: p.age || '',
       }));
+
       this.setData({ myPets: pets });
     } catch (e) {
       console.error('[AI] loadMyPets failed', e);
     }
+  },
+
+  async loadMyWorks() {
+    try {
+      const res = await db.collection('ai_works')
+        .orderBy('createdAt', 'desc')
+        .limit(20)
+        .get();
+      this.setData({ myWorks: res.data || [] });
+    } catch (e) {
+      console.error('[AI] loadMyWorks failed', e);
+    }
+  },
+
+  previewWork(e) {
+    const url = e.currentTarget.dataset.url;
+    if (url) {
+      wx.previewImage({ urls: [url] });
+    }
+  },
+
+  deleteWork(e) {
+    const { id, idx } = e.currentTarget.dataset;
+    wx.showModal({
+      title: '删除作品',
+      content: '确定要删除这个作品吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            await db.collection('ai_works').doc(id).remove();
+            const myWorks = this.data.myWorks.filter((_, i) => i !== idx);
+            this.setData({ myWorks });
+            wx.showToast({ title: '已删除', icon: 'success' });
+          } catch (e) {
+            wx.showToast({ title: '删除失败', icon: 'none' });
+          }
+        }
+      },
+    });
+  },
+
+  onWorkShare(e) {
+    const url = e.currentTarget.dataset.url;
+    this.setData({ shareWorkUrl: url });
+  },
+
+  onWorkTap(e) {
+    const { url, id, idx } = e.currentTarget.dataset;
+    if (this.data.batchMode) {
+      const selected = [...this.data.selectedWorks];
+      const pos = selected.indexOf(id);
+      if (pos >= 0) {
+        selected.splice(pos, 1);
+      } else {
+        selected.push(id);
+      }
+      this.setData({ selectedWorks: selected });
+    } else {
+      wx.previewImage({ urls: [url] });
+    }
+  },
+
+  onWorkLongPress(e) {
+    const { url, id, idx } = e.currentTarget.dataset;
+    wx.showActionSheet({
+      itemList: ['分享给好友', '删除'],
+      success: (res) => {
+        if (res.tapIndex === 0) {
+          this.setData({ shareWorkUrl: url });
+        } else if (res.tapIndex === 1) {
+          this._confirmDelete(id, idx);
+        }
+      },
+    });
+  },
+
+  _confirmDelete(id, idx) {
+    wx.showModal({
+      title: '删除作品',
+      content: '确定要删除这个作品吗？',
+      success: async (res) => {
+        if (res.confirm) {
+          try {
+            await db.collection('ai_works').doc(id).remove();
+            const myWorks = this.data.myWorks.filter((_, i) => i !== idx);
+            this.setData({ myWorks });
+            wx.showToast({ title: '已删除', icon: 'success' });
+          } catch (e) {
+            wx.showToast({ title: '删除失败', icon: 'none' });
+          }
+        }
+      },
+    });
+  },
+
+  enterBatchMode() {
+    this.setData({ batchMode: true, selectedWorks: [] });
+  },
+
+  exitBatchMode() {
+    this.setData({ batchMode: false, selectedWorks: [] });
+  },
+
+  batchDeleteWorks() {
+    const { selectedWorks, myWorks } = this.data;
+    if (selectedWorks.length === 0) {
+      return wx.showToast({ title: '请先选择作品', icon: 'none' });
+    }
+    wx.showModal({
+      title: '批量删除',
+      content: `确定要删除选中的 ${selectedWorks.length} 个作品吗？`,
+      success: async (res) => {
+        if (res.confirm) {
+          wx.showLoading({ title: '删除中...' });
+          try {
+            const dbCmd = db.command;
+            await db.collection('ai_works').where({
+              _id: dbCmd.in(selectedWorks),
+            }).remove();
+            const remaining = myWorks.filter(w => !selectedWorks.includes(w._id));
+            this.setData({ myWorks: remaining, batchMode: false, selectedWorks: [] });
+            wx.hideLoading();
+            wx.showToast({ title: '已删除', icon: 'success' });
+          } catch (e) {
+            wx.hideLoading();
+            wx.showToast({ title: '删除失败', icon: 'none' });
+          }
+        }
+      },
+    });
   },
 
   openModule(e) {
@@ -131,127 +234,22 @@ Page({
   },
 
   closeModule() {
-    this.setData({ showMatch: false, showAlbum: false, showAvatar: false, showDashboard: false });
-  },
-
-  // ==================== AI 智能匹配 ====================
-
-  onMatchPetSelect(e) {
-    this.setData({ matchPetIdx: e.currentTarget.dataset.idx });
-  },
-
-  onPrefToggle(e) {
-    const pref = e.currentTarget.dataset.pref;
-    const list = this.data.matchPrefs.slice();
-    const idx = list.indexOf(pref);
-    if (idx >= 0) list.splice(idx, 1);
-    else list.push(pref);
-    this.setData({ matchPrefs: list });
-  },
-
-  startMatch() {
-    if (this.data.matchPetIdx < 0) {
-      return wx.showToast({ title: '请先选择宠物', icon: 'none' });
-    }
-    if (this.data.matchPrefs.length === 0) {
-      return wx.showToast({ title: '请至少选择一个偏好', icon: 'none' });
-    }
-
-    this.setData({ matchLoading: true, matchResults: [], matchTried: false });
-
-    const pet = this.data.myPets[this.data.matchPetIdx];
-    const prefs = this.data.matchPrefs;
-
-    // 模拟匹配结果
-    setTimeout(() => {
-      const agencies = [
-        { name: '萌宠乐园寄养中心', score: 96 },
-        { name: '爱宠之家宠物医院', score: 93 },
-        { name: '毛孩子精品护理', score: 90 },
-        { name: '宠物星球综合服务', score: 87 },
-        { name: '温馨小窝寄养', score: 84 },
-      ];
-
-      const results = agencies.slice(0, 3).map((a, i) => {
-        const reason = MATCH_REASONS[Math.floor(Math.random() * MATCH_REASONS.length)]
-          .replace(/\{breed\}/g, pet.breed || '宠物');
-        return { ...a, reason };
-      });
-
-      this.setData({ matchLoading: false, matchResults: results, matchTried: true });
-    }, 1500);
-  },
-
-  // ==================== 宠物相册 ====================
-
-  onAlbumTab(e) {
-    this.setData({ albumTab: Number(e.currentTarget.dataset.tab) });
-  },
-
-  addAlbumPhoto() {
-    wx.chooseMedia({
-      count: 9,
-      mediaType: ['image'],
-      sourceType: ['album', 'camera'],
-      success: (res) => {
-        const newPhotos = res.tempFiles.map(f => ({ url: f.tempFilePath, caption: '' }));
-        this.setData({ albumPhotos: this.data.albumPhotos.concat(newPhotos) });
-      },
-    });
-  },
-
-  onCaptionPhotoSelect(e) {
-    this.setData({ captionPhotoIdx: e.currentTarget.dataset.idx, captionResult: '' });
-  },
-
-  generateAlbumCaption() {
-    if (this.data.albumPhotos.length === 0) {
-      return wx.showToast({ title: '请先添加照片', icon: 'none' });
-    }
-    const petName = this.data.myPets.length > 0 ? this.data.myPets[0].name : '小可爱';
-    const photos = this.data.albumPhotos.map((p, i) => {
-      const caption = CAPTION_TEMPLATES[Math.floor(Math.random() * CAPTION_TEMPLATES.length)]
-        .replace(/\{name\}/g, petName);
-      return { ...p, caption };
-    });
-    this.setData({ albumPhotos: photos });
-    wx.showToast({ title: '配文生成成功', icon: 'success' });
-  },
-
-  generatePhotoCaption() {
-    const { captionPhotoIdx, albumPhotos, myPets } = this.data;
-    if (captionPhotoIdx < 0 || captionPhotoIdx >= albumPhotos.length) {
-      return wx.showToast({ title: '请先选择照片', icon: 'none' });
-    }
-    this.setData({ captionLoading: true, captionResult: '' });
-    const petName = myPets.length > 0 ? myPets[0].name : '小可爱';
-    setTimeout(() => {
-      const caption = CAPTION_TEMPLATES[Math.floor(Math.random() * CAPTION_TEMPLATES.length)]
-        .replace(/\{name\}/g, petName);
-      this.setData({ captionLoading: false, captionResult: caption });
-    }, 1200);
-  },
-
-  onCopyCaption() {
-    wx.setClipboardData({
-      data: this.data.captionResult,
-      success: () => wx.showToast({ title: '已复制', icon: 'success' }),
-    });
-  },
-
-  shareAlbum() {
-    wx.showToast({ title: '分享功能开发中', icon: 'none' });
-  },
-
-  createSlideshow() {
-    wx.showToast({ title: '影集生成功能开发中', icon: 'none' });
-  },
-
-  shareSlideshow() {
-    wx.showToast({ title: '分享功能开发中', icon: 'none' });
+    this.setData({ showAvatar: false });
   },
 
   // ==================== 数字分身 ====================
+
+  chooseAvatarPhoto() {
+    wx.chooseMedia({
+      count: 1,
+      mediaType: ['image'],
+      sourceType: ['album', 'camera'],
+      success: (res) => {
+        const tempFilePath = res.tempFiles[0].tempFilePath;
+        this.setData({ avatarOriginalUrl: tempFilePath, avatarOriginalFileID: '', avatarGenerated: false, avatarPreviewUrl: '' });
+      },
+    });
+  },
 
   onAvatarStyleSelect(e) {
     const style = e.currentTarget.dataset.style;
@@ -259,28 +257,225 @@ Page({
     this.setData({ avatarStyle: style, avatarStyleName: styleObj ? styleObj.name : '' });
   },
 
-  generateAvatar() {
+  onPromptInput(e) {
+    this.setData({ customPrompt: e.detail.value });
+  },
+
+  async loadApiConfigs() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: { action: 'get_api_configs', category: 'image' },
+      });
+      const raw = res.result.data || [];
+      // 强制按 high → medium → low 排序
+      const high = raw.filter(m => m.tier === 'high' && m.enabled);
+      const medium = raw.filter(m => m.tier === 'medium' && m.enabled);
+      const low = raw.filter(m => m.tier === 'low' && m.enabled);
+      const models = [...high, ...medium, ...low];
+
+      // 查询每个模型的今日剩余次数
+      const modelsWithQuota = await Promise.all(models.map(async (m) => {
+        const quotaRes = await wx.cloud.callFunction({
+          name: 'ai_handler',
+          data: { action: 'check_quota', model: m.model },
+        });
+        return {
+          ...m,
+          remaining: quotaRes.result.remaining || 0,
+        };
+      }));
+
+      this.setData({
+        aiModels: modelsWithQuota,
+        selectedModel: modelsWithQuota.length > 0 ? modelsWithQuota[0].model : '',
+      });
+    } catch (e) {
+      console.error('[AI] loadApiConfigs failed', e);
+    }
+  },
+
+  onModelSelect(e) {
+    this.setData({ selectedModel: e.currentTarget.dataset.model });
+  },
+
+  async generateAvatar() {
+    if (!this.data.avatarOriginalUrl) {
+      return wx.showToast({ title: '请先上传照片', icon: 'none' });
+    }
     if (!this.data.avatarStyle) {
       return wx.showToast({ title: '请选择风格', icon: 'none' });
     }
+    if (!this.data.selectedModel) {
+      return wx.showToast({ title: '请选择模型', icon: 'none' });
+    }
+
     this.setData({ avatarLoading: true, avatarGenerated: false, avatarPreviewUrl: '' });
 
-    // 模拟生成
-    setTimeout(() => {
-      this.setData({
-        avatarLoading: false,
-        avatarGenerated: true,
-        avatarPreviewUrl: '/static/pet/logo.png',
+    try {
+      // 检查额度
+      const quotaRes = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: { action: 'check_quota', model: this.data.selectedModel },
       });
-      wx.showToast({ title: '生成成功', icon: 'success' });
-    }, 2000);
+      const quota = quotaRes.result;
+
+      if (quota.exceeded) {
+        // 检查余额是否充足
+        const balanceRes = await wx.cloud.callFunction({
+          name: 'ai_handler',
+          data: { action: 'get_user_balance' },
+        });
+        const balance = balanceRes.result.balance || 0;
+        if (balance < quota.pricePerUse) {
+          this.setData({ avatarLoading: false });
+          wx.showModal({
+            title: '免费额度已用完',
+            content: `今日免费次数已用完，继续使用需支付 ${quota.pricePerUse} 元。当前余额 ¥${balance.toFixed(2)}，余额不足，请先充值。`,
+            confirmText: '去充值',
+            success: (res) => {
+              if (res.confirm) {
+                wx.navigateTo({ url: '/pages/balance/balance' });
+              }
+            },
+          });
+          return;
+        }
+      }
+
+      // 上传原图到云存储
+      let fileID = this.data.avatarOriginalFileID;
+      if (!fileID) {
+        const uploadRes = await wx.cloud.uploadFile({
+          cloudPath: `avatar_uploads/${Date.now()}-${Math.random().toString(36).slice(2, 8)}.jpg`,
+          filePath: this.data.avatarOriginalUrl,
+        });
+        fileID = uploadRes.fileID;
+        this.setData({ avatarOriginalFileID: fileID });
+      }
+
+      // 获取临时 URL 给云函数
+      const fileRes = await wx.cloud.getTempFileURL({ fileList: [fileID] });
+      const imageUrl = fileRes.fileList[0].tempFileURL;
+
+      // 构建提示词
+      const styleName = this.data.avatarStyleName;
+      const basePrompt = `将这张宠物照片转换为${styleName}风格`;
+      const prompt = this.data.customPrompt
+        ? `${basePrompt}，${this.data.customPrompt}`
+        : basePrompt;
+
+      // 调用云函数生成图片（apiKey 从云数据库读取）
+      const res = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: {
+          action: 'generate_image',
+          model: this.data.selectedModel,
+          imageUrl,
+          prompt,
+          style: this.data.avatarStyle,
+        },
+      });
+
+      const result = res.result || {};
+      if (result.success && result.imageUrl) {
+        // 记录使用次数
+        await wx.cloud.callFunction({
+          name: 'ai_handler',
+          data: { action: 'use_quota', model: this.data.selectedModel },
+        });
+
+        // 如果超出免费额度，扣费
+        if (quota.exceeded) {
+          const modelConfig = this.data.aiModels.find(m => m.model === this.data.selectedModel);
+          await wx.cloud.callFunction({
+            name: 'ai_handler',
+            data: {
+              action: 'deduct_balance',
+              amount: modelConfig.pricePerUse,
+              description: `AI生图-${modelConfig.modelName}`,
+            },
+          });
+        }
+
+        // 刷新额度显示
+        this.loadApiConfigs();
+
+        this.setData({
+          avatarLoading: false,
+          avatarGenerated: true,
+          avatarPreviewUrl: result.imageUrl,
+          resultFileID: result.fileID || '',
+        });
+        wx.showToast({ title: '生成成功', icon: 'success' });
+      } else {
+        this.setData({ avatarLoading: false });
+        wx.showToast({ title: result.msg || '生成失败，请联系管理员检查 API 配置', icon: 'none' });
+      }
+    } catch (e) {
+      console.error('[AI] generateAvatar failed', e);
+      this.setData({ avatarLoading: false });
+      wx.showToast({ title: '网络异常，请稍后重试', icon: 'none' });
+    }
   },
 
-  saveAvatar() {
-    wx.showToast({ title: '已保存到相册', icon: 'success' });
+  previewResult() {
+    if (this.data.avatarPreviewUrl) {
+      wx.previewImage({ urls: [this.data.avatarPreviewUrl] });
+    }
   },
 
-  shareAvatar() {
-    wx.showToast({ title: '分享功能开发中', icon: 'none' });
+  onShareTap() {
+    // 触发转发菜单
+    wx.showShareMenu({
+      withShareTicket: true,
+      menus: ['shareAppMessage'],
+    });
+  },
+
+  async saveToWorks() {
+    if (!this.data.avatarPreviewUrl) {
+      return wx.showToast({ title: '没有可保存的作品', icon: 'none' });
+    }
+
+    try {
+      wx.showLoading({ title: '保存中...' });
+
+      // 通过云函数下载图片并上传到云存储（绕过域名白名单限制）
+      const res = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: {
+          action: 'download_and_save',
+          imageUrl: this.data.avatarPreviewUrl,
+        },
+      });
+
+      const result = res.result || {};
+      if (!result.success) {
+        throw new Error(result.msg || '保存失败');
+      }
+
+      // 写入云数据库
+      await db.collection('ai_works').add({
+        data: {
+          type: 'avatar',
+          style: this.data.avatarStyle,
+          styleName: this.data.avatarStyleName,
+          prompt: this.data.customPrompt,
+          originalFileID: this.data.avatarOriginalFileID,
+          resultFileID: result.fileID,
+          resultUrl: this.data.avatarPreviewUrl,
+          createdAt: db.serverDate(),
+        },
+      });
+
+      wx.hideLoading();
+      wx.showToast({ title: '保存成功', icon: 'success' });
+      this.loadMyWorks();
+    } catch (e) {
+      console.error('[AI] saveToWorks failed', e);
+      wx.hideLoading();
+      wx.showToast({ title: '保存失败', icon: 'none' });
+    }
   },
 });

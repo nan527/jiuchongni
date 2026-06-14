@@ -25,6 +25,12 @@ Page({
     activeList: [],
     toConfirmList: [],
     completedList: [],
+    // 快递订单
+    orderViewType: 'agency',
+    expressPendingList: [],
+    expressShippedList: [],
+    expressToPickupList: [],
+    expressCompletedList: [],
     totalRevenue: '0.00',
     totalOrders: 0,
     completedOrders: 0,
@@ -101,6 +107,11 @@ Page({
     this.setData({ activeTab: e.detail.index });
   },
 
+  onOrderViewTypeChange(e) {
+    const type = e.currentTarget.dataset.type;
+    this.setData({ orderViewType: type, activeTab: 0 });
+  },
+
   onChangePetFilter(e) {
     const filter = e.currentTarget.dataset.filter;
     if (!filter) return;
@@ -114,10 +125,18 @@ Page({
     let profile = {};
 
     try {
-      const [res, profileRes] = await Promise.all([
+      const [res, expressRes, profileRes] = await Promise.all([
         db.collection('user_orders')
           .where({
             orderType: 'agency',
+            agencyProfileId: this._agencyProfileId,
+          })
+          .orderBy('createTime', 'desc')
+          .limit(100)
+          .get(),
+        db.collection('user_orders')
+          .where({
+            orderType: 'express',
             agencyProfileId: this._agencyProfileId,
           })
           .orderBy('createTime', 'desc')
@@ -161,12 +180,22 @@ Page({
       totalRevenue += parseFloat(o.price) || 0;
     });
 
+    // 处理快递订单
+    const expressList = (expressRes.data || []).map(item => ({
+      ...item,
+      createTimeStr: formatDate(item.createTime),
+    }));
+
     this.setData({
       allOrders: list,
       pendingList: list.filter(o => o.orderStatus === 'pending'),
       activeList: list.filter(o => o.orderStatus === 'confirmed' || o.orderStatus === 'in_progress'),
       toConfirmList: list.filter(o => o.orderStatus === 'to_confirm'),
       completedList: completed,
+      expressPendingList: expressList.filter(o => o.orderStatus === 'pending_ship'),
+      expressShippedList: expressList.filter(o => o.orderStatus === 'shipped'),
+      expressToPickupList: expressList.filter(o => o.orderStatus === 'to_pickup'),
+      expressCompletedList: expressList.filter(o => o.orderStatus === 'completed'),
       totalRevenue: totalRevenue.toFixed(2),
       totalOrders: list.length,
       completedOrders: completed.length,

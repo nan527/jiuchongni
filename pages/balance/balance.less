@@ -1,0 +1,187 @@
+/* pages/balance/balance.less */
+
+.balance-page {
+  min-height: 100vh;
+  background: #F5F5F5;
+  padding-bottom: 60rpx;
+}
+
+/* ===== 导航栏 ===== */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+}
+
+.nav-bar__inner {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 16rpx;
+}
+
+.nav-bar__left {
+  width: 72rpx;
+  height: 72rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.nav-bar__right {
+  width: 72rpx;
+}
+
+.nav-bar__title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+}
+
+/* ===== 余额卡片 ===== */
+.balance-card {
+  margin: 24rpx 32rpx;
+  padding: 48rpx 32rpx;
+  background: linear-gradient(135deg, #FF9800, #FF7043);
+  border-radius: 20rpx;
+  color: #fff;
+}
+
+.balance-card__label {
+  font-size: 26rpx;
+  opacity: 0.85;
+  display: block;
+  margin-bottom: 16rpx;
+}
+
+.balance-card__amount {
+  display: flex;
+  align-items: baseline;
+  gap: 8rpx;
+}
+
+.balance-card__symbol {
+  font-size: 36rpx;
+  font-weight: 600;
+}
+
+.balance-card__num {
+  font-size: 64rpx;
+  font-weight: 700;
+}
+
+/* ===== 区块标题 ===== */
+.section-title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #333;
+  padding: 24rpx 32rpx 16rpx;
+}
+
+/* ===== 充值档位 ===== */
+.recharge-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16rpx;
+  padding: 0 32rpx;
+}
+
+.recharge-item {
+  background: #fff;
+  border-radius: 16rpx;
+  padding: 28rpx 16rpx;
+  text-align: center;
+  border: 3rpx solid transparent;
+  transition: all 0.2s;
+}
+
+.recharge-item--active {
+  border-color: #FF9800;
+  background: #FFF8F0;
+}
+
+.recharge-item__amount {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: #333;
+  display: block;
+  margin-bottom: 8rpx;
+}
+
+.recharge-item__gift {
+  font-size: 22rpx;
+  color: #FF7043;
+  display: block;
+  min-height: 30rpx;
+}
+
+/* ===== 充值按钮 ===== */
+.recharge-btn-wrap {
+  padding: 32rpx 32rpx 0;
+}
+
+/* ===== 充值记录 ===== */
+.logs-list {
+  padding: 0 32rpx;
+}
+
+.log-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 24rpx;
+  background: #fff;
+  border-radius: 12rpx;
+  margin-bottom: 12rpx;
+}
+
+.log-item__info {
+  flex: 1;
+  min-width: 0;
+}
+
+.log-item__desc {
+  font-size: 26rpx;
+  color: #333;
+  display: block;
+  margin-bottom: 6rpx;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.log-item__time {
+  font-size: 22rpx;
+  color: #999;
+}
+
+.log-item__amount {
+  font-size: 30rpx;
+  font-weight: 700;
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.log-item__amount--plus {
+  color: #FF7043;
+}
+
+.log-item__amount--minus {
+  color: #999;
+}
+
+/* ===== 空状态 ===== */
+.empty-wrap {
+  padding: 80rpx 0;
+  text-align: center;
+}
+
+.empty-text {
+  font-size: 26rpx;
+  color: #CCC;
+}

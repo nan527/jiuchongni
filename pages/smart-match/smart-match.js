@@ -126,6 +126,7 @@ Page({
       });
 
       const { success, parsed, msg } = aiRes.result || {};
+      console.log('[SmartMatch] AI parsed:', JSON.stringify(parsed));
       if (!success || !parsed) {
         wx.showToast({ title: msg || 'AI 解析失败', icon: 'none' });
         this.setData({ loading: false });
@@ -161,24 +162,44 @@ Page({
         return { service: s, agency };
       }).filter(p => p.agency);
 
-      // 5. 硬性过滤
+      // 5. 硬性过滤（不满足直接排除）
       let filtered = pairs;
+
+      // 服务类型筛选
       if (parsed.serviceCategory) {
         filtered = filtered.filter(({ service }) => service.category === parsed.serviceCategory);
       }
 
-      // 6. 评分 + 排序
+      // 地域筛选：用户指定了城市时，只保留该城市的机构
+      if (parsed.location) {
+        filtered = filtered.filter(({ agency }) => this._isLocationMatch(parsed.location, agency.region));
+      }
+
+      // 预算上限筛选：用户指定了预算上限时，排除超预算服务
+      if (parsed.budget && parsed.budget.max) {
+        filtered = filtered.filter(({ service }) => {
+          const price = Number(service.price) || 0;
+          return price <= parsed.budget.max;
+        });
+      }
+
+      // 6. 软性评分 + 排序（仅对通过硬性筛选的结果评分）
       const scored = filtered.map(p => ({
         ...p,
         matchScore: this._calcScore(p, parsed, userLocation),
       }));
 
       const results = scored
-        .filter(r => r.matchScore >= 30)
         .sort((a, b) => b.matchScore - a.matchScore)
         .slice(0, 10);
 
-      // 7. 补充机构图片、生成匹配理由
+      // 7. 转换为百分比（满分 85）
+      const MAX_SCORE = 85;
+      for (const r of results) {
+        r.matchPercent = Math.min(Math.round(r.matchScore / MAX_SCORE * 100), 100);
+      }
+
+      // 8. 补充机构图片、生成匹配理由
       // Batch resolve cover images
       const allFileIDs = results
         .filter(r => r.service.images && r.service.images.length)
@@ -209,49 +230,34 @@ Page({
     }
   },
 
-  // 评分算法
+  // 评分算法（仅软性维度，硬性筛选已在外部完成）
   _calcScore({ service, agency }, parsed, userLocation) {
-    let score = 5;
+    let score = 10; // 通过硬性筛选的基础分
 
-    // 1. 服务类型匹配 (+25)
-    if (parsed.serviceCategory && service.category === parsed.serviceCategory) {
-      score += 25;
-    }
-
-    // 2. 关键词匹配 (+20)
+    // 1. 关键词匹配 (+30)
     const textPool = [
       service.name, service.desc,
       agency.orgIntro, agency.serviceScope, agency.orgName
     ].join(' ').toLowerCase();
     const keywordHits = (parsed.keywords || []).filter(kw => textPool.includes(kw.toLowerCase()));
-    score += Math.min(keywordHits.length * 5, 20);
+    score += Math.min(keywordHits.length * 8, 30);
 
-    // 3. 价格匹配 (+15)
-    if (parsed.budget && parsed.budget.max) {
-      const price = Number(service.price) || 0;
-      if (price >= (parsed.budget.min || 0) && price <= parsed.budget.max) {
-        score += 15;
-      } else if (parsed.budget.min && price < parsed.budget.min) {
-        score += 10;
-      }
-    }
-
-    // 5. 环境展示度 (+10)
-    if (agency.envImages && agency.envImages.length > 0) {
-      score += 10;
-    } else {
-      score += 3;
-    }
-
-    // 6. 偏好匹配 (+10)
+    // 2. 偏好匹配 (+25)
     if (parsed.preferences && parsed.preferences.length > 0) {
       const prefPool = [agency.orgIntro, agency.serviceScope, agency.cageDesc]
         .filter(Boolean).join(' ').toLowerCase();
       const prefHits = parsed.preferences.filter(p => prefPool.includes(p.toLowerCase()));
-      score += Math.min(prefHits.length * 5, 10);
+      score += Math.min(prefHits.length * 10, 25);
     }
 
-    // 7. 紧急度加成 (+5)
+    // 3. 环境展示度 (+15)
+    if (agency.envImages && agency.envImages.length > 0) {
+      score += 15;
+    } else {
+      score += 3;
+    }
+
+    // 4. 紧急度加成 (+5)
     if (parsed.urgency === 'urgent' && service.category === 'foster' && agency.totalCages > 0) {
       score += 5;
     }
@@ -259,21 +265,68 @@ Page({
     return score;
   },
 
+  // 地域匹配（硬性筛选）
+  _isLocationMatch(userLocation, agencyRegion) {
+    if (!userLocation || !agencyRegion) return true;
+    const loc = userLocation.toLowerCase();
+    const region = agencyRegion.toLowerCase();
+
+    const strip = s => s.replace(/[省市自治区特别行政区壮族自治区回族自治区维吾尔自治区自治区]/g, '');
+    const locClean = strip(loc);
+    const regionClean = strip(region);
+
+    // 直接匹配：机构区域包含用户城市
+    if (regionClean.includes(locClean) || locClean.includes(regionClean)) {
+      return true;
+    }
+
+    // 省份→城市匹配（如用户说"黑龙江"，机构在"哈尔滨"）
+    const provinceCity = {
+      '北京': ['北京'], '天津': ['天津'], '上海': ['上海'], '重庆': ['重庆'],
+      '河北': ['石家庄', '唐山', '保定', '邯郸'], '山西': ['太原', '大同', '临汾'],
+      '辽宁': ['沈阳', '大连', '鞍山'], '吉林': ['长春', '吉林'],
+      '黑龙江': ['哈尔滨', '齐齐哈尔', '大庆', '牡丹江'],
+      '江苏': ['南京', '苏州', '无锡', '常州'], '浙江': ['杭州', '宁波', '温州'],
+      '安徽': ['合肥', '芜湖', '马鞍山'], '福建': ['福州', '厦门', '泉州'],
+      '江西': ['南昌', '赣州', '九江'], '山东': ['济南', '青岛', '烟台'],
+      '河南': ['郑州', '洛阳', '开封'], '湖北': ['武汉', '宜昌', '襄阳'],
+      '湖南': ['长沙', '株洲', '湘潭'], '广东': ['广州', '深圳', '东莞', '佛山'],
+      '海南': ['海口', '三亚'], '四川': ['成都', '绵阳', '德阳'],
+      '贵州': ['贵阳', '遵义'], '云南': ['昆明', '大理', '丽江'],
+      '陕西': ['西安', '咸阳', '宝鸡'], '甘肃': ['兰州', '天水'],
+      '青海': ['西宁'], '台湾': ['台北', '高雄'],
+      '内蒙古': ['呼和浩特', '包头'], '广西': ['南宁', '柳州', '桂林'],
+      '西藏': ['拉萨'], '宁夏': ['银川'], '新疆': ['乌鲁木齐', '伊宁'],
+    };
+
+    // 用户说省份 → 机构城市在该省
+    const cities = provinceCity[locClean];
+    if (cities && cities.some(c => regionClean.includes(c))) return true;
+
+    // 用户说城市 → 机构省份名在该城市所属省
+    for (const [prov, cityList] of Object.entries(provinceCity)) {
+      if (cityList.includes(locClean) && regionClean.includes(prov)) return true;
+    }
+
+    return false;
+  },
+
   // 生成匹配理由
   _generateReason({ service, agency, matchScore }, parsed) {
     const reasons = [];
-    if (parsed.serviceCategory && service.category === parsed.serviceCategory) {
-      reasons.push('服务类型完全匹配');
+    // 硬性筛选理由
+    if (parsed.location && agency.region) {
+      reasons.push('位于' + parsed.location);
     }
+    if (parsed.budget && parsed.budget.max) {
+      reasons.push('价格在预算范围内');
+    }
+    // 软性评分理由
     if (parsed.preferences && parsed.preferences.length > 0) {
       const prefPool = [agency.orgIntro, agency.serviceScope, agency.cageDesc]
         .filter(Boolean).join(' ').toLowerCase();
       const hits = parsed.preferences.filter(p => prefPool.includes(p.toLowerCase()));
       if (hits.length > 0) reasons.push('满足' + hits.join('、') + '等偏好');
-    }
-    if (parsed.budget && parsed.budget.max) {
-      const price = Number(service.price) || 0;
-      if (price <= parsed.budget.max) reasons.push('价格在预算范围内');
     }
     if (reasons.length === 0) reasons.push('综合评分较高');
     return reasons.slice(0, 2).join('，');

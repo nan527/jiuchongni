@@ -1,0 +1,70 @@
+<!-- pages/admin/api-config.wxml -->
+<view class="api-config-page" style="padding-top: {{ navBarHeight + 10 }}px;">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__left" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">API 接入管理</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
+  <!-- 分析 API（预留） -->
+  <view class="section-title">分析 API</view>
+  <view class="reserved-card">
+    <van-icon name="lock" size="48rpx" color="#BDBDBD" />
+    <text class="reserved-text">暂未开放，敬请期待</text>
+  </view>
+
+  <!-- 图片 API -->
+  <view class="section-title">图片 API</view>
+
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading size="48rpx" color="#FF9800">加载中...</van-loading>
+  </view>
+
+  <view class="model-list" wx:else>
+    <view class="model-card" wx:for="{{imageConfigs}}" wx:key="_id">
+      <view class="model-card__header">
+        <view class="model-card__name-row">
+          <text class="model-card__name">{{item.modelName}}</text>
+          <view class="tier-badge tier-badge--{{item.tier}}">
+            <text>{{item.tier === 'high' ? '高级' : item.tier === 'medium' ? '中级' : '低级'}}</text>
+          </view>
+        </view>
+        <text class="model-card__model">{{item.model}}</text>
+      </view>
+
+      <view class="model-card__body">
+        <view class="api-key-row">
+          <text class="api-key-label">API Key</text>
+          <input
+            class="api-key-input"
+            placeholder="输入 API Key"
+            value="{{item.apiKey}}"
+            bindinput="onApiKeyInput"
+            data-idx="{{index}}"
+            password="{{!item.keyVisible}}"
+          />
+          <view class="api-key-toggle" bindtap="toggleKeyVisible" data-idx="{{index}}">
+            <van-icon name="{{item.keyVisible ? 'eye-o' : 'closed-eye'}}" size="32rpx" color="#8C7A6B" />
+          </view>
+        </view>
+
+        <view class="model-card__footer">
+          <view class="model-card__price">
+            <text wx:if="{{item.dailyFreeQuota > 0}}">每日免费 {{item.dailyFreeQuota}} 次，超出 {{item.pricePerUse}} 元/次</text>
+            <text wx:else>{{item.pricePerUse}} 元/次</text>
+          </view>
+          <van-button round size="small" color="#FF9800" bindtap="onSaveConfig" data-idx="{{index}}" loading="{{item.saving}}">
+            保存
+          </van-button>
+        </view>
+      </view>
+    </view>
+  </view>
+
+</view>

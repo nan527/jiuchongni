@@ -483,49 +483,15 @@
   box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
 }
 
-.weight-chart {
-  display: flex;
-  align-items: flex-end;
-  justify-content: space-around;
-  height: 280rpx;
-  padding: 20rpx 0;
+.weight-chart-wrap {
+  width: 100%;
+  height: 320rpx;
+  margin-top: 16rpx;
 }
 
-.weight-chart__bar-wrap {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  flex: 1;
+.weight-canvas {
+  width: 100%;
   height: 100%;
-  justify-content: flex-end;
-}
-
-.weight-chart__bar {
-  width: 40rpx;
-  background: linear-gradient(180deg, #FFB74D, #FF9800);
-  border-radius: 8rpx 8rpx 0 0;
-  transition: height 0.3s ease;
-}
-
-.weight-chart__bar--max {
-  background: linear-gradient(180deg, #FF7043, #E64A19);
-}
-
-.weight-chart__bar--min {
-  background: linear-gradient(180deg, #81C784, #4CAF50);
-}
-
-.weight-chart__value {
-  font-size: 20rpx;
-  color: #3D2C1E;
-  font-weight: 600;
-  margin-top: 8rpx;
-}
-
-.weight-chart__date {
-  font-size: 18rpx;
-  color: #A89585;
-  margin-top: 4rpx;
 }
 
 .weight-chart__legend {
@@ -636,4 +602,153 @@
 .timeline__status--done {
   background: #E8F5E9;
   color: #2E7D32;
+}
+
+/* ===== AI 健康风险预警 ===== */
+.risk-card {
+  margin: 24rpx 28rpx 0;
+  background: #FFFAF5;
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+}
+
+.risk-card__header {
+  display: flex;
+  align-items: center;
+  gap: 12rpx;
+  margin-bottom: 16rpx;
+}
+
+.risk-card__title {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3D2C1E;
+}
+
+.risk-card__summary {
+  font-size: 24rpx;
+  color: #8C7A6B;
+  margin-bottom: 16rpx;
+  padding: 12rpx 16rpx;
+  background: #FFF8F0;
+  border-radius: 12rpx;
+}
+
+.risk-item {
+  display: flex;
+  align-items: flex-start;
+  padding: 16rpx 12rpx;
+  margin-bottom: 8rpx;
+  border-radius: 12rpx;
+  border-left: 6rpx solid transparent;
+}
+
+.risk-item--high {
+  background: #FBE9E7;
+  border-left-color: #E64A19;
+}
+
+.risk-item--warning {
+  background: #FFF3E0;
+  border-left-color: #FF9800;
+}
+
+.risk-item--info {
+  background: #E3F2FD;
+  border-left-color: #1976D2;
+}
+
+.risk-item__dot {
+  width: 14rpx;
+  height: 14rpx;
+  border-radius: 50%;
+  margin-top: 8rpx;
+  margin-right: 12rpx;
+  flex-shrink: 0;
+}
+
+.risk-item--high .risk-item__dot {
+  background: #E64A19;
+}
+
+.risk-item--warning .risk-item__dot {
+  background: #FF9800;
+}
+
+.risk-item--info .risk-item__dot {
+  background: #1976D2;
+}
+
+.risk-item__body {
+  flex: 1;
+  min-width: 0;
+}
+
+.risk-item__title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #3D2C1E;
+  display: block;
+}
+
+.risk-item__desc {
+  font-size: 22rpx;
+  color: #8C7A6B;
+  margin-top: 4rpx;
+  display: block;
+  line-height: 1.5;
+}
+
+.risk-card__date {
+  font-size: 22rpx;
+  color: #C4B8AC;
+  margin-bottom: 12rpx;
+}
+
+.risk-card__empty {
+  text-align: center;
+  padding: 24rpx 0;
+  font-size: 24rpx;
+  color: #66BB6A;
+}
+
+.risk-card__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 32rpx 0;
+  gap: 12rpx;
+}
+
+.risk-card__loading-text {
+  font-size: 24rpx;
+  color: #8C7A6B;
+}
+
+.risk-card__error {
+  text-align: center;
+  padding: 24rpx 0;
+  font-size: 24rpx;
+  color: #E64A19;
+}
+
+.risk-card__retry {
+  display: inline-block;
+  margin-left: 16rpx;
+  color: #FF9800;
+  font-weight: 600;
+}
+
+.risk-card__hint {
+  text-align: center;
+  padding: 24rpx 0;
+  font-size: 24rpx;
+  color: #C4B8AC;
+}
+
+.risk-card__btn-wrap {
+  margin-top: 20rpx;
+  display: flex;
+  justify-content: center;
 }

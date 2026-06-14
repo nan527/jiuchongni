@@ -63,6 +63,8 @@ exports.main = async (event, context) => {
       return await insertTestHealth(event);
     case 'smart_match_parse':
       return await smartMatchParse(event);
+    case 'health_risk_analysis':
+      return await healthRiskAnalysis(event);
     default:
       return { success: false, msg: '未知操作: ' + action };
   }
@@ -1396,40 +1398,37 @@ async function smartMatchParse(event) {
       return { success: false, msg: 'AI 模型未配置' };
     }
 
-    const systemPrompt = `你是一个宠物服务需求分析助手。根据用户描述和宠物信息，提取结构化的服务需求。
+    const systemPrompt = `你是宠物服务需求分析助手。请分析用户需求并返回一个JSON对象，不要返回其他任何文字。
 
 宠物信息：${JSON.stringify(petInfo)}
-用户需求：${trimmedText || '(用户未填写文字需求，请仅根据宠物信息推荐)'}
+用户需求：${trimmedText || '请根据宠物信息推荐'}
 
-请返回 JSON 格式（不要包含其他文字）：
-{
-  "serviceCategory": "foster|grooming|medical|door|extra|null",
-  "keywords": ["关键词1", "关键词2", ...],
-  "budget": { "min": 数字或null, "max": 数字或null },
-  "duration": "时长描述或null",
-  "preferences": ["偏好1", "偏好2", ...],
-  "petType": "cat|dog|other",
-  "urgency": "normal|urgent"
-}
+示例输入："我家小狗有点胆小，在黑龙江，找100元以内的寄养"
+示例输出：{"serviceCategory":"foster","keywords":["寄养","小狗","胆小","黑龙江","100元"],"budget":{"min":null,"max":100},"preferences":["安静","胆小"],"urgency":"normal","location":"黑龙江"}
 
-规则：
-- serviceCategory：foster=寄养, grooming=美容洗护, medical=医疗, door=上门服务, extra=商品增值, null=不限
-- keywords：提取 3-5 个核心关键词（名词/形容词），用于文本匹配
-- budget：如果用户提到价格/预算/实惠等，提取范围；否则为 null
-- preferences：用户的特殊偏好（如"安静"、"有监控"、"干净"），用于与机构描述匹配
-- urgency：提到"急"、"马上"、"今天"等为 urgent，否则 normal`;
+示例输入："猫咪洗澡，要干净的店"
+示例输出：{"serviceCategory":"grooming","keywords":["洗澡","猫咪","干净"],"budget":null,"preferences":["干净"],"urgency":"normal","location":null}
+
+示例输入："我家小狗有点饿，整点吃的"
+示例输出：{"serviceCategory":"extra","keywords":["狗粮","零食","吃的","小狗"],"budget":null,"preferences":[],"urgency":"normal","location":null}
+
+keywords提取5-8个，包括服务类型、宠物特征、地点、价格等关键词
+preferences提取用户隐含偏好（如胆小→安静，有监控→安全）
+serviceCategory：foster寄养 grooming美容 medical医疗 door上门 extra商品增值 null不限
+urgency：normal或urgent
+location：用户提到的城市/省份名，没有则为null`;
 
     const res = await axios.post('https://token-plan-cn.xiaomimimo.com/v1/chat/completions', {
       model: 'mimo-v2.5-pro',
       messages: [
         { role: 'system', content: systemPrompt },
-        { role: 'user', content: trimmedText || '请根据宠物信息推荐服务' },
+        { role: 'user', content: trimmedText || '请根据宠物信息推荐' },
       ],
       temperature: 0.3,
       max_tokens: 2000,
     }, {
       headers: { Authorization: `Bearer ${apiKey}` },
-      timeout: 30000,
+      timeout: 60000,
     });
 
     console.log('[smartMatchParse] API 响应状态:', res.status);
@@ -1441,28 +1440,208 @@ async function smartMatchParse(event) {
     }
 
     const choice = res.data.choices[0];
-    // MiMo 是推理模型，回答在 reasoning_content 字段，content 可能为空
-    const raw = (choice.message && (choice.message.content || choice.message.reasoning_content)) || choice.text || '';
-    console.log('[smartMatchParse] AI 原始返回:', raw);
+    const content = (choice.message && choice.message.content) || '';
+    const reasoning = (choice.message && choice.message.reasoning_content) || '';
+    console.log('[smartMatchParse] content:', content.slice(0, 300));
+    console.log('[smartMatchParse] reasoning:', reasoning.slice(0, 300));
 
-    if (!raw) {
-      return { success: false, msg: 'AI 返回内容为空, choice: ' + JSON.stringify(choice).slice(0, 500) };
+    // 尝试从文本中提取有效 JSON（处理嵌套括号）
+    function extractJson(text) {
+      if (!text) return null;
+      // 找所有 { 的位置，从每个位置尝试匹配到对应的 }
+      const results = [];
+      for (let i = 0; i < text.length; i++) {
+        if (text[i] !== '{') continue;
+        let depth = 0;
+        for (let j = i; j < text.length; j++) {
+          if (text[j] === '{') depth++;
+          if (text[j] === '}') depth--;
+          if (depth === 0) {
+            const candidate = text.slice(i, j + 1);
+            try {
+              const obj = JSON.parse(candidate);
+              if (obj && obj.serviceCategory !== undefined) results.push(obj);
+            } catch (e) { /* 跳过 */ }
+            break;
+          }
+        }
+      }
+      // 优先返回最后一个匹配（最终答案通常在最后）
+      return results.length > 0 ? results[results.length - 1] : null;
     }
 
-    // 尝试提取 JSON（兼容 AI 可能返回 markdown 代码块的情况）
-    const jsonMatch = raw.match(/\{[\s\S]*\}/);
-    if (!jsonMatch) {
-      return { success: false, msg: 'AI 返回格式异常: ' + raw.slice(0, 300) };
+    // 策略1：从 content 提取
+    let parsed = extractJson(content);
+    // 策略2：从 reasoning_content 提取
+    if (!parsed) parsed = extractJson(reasoning);
+    // 策略3：合并两个字段尝试
+    if (!parsed && content && reasoning) {
+      parsed = extractJson(reasoning + ' ' + content);
     }
 
-    try {
-      const parsed = JSON.parse(jsonMatch[0]);
+    if (parsed) {
       return { success: true, parsed };
-    } catch (parseErr) {
-      return { success: false, msg: 'JSON 解析失败: ' + jsonMatch[0].slice(0, 300) };
     }
+
+    return { success: false, msg: 'AI 返回格式异常: ' + (content || reasoning).slice(0, 300) };
   } catch (e) {
     console.error('[smartMatchParse]', e.message);
     return { success: false, msg: '请求失败: ' + e.message };
   }
+}
+
+/**
+ * AI 健康风险预警
+ * 分析宠物健康数据，识别异常指标和关键时间节点
+ */
+async function healthRiskAnalysis(event) {
+  const { pet_info = {}, health_records = [] } = event;
+  const db = cloud.database();
+
+  try {
+    // 获取 MiMo API 配置
+    const configRes = await db.collection('api_configs')
+      .where({ model: 'mimo-v2.5-pro', enabled: true })
+      .get();
+    const apiKey = configRes.data[0]?.apiKey;
+    if (!apiKey) {
+      return fallbackRiskAnalysis(pet_info, health_records);
+    }
+
+    // 整理健康数据摘要
+    const now = new Date();
+    const records = health_records.slice(0, 30);
+
+    const weightRecords = records.filter(r => r.type === 'weight').slice(0, 10);
+    const vaccineRecords = records.filter(r => r.type === 'vaccine').slice(0, 5);
+    const dewormingRecords = records.filter(r => r.type === 'deworming').slice(0, 5);
+    const checkupRecords = records.filter(r => r.type === 'checkup').slice(0, 3);
+
+    const dataSummary = {
+      weight: weightRecords.map(r => `${r.value}kg(${r.createTime.slice(0, 10)})`).join(', ') || '无记录',
+      vaccine: vaccineRecords.map(r => `${r.value}(${r.createTime.slice(0, 10)})`).join(', ') || '无记录',
+      deworming: dewormingRecords.map(r => `${r.value}(${r.createTime.slice(0, 10)})`).join(', ') || '无记录',
+      checkup: checkupRecords.map(r => `${r.value}(${r.createTime.slice(0, 10)})`).join(', ') || '无记录',
+    };
+
+    const systemPrompt = `你是宠物健康风险分析专家。根据宠物信息和健康记录分析风险，返回JSON。
+
+宠物：品种${pet_info.species || '未知'}，年龄${pet_info.age || '未知'}岁
+体重记录：${dataSummary.weight}
+疫苗记录：${dataSummary.vaccine}
+驱虫记录：${dataSummary.deworming}
+体检记录：${dataSummary.checkup}
+今天：${now.toISOString().slice(0, 10)}
+
+示例输出：{"risks":[{"level":"high","type":"疫苗到期","title":"狂犬疫苗已过期","desc":"上次接种于2026-01-10，已过152天，请尽快补种"}],"summary":"疫苗已过期需尽快处理"}
+
+示例输出：{"risks":[],"summary":"各项指标正常，健康状况良好"}
+
+level只能是high、warning或info
+最多5条风险，没有风险时risks为空数组`;
+
+    const res = await axios.post('https://token-plan-cn.xiaomimimo.com/v1/chat/completions', {
+      model: 'mimo-v2.5-pro',
+      messages: [
+        { role: 'system', content: systemPrompt },
+        { role: 'user', content: '请分析这只宠物的健康风险' },
+      ],
+      temperature: 0.3,
+      max_tokens: 1500,
+    }, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      timeout: 60000,
+    });
+
+    const choice = res.data.choices[0];
+    const raw = (choice.message && (choice.message.content || choice.message.reasoning_content)) || '';
+
+    if (!raw) {
+      return fallbackRiskAnalysis(pet_info, health_records);
+    }
+
+    // 提取 JSON
+    function extractJson(text) {
+      if (!text) return null;
+      for (let i = 0; i < text.length; i++) {
+        if (text[i] !== '{') continue;
+        let depth = 0;
+        for (let j = i; j < text.length; j++) {
+          if (text[j] === '{') depth++;
+          if (text[j] === '}') depth--;
+          if (depth === 0) {
+            try {
+              const obj = JSON.parse(text.slice(i, j + 1));
+              if (obj && obj.risks !== undefined) return obj;
+            } catch (e) { /* 跳过 */ }
+            break;
+          }
+        }
+      }
+      return null;
+    }
+
+    const parsed = extractJson(raw);
+    if (parsed) {
+      return { success: true, risks: parsed.risks || [], summary: parsed.summary || '' };
+    }
+
+    return fallbackRiskAnalysis(pet_info, health_records);
+  } catch (e) {
+    console.error('[healthRiskAnalysis]', e.message);
+    return fallbackRiskAnalysis(pet_info, health_records);
+  }
+}
+
+/**
+ * 规则降级：AI 失败时基于规则生成风险提示
+ */
+function fallbackRiskAnalysis(petInfo, records) {
+  const risks = [];
+  const now = new Date();
+
+  // 疫苗到期检查（3个月周期）
+  const vaccines = records.filter(r => r.type === 'vaccine');
+  if (vaccines.length > 0) {
+    const latest = vaccines[0];
+    const lastDate = new Date(latest.createTime);
+    const daysSince = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+    if (daysSince > 120) {
+      risks.push({ level: 'high', type: '疫苗到期', title: `${latest.value}已超期`, desc: `上次接种于${latest.createTime.slice(0, 10)}，已过${daysSince}天，建议尽快补种`, action: '预约接种' });
+    } else if (daysSince > 80) {
+      risks.push({ level: 'warning', type: '疫苗提醒', title: `${latest.value}即将到期`, desc: `上次接种于${latest.createTime.slice(0, 10)}，还有约${120 - daysSince}天到期` });
+    }
+  }
+
+  // 驱虫到期检查（1个月周期）
+  const dewormings = records.filter(r => r.type === 'deworming');
+  if (dewormings.length > 0) {
+    const latest = dewormings[0];
+    const lastDate = new Date(latest.createTime);
+    const daysSince = Math.floor((now - lastDate) / (1000 * 60 * 60 * 24));
+    if (daysSince > 45) {
+      risks.push({ level: 'warning', type: '驱虫提醒', title: `${latest.value}已超期`, desc: `上次驱虫于${latest.createTime.slice(0, 10)}，已过${daysSince}天，建议尽快驱虫` });
+    }
+  }
+
+  // 体重骤变检查
+  const weights = records.filter(r => r.type === 'weight');
+  if (weights.length >= 2) {
+    const latest = Number(weights[0].value) || 0;
+    const prev = Number(weights[1].value) || 0;
+    if (prev > 0) {
+      const change = Math.abs(latest - prev) / prev;
+      if (change > 0.2) {
+        risks.push({ level: 'high', type: '体重骤变', title: '体重变化超过20%', desc: `近期体重从${prev}kg变为${latest}kg，变化${(change * 100).toFixed(0)}%，建议就医检查` });
+      } else if (change > 0.1) {
+        risks.push({ level: 'warning', type: '体重波动', title: '体重有明显变化', desc: `近期体重从${prev}kg变为${latest}kg，变化${(change * 100).toFixed(0)}%，建议关注饮食` });
+      }
+    }
+  }
+
+  const summary = risks.length === 0 ? '目前未发现明显健康风险，继续保持良好习惯' :
+    risks.some(r => r.level === 'high') ? '发现需要关注的健康问题，建议及时处理' :
+    '有需要关注的事项，建议留意观察';
+
+  return { success: true, risks, summary };
 }

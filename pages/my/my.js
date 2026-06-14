@@ -18,12 +18,17 @@ Page({
     pendingCount: 0,
     toConfirmCount: 0,
     toReviewCount: 0,
+    pendingShipCount: 0,
+    toPickupCount: 0,
     // 新消息红点
     unpaidNew: false,
     pendingNew: false,
     toConfirmNew: false,
     toReviewNew: false,
+    pendingShipNew: false,
+    toPickupNew: false,
     loading: true,
+    balance: '0.00',
     // 导航栏
     statusBarHeight: 0,
     navBarHeight: 0,
@@ -50,7 +55,7 @@ Page({
   },
 
   _loadLastSeen() {
-    this._lastSeen = { unpaid: 0, pending: 0, to_confirm: 0, to_review: 0 };
+    this._lastSeen = { unpaid: 0, pending: 0, to_confirm: 0, to_review: 0, pending_ship: 0, to_pickup: 0 };
     try {
       const saved = wx.getStorageSync(SEEN_STORAGE_KEY);
       if (saved) this._lastSeen = saved;
@@ -64,12 +69,14 @@ Page({
   },
 
   _updateBadges() {
-    const seen = this._lastSeen || { unpaid: 0, pending: 0, to_confirm: 0, to_review: 0 };
+    const seen = this._lastSeen || { unpaid: 0, pending: 0, to_confirm: 0, to_review: 0, pending_ship: 0, to_pickup: 0 };
     this.setData({
       unpaidNew: this.data.unpaidCount > (seen.unpaid || 0),
       pendingNew: this.data.pendingCount > (seen.pending || 0),
       toConfirmNew: this.data.toConfirmCount > (seen.to_confirm || 0),
       toReviewNew: this.data.toReviewCount > (seen.to_review || 0),
+      pendingShipNew: this.data.pendingShipCount > (seen.pending_ship || 0),
+      toPickupNew: this.data.toPickupCount > (seen.to_pickup || 0),
     });
   },
 
@@ -125,7 +132,7 @@ Page({
       return;
     }
     try {
-      const [petsRes, ordersRes, unpaidRes, pendingRes, toConfirmRes, toReviewRes] =
+      const [petsRes, ordersRes, unpaidRes, pendingRes, toConfirmRes, toReviewRes, pendingShipRes, toPickupRes] =
         await Promise.all([
           db.collection('pets').where({ ownerId: userId }).count(),
           db.collection('user_orders').where({ ownerId: userId }).count(),
@@ -133,6 +140,8 @@ Page({
           db.collection('user_orders').where({ ownerId: userId, orderStatus: 'pending' }).count(),
           db.collection('user_orders').where({ ownerId: userId, orderStatus: 'to_confirm' }).count(),
           db.collection('user_orders').where({ ownerId: userId, orderStatus: 'completed', review: db.command.exists(false) }).count(),
+          db.collection('user_orders').where({ ownerId: userId, orderType: 'express', orderStatus: 'pending_ship' }).count(),
+          db.collection('user_orders').where({ ownerId: userId, orderType: 'express', orderStatus: 'to_pickup' }).count(),
         ]);
 
       this.setData({
@@ -142,16 +151,35 @@ Page({
         pendingCount: pendingRes.total,
         toConfirmCount: toConfirmRes.total,
         toReviewCount: toReviewRes.total,
+        pendingShipCount: pendingShipRes.total,
+        toPickupCount: toPickupRes.total,
         loading: false,
       });
 
       this._updateBadges();
+
+      // 加载余额
+      this.loadBalance();
 
       // 加载宠物档案和健康概览
       this.loadFirstPet();
     } catch (err) {
       console.warn('[My] loadStats 异常', err);
       this.setData({ loading: false });
+    }
+  },
+
+  async loadBalance() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: { action: 'get_user_balance' },
+      });
+      if (res.result.success) {
+        this.setData({ balance: (res.result.balance || 0).toFixed(2) });
+      }
+    } catch (e) {
+      console.warn('[My] loadBalance 异常', e);
     }
   },
 
@@ -320,7 +348,7 @@ Page({
     const status = e.currentTarget.dataset.status;
     const seen = this._lastSeen || {};
     if (status && seen.hasOwnProperty(status)) {
-      const countMap = { unpaid: 'unpaidCount', pending: 'pendingCount', to_confirm: 'toConfirmCount', to_review: 'toReviewCount' };
+      const countMap = { unpaid: 'unpaidCount', pending: 'pendingCount', to_confirm: 'toConfirmCount', to_review: 'toReviewCount', pending_ship: 'pendingShipCount', to_pickup: 'toPickupCount' };
       seen[status] = this.data[countMap[status]] || 0;
       this._lastSeen = seen;
       this._saveLastSeen();
@@ -336,6 +364,10 @@ Page({
 
   toAdminPanel() {
     wx.navigateTo({ url: '/pages/admin/admin' });
+  },
+
+  toBalance() {
+    wx.navigateTo({ url: '/pages/balance/balance' });
   },
 
   toCustomerService() {

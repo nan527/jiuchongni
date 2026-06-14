@@ -90,6 +90,26 @@
         </view>
         <text class="order-card__item-label">待确认</text>
       </view>
+      <!-- 待发货 -->
+      <view class="order-card__item" bindtap="toOrders" data-status="pending_ship">
+        <view class="order-card__icon-wrap">
+          <view class="order-card__icon">
+            <van-icon name="logistics" size="40rpx" color="#FF9800" />
+          </view>
+          <view class="order-card__badge" wx:if="{{pendingShipNew}}">{{pendingShipCount > 99 ? '99+' : pendingShipCount}}</view>
+        </view>
+        <text class="order-card__item-label">待发货</text>
+      </view>
+      <!-- 待取件 -->
+      <view class="order-card__item" bindtap="toOrders" data-status="to_pickup">
+        <view class="order-card__icon-wrap">
+          <view class="order-card__icon">
+            <van-icon name="todo-list-o" size="40rpx" color="#FF9800" />
+          </view>
+          <view class="order-card__badge" wx:if="{{toPickupNew}}">{{toPickupCount > 99 ? '99+' : toPickupCount}}</view>
+        </view>
+        <text class="order-card__item-label">待取件</text>
+      </view>
       <!-- 待评价 -->
       <view class="order-card__item" bindtap="toOrders" data-status="to_review">
         <view class="order-card__icon-wrap">
@@ -191,6 +211,17 @@
       <text class="section-header__title">更多工具</text>
     </view>
     <view class="tool-card__list">
+      <view class="tool-card__item" bindtap="toBalance">
+        <view class="tool-card__icon" style="background:#FFF3E0;">
+          <van-icon name="balance-o" size="36rpx" color="#FF9800" />
+        </view>
+        <view class="tool-card__info">
+          <text class="tool-card__name">我的余额</text>
+          <text class="tool-card__desc">¥ {{balance}}</text>
+        </view>
+        <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+      </view>
+      <view class="tool-card__divider"></view>
       <view class="tool-card__item" bindtap="toCustomerService">
         <view class="tool-card__icon tool-card__icon--blue">
           <van-icon name="service-o" size="36rpx" color="#1565C0" />

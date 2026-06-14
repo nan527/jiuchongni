@@ -29,12 +29,6 @@
       </view>
       <text class="func-entry__label">AI 创作</text>
     </view>
-    <view class="func-entry__item" bindtap="toHealth">
-      <view class="func-entry__icon func-entry__icon--green">
-        <van-icon name="like-o" size="44rpx" color="#66BB6A" />
-      </view>
-      <text class="func-entry__label">健康管理</text>
-    </view>
     <view class="func-entry__item" bindtap="toSmartMatch">
       <view class="func-entry__icon func-entry__icon--blue">
         <van-icon name="aim" size="44rpx" color="#2196F3" />

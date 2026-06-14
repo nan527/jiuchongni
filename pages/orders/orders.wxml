@@ -12,7 +12,8 @@
     </view>
     <van-tabs active="{{activeTab}}" bind:change="onTabChange" color="#FF9800" line-width="60rpx" swipeable>
       <van-tab title="全部" />
-      <van-tab title="机构订单" />
+      <van-tab title="机构服务" />
+      <van-tab title="快递服务" />
     </van-tabs>
   </view>
 
@@ -41,8 +42,8 @@
 
       <!-- 卡片头部 -->
       <view class="o-card__header">
-        <view class="o-card__type-badge badge-agency">
-          机构服务
+        <view class="o-card__type-badge {{item.orderType === 'express' ? 'badge-express' : 'badge-agency'}}">
+          {{item.orderType === 'express' ? '快递服务' : '机构服务'}}
         </view>
         <view class="o-card__status" style="background:{{item.statusConfig.bg}};color:{{item.statusConfig.color}};">
           {{item.statusConfig.label}}
@@ -72,13 +73,13 @@
       </view>
 
       <!-- 操作按钮 -->
-      <view class="o-card__actions" wx:if="{{item.orderStatus === 'unpaid' || item.orderStatus === 'to_confirm' || (item.orderStatus === 'completed' && !item.review)}}">
+      <view class="o-card__actions" wx:if="{{item.orderStatus === 'unpaid' || item.orderStatus === 'to_confirm' || item.orderStatus === 'to_pickup' || (item.orderStatus === 'completed' && !item.review)}}">
         <view class="o-card__btn" wx:if="{{item.orderStatus === 'unpaid' && !item.countdownExpired}}">
           <van-button size="small" round type="primary" color="#FF9800" data-id="{{item._id}}" catchtap="onPayOrder">立即付款</van-button>
         </view>
-        <view class="o-card__btn" wx:if="{{item.orderStatus === 'to_confirm'}}">
+        <view class="o-card__btn" wx:if="{{item.orderStatus === 'to_confirm' || item.orderStatus === 'to_pickup'}}">
           <van-button size="small" round type="primary" color="#FF9800" data-id="{{item._id}}" data-category="{{item.category}}" catchtap="onConfirmComplete">
-            {{item.category === 'foster' ? '确认取回' : '确认完成'}}
+            {{item.orderStatus === 'to_pickup' ? '确认取件' : (item.category === 'foster' ? '确认取回' : '确认完成')}}
           </van-button>
         </view>
         <view class="o-card__btn" wx:if="{{item.orderStatus === 'completed' && !item.review}}">

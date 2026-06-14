@@ -12,6 +12,7 @@ function withTimeout(promise, ms) {
 
 const TYPE_LABEL = {
   weight: '体重',
+  temperature: '体温',
   vaccine: '疫苗',
   deworming: '驱虫',
   checkup: '体检',
@@ -34,8 +35,12 @@ Page({
     reminders: [],
     // 最近记录
     recentRecords: [],
-    // AI
-    aiSuggestion: '',
+    // AI 风险预警
+    riskAlerts: [],
+    riskSummary: '',
+    riskLoading: false,
+    riskError: '',
+    riskDate: '',
     // 图表数据
     weightChart: [],
     vaccineTimeline: [],
@@ -157,8 +162,8 @@ Page({
       // 处理驱虫时间线
       const dewormingTimeline = this._buildTimeline(dewormingRecords, 'deworming');
 
-      // AI 建议
-      this.loadAiSuggestion(pet, weightRecords);
+      // 加载已保存的风险预警记录
+      this.loadSavedRisk(petId);
 
       this.setData({
         latestWeight,
@@ -211,21 +216,100 @@ Page({
     return reminders;
   },
 
-  async loadAiSuggestion(pet, weightRecords) {
+  // 加载已保存的风险预警记录
+  async loadSavedRisk(petId) {
     try {
+      const res = await db.collection('health_risk_records')
+        .where({ petId })
+        .orderBy('analyzeTime', 'desc')
+        .limit(1)
+        .get();
+      if (res.data && res.data.length > 0) {
+        const saved = res.data[0];
+        this.setData({
+          riskAlerts: saved.risks || [],
+          riskSummary: saved.summary || '',
+          riskDate: saved.analyzeTime || '',
+          riskError: '',
+        });
+      }
+    } catch (e) {
+      // 无记录不影响页面
+    }
+  },
+
+  // 手动执行风险分析
+  async runRiskAnalysis() {
+    const pet = this.data.selectedPet;
+    if (!pet) return;
+
+    this.setData({ riskLoading: true, riskError: '' });
+
+    try {
+      // 获取健康记录
+      const res = await withTimeout(
+        db.collection('health_records')
+          .where({ pet_id: pet._id })
+          .orderBy('record_date', 'desc')
+          .limit(30)
+          .get(),
+        8000
+      );
+      const records = res.data || [];
+
+      // 调用 AI 分析
       const aiRes = await wx.cloud.callFunction({
         name: 'ai_handler',
         data: {
-          action: 'analyze_health',
-          pet_info: pet,
-          current_data: {
-            weight: weightRecords.length > 0 ? weightRecords[0].value : '',
-          },
+          action: 'health_risk_analysis',
+          pet_info: { name: pet.name, species: pet.species, age: pet.age, breed: pet.breed, weight: pet.weight },
+          health_records: records.map(r => ({
+            type: r.type,
+            value: r.value || r.vaccine_name || r.medicine_name || r.result || '',
+            createTime: r.record_date || r.createTime || '',
+          })),
         },
       });
-      this.setData({ aiSuggestion: aiRes.result.suggestion || '' });
+
+      const { risks = [], summary = '' } = aiRes.result || {};
+
+      this.setData({
+        riskAlerts: risks,
+        riskSummary: summary,
+        riskLoading: false,
+        riskDate: new Date().toISOString().slice(0, 16).replace('T', ' '),
+        riskError: '',
+      });
+
+      // 保存到数据库
+      this.saveRiskToDB(pet._id, risks, summary);
     } catch (e) {
-      // AI 分析失败不阻断
+      console.warn('[Health] runRiskAnalysis', e);
+      this.setData({ riskLoading: false, riskError: '分析失败，请重试' });
+    }
+  },
+
+  // 保存风险记录到数据库
+  async saveRiskToDB(petId, risks, summary) {
+    try {
+      // 删除该宠物旧的风险记录
+      const old = await db.collection('health_risk_records').where({ petId }).get();
+      for (const doc of old.data || []) {
+        await db.collection('health_risk_records').doc(doc._id).remove();
+      }
+      // 插入新记录
+      await db.collection('health_risk_records').add({
+        data: {
+          petId,
+          ownerId: this._userId,
+          risks,
+          summary,
+          analyzeTime: new Date().toISOString(),
+          createTime: db.serverDate(),
+        },
+      });
+    } catch (e) {
+      console.warn('[Health] saveRiskToDB', e);
     }
   },
 
@@ -258,17 +342,134 @@ Page({
     const minWeight = Math.min(...weights);
     const range = maxWeight - minWeight || 1;
 
-    return records.map((r, i) => {
-      const weight = weights[i];
-      const heightPercent = ((weight - minWeight) / range) * 60 + 40;
-      return {
-        value: weight,
-        date: this._formatDate(r.record_date),
-        height: `${heightPercent}%`,
-        isMax: weight === maxWeight && weights.length > 1,
-        isMin: weight === minWeight && weights.length > 1,
-      };
-    });
+    const points = records.map((r, i) => ({
+      value: weights[i],
+      date: this._formatDate(r.record_date),
+      isMax: weights[i] === maxWeight && weights.length > 1,
+      isMin: weights[i] === minWeight && weights.length > 1,
+    }));
+
+    // 延迟绘制 canvas
+    setTimeout(() => this._drawWeightCurve(points, minWeight, range), 300);
+
+    return points;
+  },
+
+  _drawWeightCurve(points, minWeight, range) {
+    if (!points || points.length === 0) return;
+    const query = wx.createSelectorQuery();
+    query.select('#weightCanvas')
+      .fields({ node: true, size: true })
+      .exec((res) => {
+        if (!res || !res[0] || !res[0].node) return;
+        const canvas = res[0].node;
+        const ctx = canvas.getContext('2d');
+        const dpr = wx.getWindowInfo().pixelRatio || 2;
+        const width = res[0].width;
+        const height = res[0].height;
+
+        canvas.width = width * dpr;
+        canvas.height = height * dpr;
+        ctx.scale(dpr, dpr);
+
+        ctx.clearRect(0, 0, width, height);
+
+        const padLeft = 8;
+        const padRight = 8;
+        const padTop = 36;
+        const padBottom = 48;
+        const chartW = width - padLeft - padRight;
+        const chartH = height - padTop - padBottom;
+
+        // 计算数据点坐标
+        const coords = points.length === 1
+          ? [{ x: padLeft + chartW / 2, y: padTop + chartH - ((points[0].value - minWeight) / range) * chartH }]
+          : points.map((p, i) => ({
+              x: padLeft + (i / (points.length - 1)) * chartW,
+              y: padTop + chartH - ((p.value - minWeight) / range) * chartH,
+            }));
+
+        // 绘制网格线（3条水平虚线）
+        ctx.strokeStyle = '#F0E6D8';
+        ctx.lineWidth = 0.5;
+        ctx.setLineDash([4, 4]);
+        for (let g = 0; g <= 2; g++) {
+          const gy = padTop + (chartH / 2) * g;
+          ctx.beginPath();
+          ctx.moveTo(padLeft, gy);
+          ctx.lineTo(width - padRight, gy);
+          ctx.stroke();
+        }
+        ctx.setLineDash([]);
+
+        // 绘制渐变填充区域（需要至少2个点）
+        if (coords.length >= 2) {
+          const gradient = ctx.createLinearGradient(0, padTop, 0, padTop + chartH);
+          gradient.addColorStop(0, 'rgba(255, 152, 0, 0.25)');
+          gradient.addColorStop(1, 'rgba(255, 152, 0, 0.02)');
+
+          ctx.beginPath();
+          ctx.moveTo(coords[0].x, padTop + chartH);
+          ctx.lineTo(coords[0].x, coords[0].y);
+
+          // 平滑贝塞尔曲线
+          for (let i = 1; i < coords.length; i++) {
+            const prev = coords[i - 1];
+            const curr = coords[i];
+            const cpx = (prev.x + curr.x) / 2;
+            ctx.bezierCurveTo(cpx, prev.y, cpx, curr.y, curr.x, curr.y);
+          }
+
+          ctx.lineTo(coords[coords.length - 1].x, padTop + chartH);
+          ctx.closePath();
+          ctx.fillStyle = gradient;
+          ctx.fill();
+
+          // 绘制曲线
+          ctx.beginPath();
+          ctx.moveTo(coords[0].x, coords[0].y);
+          for (let i = 1; i < coords.length; i++) {
+            const prev = coords[i - 1];
+            const curr = coords[i];
+            const cpx = (prev.x + curr.x) / 2;
+            ctx.bezierCurveTo(cpx, prev.y, cpx, curr.y, curr.x, curr.y);
+          }
+          ctx.strokeStyle = '#FF9800';
+          ctx.lineWidth = 2.5;
+          ctx.lineJoin = 'round';
+          ctx.lineCap = 'round';
+          ctx.stroke();
+        }
+
+        // 绘制数据点
+        coords.forEach((c, i) => {
+          const p = points[i];
+          ctx.beginPath();
+          ctx.arc(c.x, c.y, p.isMax || p.isMin ? 5 : 3.5, 0, Math.PI * 2);
+          ctx.fillStyle = p.isMax ? '#E64A19' : p.isMin ? '#4CAF50' : '#FF9800';
+          ctx.fill();
+          ctx.strokeStyle = '#fff';
+          ctx.lineWidth = 1.5;
+          ctx.stroke();
+        });
+
+        // 绘制日期标签
+        ctx.fillStyle = '#A89585';
+        ctx.font = '10px sans-serif';
+        ctx.textAlign = 'center';
+        coords.forEach((c, i) => {
+          ctx.fillText(points[i].date, c.x, height - 10);
+        });
+
+        // 绘制数值标签
+        ctx.fillStyle = '#3D2C1E';
+        ctx.font = 'bold 10px sans-serif';
+        ctx.textAlign = 'center';
+        coords.forEach((c, i) => {
+          const label = String(points[i].value);
+          ctx.fillText(label, c.x, c.y - 10);
+        });
+      });
   },
 
   _buildTimeline(records, type) {

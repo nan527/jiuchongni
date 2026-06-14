@@ -7,12 +7,13 @@ Page({
   data: {
     orderId: '',
     order: {},
-    payMethod: 'wechat',
+    payMethod: 'balance',
     paying: false,
     countdownText: '',
     expired: false,
     statusBarHeight: 0,
     navBarHeight: 0,
+    balance: 0,
   },
 
   _timer: null,
@@ -27,6 +28,7 @@ Page({
       this.setData({ orderId: options.id });
       this.loadOrder(options.id);
     }
+    this.loadBalance();
   },
 
   onUnload() {
@@ -84,16 +86,47 @@ Page({
     wx.navigateBack();
   },
 
+  async loadBalance() {
+    try {
+      const res = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: { action: 'get_user_balance' },
+      });
+      if (res.result.success) {
+        this.setData({ balance: res.result.balance || 0 });
+      }
+    } catch (e) {
+      console.error('[Payment] loadBalance failed', e);
+    }
+  },
+
   async onConfirmPay() {
     if (this.data.expired) return wx.showToast({ title: '支付已超时', icon: 'none' });
     if (this.data.paying) return;
     this.setData({ paying: true });
 
-    const { orderId, payMethod } = this.data;
+    const { orderId, payMethod, order, balance } = this.data;
+    const price = Number(order.price) || 0;
+
+    // 余额支付：检查余额是否充足
+    if (payMethod === 'balance' && balance < price) {
+      this.setData({ paying: false });
+      wx.showModal({
+        title: '余额不足',
+        content: `当前余额 ¥${balance.toFixed(2)}，需支付 ¥${price}，请先充值。`,
+        confirmText: '去充值',
+        success: (res) => {
+          if (res.confirm) {
+            wx.navigateTo({ url: '/pages/balance/balance' });
+          }
+        },
+      });
+      return;
+    }
 
     wx.showModal({
       title: '确认支付',
-      content: `确认使用${payMethod === 'wechat' ? '微信' : '余额'}支付 ¥${this.data.order.price}？`,
+      content: `确认使用${payMethod === 'wechat' ? '微信' : '余额'}支付 ¥${price}？`,
       confirmColor: '#FF9800',
       success: async (res) => {
         if (!res.confirm) {
@@ -102,12 +135,35 @@ Page({
         }
         wx.showLoading({ title: '支付中...' });
         try {
+          // 余额支付：扣减余额
+          if (payMethod === 'balance') {
+            const deductRes = await wx.cloud.callFunction({
+              name: 'ai_handler',
+              data: {
+                action: 'deduct_balance',
+                amount: price,
+                description: `订单支付-${order.serviceName || '服务'}`,
+              },
+            });
+            if (!deductRes.result.success) {
+              wx.hideLoading();
+              wx.showToast({ title: deductRes.result.msg || '余额扣减失败', icon: 'none' });
+              this.setData({ paying: false });
+              return;
+            }
+          }
+
           const db = wx.cloud.database();
+          const nextStatus = order.orderType === 'express' ? 'pending_ship' : 'pending';
           await db.collection('user_orders').doc(orderId).update({
-            data: { orderStatus: 'pending', payTime: db.serverDate(), updateTime: db.serverDate() },
+            data: {
+              orderStatus: nextStatus,
+              payMethod,
+              payTime: db.serverDate(),
+              updateTime: db.serverDate(),
+            },
           });
           // 寄养订单付款后更新宠物状态
-          const order = this.data.order;
           if (order.category === 'foster' && order.petId) {
             try {
               await db.collection('pets').doc(order.petId).update({
