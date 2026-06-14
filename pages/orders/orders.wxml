@@ -109,36 +109,11 @@
   </view>
 
   <!-- 空状态 -->
-  <view class="empty-wrap" wx:if="{{!loading && filteredOrders.length === 0}}">
-    <van-icon name="orders-o" size="80rpx" color="#F0E6D8" />
-    <text class="empty-wrap__text">暂无订单</text>
-  </view>
+  <empty-state wx:if="{{!loading && filteredOrders.length === 0}}" icon="orders-o" text="暂无订单" button="去下单" bind:action="goToIndex" />
 
   </view><!-- scroll-area -->
 
   <!-- 评价弹窗 -->
-  <van-popup show="{{showReview}}" position="bottom" round bind:close="closeReview">
-    <view class="review-popup">
-      <view class="review-popup__header">
-        <text class="review-popup__title">{{editReviewId ? '修改评价' : '评价服务'}}</text>
-        <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="closeReview" />
-      </view>
-      <view class="review-popup__rating">
-        <text class="review-popup__label">服务评分</text>
-        <van-rate value="{{reviewRating}}" bind:change="onRatingChange" size="40rpx" color="#FF9800" void-color="#F0E6D8" />
-      </view>
-      <view class="review-popup__field">
-        <textarea class="review-popup__textarea" placeholder="请输入您的评价..." value="{{reviewContent}}" bindinput="onReviewContentChange" />
-      </view>
-      <van-button
-        type="primary"
-        block
-        round
-        loading="{{submittingReview}}"
-        color="linear-gradient(135deg, #FF9800, #FFB74D)"
-        bindtap="submitReview"
-      >{{editReviewId ? '保存修改' : '提交评价'}}</van-button>
-    </view>
-  </van-popup>
+  <review-popup show="{{showReview}}" orderId="{{reviewOrderId}}" bind:submit="onSubmitReview" bind:close="onCloseReview" />
 
 </view>

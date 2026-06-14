@@ -396,6 +396,47 @@ Page({
     this.setData({ showReview: false, reviewOrderId: '', editReviewId: '' });
   },
 
+  onCloseReview() {
+    this.closeReview();
+  },
+
+  async onSubmitReview(e) {
+    const { orderId, rating, content } = e.detail;
+    const editReviewId = this.data.editReviewId;
+    if (this.data.submittingReview) return;
+    this.setData({ submittingReview: true });
+
+    try {
+      const db = wx.cloud.database();
+      if (editReviewId) {
+        await db.collection('user_orders').doc(editReviewId).update({
+          data: {
+            'review.rating': rating,
+            'review.content': content.trim(),
+          },
+        });
+        wx.showToast({ title: '修改成功' });
+      } else {
+        await db.collection('user_orders').doc(orderId).update({
+          data: {
+            review: { rating: rating, content: content.trim(), createTime: db.serverDate() },
+          },
+        });
+        wx.showToast({ title: '评价成功' });
+      }
+      this.setData({ showReview: false, reviewOrderId: '', editReviewId: '' });
+      this.loadOrders();
+    } catch (e) {
+      wx.showToast({ title: '操作失败', icon: 'none' });
+    } finally {
+      this.setData({ submittingReview: false });
+    }
+  },
+
+  goToIndex() {
+    wx.switchTab({ url: '/pages/index/index' });
+  },
+
   onRatingChange(e) {
     this.setData({ reviewRating: e.detail });
   },
