@@ -1,0 +1,34 @@
+.review-popup {
+  padding: 32rpx;
+}
+
+.review-popup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 32rpx;
+}
+
+.review-popup__title {
+  font-size: 32rpx;
+  font-weight: 600;
+}
+
+.review-popup__content {
+  margin-bottom: 32rpx;
+}
+
+.review-popup__rating {
+  display: flex;
+  align-items: center;
+  margin-bottom: 24rpx;
+}
+
+.review-popup__label {
+  margin-right: 16rpx;
+  font-size: 28rpx;
+}
+
+.review-popup__footer {
+  margin-top: 32rpx;
+}

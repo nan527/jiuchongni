@@ -1,0 +1,25 @@
+<van-popup show="{{show}}" position="bottom" round bind:close="onClose">
+  <view class="review-popup">
+    <view class="review-popup__header">
+      <text class="review-popup__title">评价订单</text>
+      <van-icon name="cross" size="40rpx" bindtap="onClose" />
+    </view>
+    <view class="review-popup__content">
+      <view class="review-popup__rating">
+        <text class="review-popup__label">服务评分</text>
+        <van-rate value="{{rating}}" bind:change="onRatingChange" />
+      </view>
+      <van-field
+        value="{{content}}"
+        type="textarea"
+        placeholder="请输入您的评价内容..."
+        bind:input="onContentInput"
+        maxlength="200"
+        show-word-limit
+      />
+    </view>
+    <view class="review-popup__footer">
+      <van-button type="primary" block round bindtap="onSubmit">提交评价</van-button>
+    </view>
+  </view>
+</van-popup>
