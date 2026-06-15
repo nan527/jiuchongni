@@ -1,8 +1,8 @@
-<!-- pages/orders/orders.wxml -->
-<view class="orders-page">
+<view class="orders-page neu-page">
 
   <!-- 固定头部：导航栏 + Tab -->
-  <view class="fixed-header" style="padding-top: {{ statusBarHeight }}px;">
+  <view class="fixed-header neu-header" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="header-bg"></view>
     <view class="nav-bar__inner">
       <view class="nav-bar__back" bindtap="onGoBack">
         <van-icon name="arrow-left" size="40rpx" color="#fff" />
@@ -10,20 +10,27 @@
       <text class="nav-bar__title">订单</text>
       <view class="nav-bar__right"></view>
     </view>
-    <van-tabs active="{{activeTab}}" bind:change="onTabChange" color="#FF9800" line-width="60rpx" swipeable>
-      <van-tab title="全部" />
-      <van-tab title="机构服务" />
-      <van-tab title="快递服务" />
-    </van-tabs>
+    <view class="custom-tabs">
+      <view
+        class="custom-tab {{activeTab === index ? 'custom-tab--active' : ''}}"
+        wx:for="{{tabList}}"
+        wx:key="key"
+        data-index="{{index}}"
+        bindtap="onTabChange"
+      >
+        <text class="custom-tab__text">{{item.label}}</text>
+      </view>
+    </view>
+    <view class="header-bottom-arc"></view>
   </view>
 
   <!-- 内容区域，下移避开固定头部 -->
-  <view class="scroll-area" style="margin-top: {{ headerHeight }}px;">
+  <view class="scroll-area" style="margin-top: {{ headerHeight }}px; padding-top: 40rpx;">
 
   <!-- 状态筛选 -->
   <scroll-view class="status-scroll" scroll-x enable-flex>
     <view
-      class="status-pill {{activeStatus === item.key ? 'status-pill--active' : ''}}"
+      class="status-pill neu-pill {{activeStatus === item.key ? 'neu-pill--active' : ''}}"
       wx:for="{{statusFilter}}"
       wx:key="key"
       data-key="{{item.key}}"
@@ -32,26 +39,26 @@
   </scroll-view>
 
   <!-- 加载中 -->
-  <view class="loading-wrap" wx:if="{{loading}}">
+  <view class="loading-wrap neu-loading" wx:if="{{loading}}">
     <van-loading type="spinner" color="#FF9800" size="48rpx" />
   </view>
 
   <!-- 订单列表 -->
   <view class="order-list" wx:if="{{!loading && filteredOrders.length > 0}}">
-    <view class="o-card" wx:for="{{filteredOrders}}" wx:key="_id" bindtap="onOrderTap" data-id="{{item._id}}">
+    <view class="o-card neu-card fade-in-up" wx:for="{{filteredOrders}}" wx:key="_id" bindtap="onOrderTap" data-id="{{item._id}}" style="animation-delay: {{item._animDelay}}ms;">
 
       <!-- 卡片头部 -->
-      <view class="o-card__header">
-        <view class="o-card__type-badge {{item.orderType === 'express' ? 'badge-express' : 'badge-agency'}}">
+      <view class="o-card__header neu-card__header">
+        <view class="o-card__type-badge {{item.orderType === 'express' ? 'badge-express' : 'badge-agency'}} neu-badge">
           {{item.orderType === 'express' ? '快递服务' : '机构服务'}}
         </view>
-        <view class="o-card__status" style="background:{{item.statusConfig.bg}};color:{{item.statusConfig.color}};">
+        <view class="o-card__status neu-status" style="background:{{item.statusConfig.bg}};color:{{item.statusConfig.color}};">
           {{item.statusConfig.label}}
         </view>
       </view>
 
       <!-- 卡片内容 -->
-      <view class="o-card__body">
+      <view class="o-card__body neu-card__body">
         <image class="o-card__img" src="{{item._imgError ? '/static/pet/logo.png' : (item.images[0] || item.petInfo.photo || '/static/pet/logo.png')}}" mode="aspectFill" binderror="onImageError" data-idx="{{index}}" />
         <view class="o-card__info">
           <text class="o-card__name">{{item.serviceName || item.petName}}</text>
@@ -67,49 +74,39 @@
       </view>
 
       <!-- 付款倒计时 -->
-      <view class="o-card__countdown" wx:if="{{item.orderStatus === 'unpaid' && item.countdownText}}">
+      <view class="o-card__countdown neu-countdown" wx:if="{{item.orderStatus === 'unpaid' && item.countdownText}}">
         <van-icon name="clock-o" size="28rpx" color="#E53935" />
         <text class="o-card__countdown-text {{item.countdownExpired ? 'o-card__countdown-text--expired' : ''}}">{{item.countdownText}}</text>
       </view>
 
       <!-- 操作按钮 -->
-      <view class="o-card__actions" wx:if="{{item.orderStatus === 'unpaid' || item.orderStatus === 'to_confirm' || item.orderStatus === 'to_pickup' || (item.orderStatus === 'completed' && !item.review)}}">
-        <view class="o-card__btn" wx:if="{{item.orderStatus === 'unpaid' && !item.countdownExpired}}">
-          <van-button size="small" round type="primary" color="#FF9800" data-id="{{item._id}}" catchtap="onPayOrder">立即付款</van-button>
+      <view class="o-card__actions neu-actions" wx:if="{{item.orderStatus === 'unpaid' || item.orderStatus === 'to_confirm' || item.orderStatus === 'to_pickup' || (item.orderStatus === 'completed' && !item.review)}}">
+        <view class="neu-btn neu-btn--primary" wx:if="{{item.orderStatus === 'unpaid' && !item.countdownExpired}}" data-id="{{item._id}}" catchtap="onPayOrder">立即付款</view>
+        <view class="neu-btn neu-btn--primary" wx:if="{{item.orderStatus === 'to_confirm' || item.orderStatus === 'to_pickup'}}" data-id="{{item._id}}" data-category="{{item.category}}" catchtap="onConfirmComplete">
+          {{item.orderStatus === 'to_pickup' ? '确认取件' : (item.category === 'foster' ? '确认取回' : '确认完成')}}
         </view>
-        <view class="o-card__btn" wx:if="{{item.orderStatus === 'to_confirm' || item.orderStatus === 'to_pickup'}}">
-          <van-button size="small" round type="primary" color="#FF9800" data-id="{{item._id}}" data-category="{{item.category}}" catchtap="onConfirmComplete">
-            {{item.orderStatus === 'to_pickup' ? '确认取件' : (item.category === 'foster' ? '确认取回' : '确认完成')}}
-          </van-button>
-        </view>
-        <view class="o-card__btn" wx:if="{{item.orderStatus === 'completed' && !item.review}}">
-          <van-button size="small" round plain type="warning" data-id="{{item._id}}" catchtap="openReview">评价服务</van-button>
-        </view>
-        <view class="o-card__btn">
-          <van-button size="small" round plain data-id="{{item._id}}" catchtap="onViewDetail">查看详情</van-button>
-        </view>
+        <view class="neu-btn neu-btn--warm" wx:if="{{item.orderStatus === 'completed' && !item.review}}" data-id="{{item._id}}" catchtap="openReview">评价服务</view>
+        <view class="neu-btn neu-btn--secondary" data-id="{{item._id}}" catchtap="onViewDetail">查看详情</view>
       </view>
-      <view class="o-card__actions" wx:elif="{{item.orderStatus === 'completed' && item.review}}">
-        <view class="o-card__btn">
-          <van-button size="small" round plain data-id="{{item._id}}" catchtap="openEditReview">修改评价</van-button>
-        </view>
-        <view class="o-card__btn">
-          <van-button size="small" round plain data-id="{{item._id}}" catchtap="deleteReview" color="#E53935">删除评价</van-button>
-        </view>
-        <view class="o-card__btn">
-          <van-button size="small" round plain data-id="{{item._id}}" catchtap="onViewDetail">查看详情</van-button>
-        </view>
+      <view class="o-card__actions neu-actions" wx:elif="{{item.orderStatus === 'completed' && item.review}}">
+        <view class="neu-btn neu-btn--warm" data-id="{{item._id}}" catchtap="openEditReview">修改评价</view>
+        <view class="neu-btn neu-btn--danger" data-id="{{item._id}}" catchtap="deleteReview">删除评价</view>
+        <view class="neu-btn neu-btn--secondary" data-id="{{item._id}}" catchtap="onViewDetail">查看详情</view>
       </view>
-      <view class="o-card__actions" wx:elif="{{item.orderStatus !== 'unpaid'}}">
-        <view class="o-card__btn">
-          <van-button size="small" round plain data-id="{{item._id}}" catchtap="onViewDetail">查看详情</van-button>
-        </view>
+      <view class="o-card__actions neu-actions" wx:elif="{{item.orderStatus !== 'unpaid'}}">
+        <view class="neu-btn neu-btn--secondary" data-id="{{item._id}}" catchtap="onViewDetail">查看详情</view>
       </view>
     </view>
   </view>
 
   <!-- 空状态 -->
-  <empty-state wx:if="{{!loading && filteredOrders.length === 0}}" icon="orders-o" text="暂无订单" button="去下单" bind:action="goToIndex" />
+  <view class="neu-empty-card" wx:if="{{!loading && filteredOrders.length === 0}}">
+    <view class="neu-empty-inner">
+      <van-icon name="orders-o" size="120rpx" color="#C4B8AC" />
+      <text class="neu-empty-text">暂无订单</text>
+      <view class="neu-btn neu-btn--primary" bindtap="goToIndex">去下单</view>
+    </view>
+  </view>
 
   </view><!-- scroll-area -->
 

@@ -12,13 +12,29 @@
     </view>
   </view>
 
+  <!-- Hero 区域 -->
+  <view class="hero-section" style="padding-top:{{navBarHeight}}px;">
+    <view class="hero-section__inner">
+      <view class="hero-section__icon">
+        <van-icon name="aim" size="52rpx" color="#fff" />
+      </view>
+      <text class="hero-section__title">AI 智能匹配</text>
+      <text class="hero-section__desc">描述你的需求，AI 帮你找到最合适的宠物服务</text>
+    </view>
+  </view>
+
   <!-- 内容区 -->
-  <view class="page-body" style="padding-top:{{navBarHeight + 16}}px;">
+  <view class="page-body">
 
     <!-- 选择宠物 -->
-    <view class="input-card">
-      <text class="input-card__label">选择宠物</text>
-      <view class="pet-selector" bindtap="onShowPetPicker">
+    <view class="input-card input-card--pet anim-fade-in-up" style="animation-delay:0.1s;">
+      <view class="input-card__header">
+        <view class="input-card__icon-wrap">
+          <van-icon name="friends-o" size="32rpx" color="#FF9800" />
+        </view>
+        <text class="input-card__label">选择宠物</text>
+      </view>
+      <view class="pet-selector {{selectedPet ? 'pet-selector--chosen' : ''}}" bindtap="onShowPetPicker">
         <view wx:if="{{selectedPet}}" class="pet-selector__chosen">
           <image class="pet-selector__avatar" src="{{selectedPet.photo || ''}}" wx:if="{{selectedPet.photo}}" mode="aspectFill" />
           <view class="pet-selector__avatar pet-selector__avatar--default" wx:else>
@@ -30,15 +46,22 @@
           </view>
         </view>
         <view wx:else class="pet-selector__empty">
-          <text class="pet-selector__empty-text">请选择宠物</text>
+          <van-icon name="plus" size="28rpx" color="#C4B8AC" />
+          <text class="pet-selector__empty-text">请选择你的宠物</text>
         </view>
         <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
       </view>
     </view>
 
     <!-- 描述需求 -->
-    <view class="input-card">
-      <text class="input-card__label">描述你的需求</text>
+    <view class="input-card input-card--desc anim-fade-in-up" style="animation-delay:0.2s;">
+      <view class="input-card__header">
+        <view class="input-card__icon-wrap">
+          <van-icon name="edit" size="32rpx" color="#FF9800" />
+        </view>
+        <text class="input-card__label">描述你的需求</text>
+        <text class="input-card__optional">可选</text>
+      </view>
       <view class="textarea-box">
         <textarea
           class="textarea-input"
@@ -49,118 +72,136 @@
           maxlength="500"
           auto-height
         />
-        <text class="textarea-count">{{userText.length}}/500</text>
+        <view class="textarea-footer">
+          <text class="textarea-count">{{userText.length}}/500</text>
+        </view>
       </view>
       <view class="textarea-tips">
+        <van-icon name="bulb-o" size="24rpx" color="#FF9800" />
         <text class="textarea-tips__label">试试：</text>
-        <text class="textarea-tips__item">"附近可以寄养猫咪的地方，价格实惠一点"</text>
+        <text class="textarea-tips__item" bindtap="onFillExample">"附近可以寄养猫咪的地方，价格实惠一点"</text>
       </view>
     </view>
 
     <!-- 匹配按钮 -->
-    <view class="match-btn-wrap">
-      <van-button
-        type="primary"
-        color="linear-gradient(135deg, #FF9800, #FFB74D)"
-        round
-        loading="{{loading}}"
-        loading-text="AI 分析中..."
-        bindtap="onMatchTap"
-        custom-style="width:100%;height:88rpx;font-size:30rpx;font-weight:600;"
-      >
-        <van-icon name="aim" size="28rpx" style="margin-right: 8rpx;" /> 智能匹配
-      </van-button>
+    <view class="match-btn-wrap anim-fade-in-up" style="animation-delay:0.3s;">
+      <view class="match-btn {{loading ? 'match-btn--loading' : ''}}" bindtap="onMatchTap">
+        <view class="match-btn__bg"></view>
+        <view class="match-btn__inner">
+          <van-icon wx:if="{{!loading}}" name="aim" size="36rpx" color="#fff" />
+          <view wx:if="{{loading}}" class="match-btn__spinner"></view>
+          <text class="match-btn__text">{{loading ? 'AI 分析中...' : '开始智能匹配'}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 匹配中动画 -->
+    <view class="loading-section anim-fade-in" wx:if="{{loading}}">
+      <view class="loading-wave">
+        <view class="loading-wave__bar"></view>
+        <view class="loading-wave__bar"></view>
+        <view class="loading-wave__bar"></view>
+        <view class="loading-wave__bar"></view>
+        <view class="loading-wave__bar"></view>
+      </view>
+      <text class="loading-section__text">正在为你分析需求，匹配最佳方案...</text>
     </view>
 
     <!-- 匹配结果 -->
-    <block wx:if="{{hasResult}}">
-      <view class="result-header">
-        <text class="result-header__title">为你找到 {{resultList.length}} 个匹配方案</text>
+    <block wx:if="{{hasResult && resultList.length > 0}}">
+      <view class="result-header anim-fade-in-up">
+        <view class="result-header__left">
+          <text class="result-header__title">为你找到</text>
+          <text class="result-header__count">{{resultList.length}}</text>
+          <text class="result-header__title">个匹配方案</text>
+        </view>
+        <view class="result-header__badge">
+          <van-icon name="success" size="24rpx" color="#66BB6A" />
+          <text>AI 推荐</text>
+        </view>
       </view>
 
       <view class="result-list">
-        <view class="result-card" wx:for="{{resultList}}" wx:key="_id">
+        <view
+          class="result-card anim-fade-in-up"
+          style="animation-delay:{{0.4 + index * 0.1}}s;"
+          wx:for="{{resultList}}"
+          wx:key="_id"
+        >
+          <!-- 匹配度徽章 -->
+          <view class="result-card__badge {{item.matchPercent >= 90 ? 'badge-high' : item.matchPercent >= 70 ? 'badge-med' : 'badge-low'}}">
+            <text class="result-card__badge-text">{{item.matchPercent}}%</text>
+            <text class="result-card__badge-label">匹配</text>
+          </view>
 
-          <!-- 匹配度条 -->
+          <!-- 匹配度进度条 -->
           <view class="result-card__score-bar">
-            <view class="result-card__score-fill {{item.matchPercent >= 90 ? 'score-high' : item.matchPercent >= 70 ? 'score-med' : 'score-low'}}" style="width: {{item.matchPercent}}%;"></view>
-            <text class="result-card__score-text">匹配度 {{item.matchPercent}}%</text>
+            <view class="result-card__score-track">
+              <view class="result-card__score-fill {{item.matchPercent >= 90 ? 'score-high' : item.matchPercent >= 70 ? 'score-med' : 'score-low'}}" style="width: {{item.matchPercent}}%;"></view>
+            </view>
           </view>
 
           <view class="result-card__content">
             <!-- 服务图片 -->
-            <image class="result-card__img" wx:if="{{item.service.coverImage}}" src="{{item.service.coverImage}}" mode="aspectFill" />
+            <view class="result-card__img-wrap" wx:if="{{item.service.coverImage}}">
+              <image class="result-card__img" src="{{item.service.coverImage}}" mode="aspectFill" />
+            </view>
 
             <!-- 机构信息 -->
             <view class="result-card__body">
               <view class="result-card__header">
                 <text class="result-card__agency-name">{{item.agency.orgName}}</text>
-                <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.service.catTitle}}</van-tag>
+                <view class="result-card__tag">{{item.service.catTitle}}</view>
               </view>
-              <text class="result-card__location" wx:if="{{item.agency.region}}">
-                <van-icon name="location-o" size="22rpx" color="#8C7A6B" /> {{item.agency.region}}
-              </text>
-              <text class="result-card__service">
-                {{item.service.name}} <text class="result-card__price">¥{{item.service.price}}/{{item.service.priceUnit || '次'}}</text>
-              </text>
-              <text class="result-card__reason" wx:if="{{aiReasons[item.service._id]}}">
-                {{aiReasons[item.service._id]}}
-              </text>
+              <view class="result-card__location" wx:if="{{item.agency.region}}">
+                <van-icon name="location-o" size="22rpx" color="#8C7A6B" />
+                <text>{{item.agency.region}}</text>
+              </view>
+              <view class="result-card__service">
+                <text class="result-card__service-name">{{item.service.name}}</text>
+                <text class="result-card__price">¥{{item.service.price}}</text>
+                <text class="result-card__price-unit">/{{item.service.priceUnit || '次'}}</text>
+              </view>
+              <view class="result-card__reason" wx:if="{{aiReasons[item.service._id]}}">
+                <van-icon name="chat-o" size="22rpx" color="#FF9800" />
+                <text>{{aiReasons[item.service._id]}}</text>
+              </view>
             </view>
           </view>
 
           <!-- 操作按钮 -->
           <view class="result-card__actions">
-            <view style="flex:1;">
-              <van-button
-                size="small"
-                round
-                plain
-                color="#FF9800"
-                bindtap="onDetailTap"
-                data-agencyid="{{item.agency._id}}"
-                custom-style="width:100%;height:64rpx;font-size:24rpx;"
-              >
-                查看详情
-              </van-button>
+            <view class="result-card__btn result-card__btn--detail" bindtap="onDetailTap" data-agencyid="{{item.agency._id}}">
+              <van-icon name="info-o" size="26rpx" color="#FF9800" />
+              <text>查看详情</text>
             </view>
-            <view style="flex:1;">
-              <van-button
-                size="small"
-                round
-                type="primary"
-                color="#FF9800"
-                bindtap="onBookTap"
-                data-serviceid="{{item.service._id}}"
-                custom-style="width:100%;height:64rpx;font-size:24rpx;"
-              >
-                立即预约
-              </van-button>
+            <view class="result-card__btn result-card__btn--book" bindtap="onBookTap" data-serviceid="{{item.service._id}}">
+              <van-icon name="clock-o" size="26rpx" color="#fff" />
+              <text>立即预约</text>
             </view>
           </view>
         </view>
       </view>
 
       <!-- 重新匹配 -->
-      <view class="rematch-wrap">
-        <van-button
-          size="small"
-          round
-          plain
-          color="#8C7A6B"
-          bindtap="onReMatch"
-          custom-style="height:64rpx;font-size:24rpx;"
-        >
-          重新匹配
-        </van-button>
+      <view class="rematch-wrap anim-fade-in-up" style="animation-delay:{{0.4 + resultList.length * 0.1}}s;">
+        <view class="rematch-btn" bindtap="onReMatch">
+          <van-icon name="replay" size="28rpx" color="#8C7A6B" />
+          <text>重新匹配</text>
+        </view>
       </view>
     </block>
 
     <!-- 空结果 -->
-    <view class="empty-wrap" wx:if="{{hasResult && resultList.length === 0}}">
-      <van-icon name="search" size="80rpx" color="#F0E6D8" />
+    <view class="empty-wrap anim-fade-in" wx:if="{{hasResult && resultList.length === 0}}">
+      <view class="empty-wrap__icon">
+        <van-icon name="search" size="72rpx" color="#F0E6D8" />
+      </view>
       <text class="empty-wrap__text">暂无合适推荐</text>
-      <text class="empty-wrap__sub">试试换个描述方式</text>
+      <text class="empty-wrap__sub">试试换个描述方式，或减少筛选条件</text>
+      <view class="empty-wrap__btn" bindtap="onReMatch">
+        <text>重新匹配</text>
+      </view>
     </view>
 
   </view>
@@ -168,7 +209,12 @@
   <!-- 宠物选择弹窗 -->
   <van-popup show="{{petPickerVisible}}" position="bottom" round bind:close="onPetPickerClose">
     <view class="pet-picker">
-      <view class="pet-picker__title">选择宠物</view>
+      <view class="pet-picker__header">
+        <text class="pet-picker__title">选择宠物</text>
+        <view class="pet-picker__close" bindtap="onPetPickerClose">
+          <van-icon name="cross" size="32rpx" color="#8C7A6B" />
+        </view>
+      </view>
       <view class="pet-picker__list">
         <view
           class="pet-picker__item {{selectedPetId === item._id ? 'pet-picker__item--active' : ''}}"
@@ -185,10 +231,13 @@
             <text class="pet-picker__name">{{item.name}}</text>
             <text class="pet-picker__meta">{{item.species || '未知'}} · {{item.age || ''}}</text>
           </view>
-          <van-icon wx:if="{{selectedPetId === item._id}}" name="success" size="32rpx" color="#FF9800" />
+          <view class="pet-picker__check" wx:if="{{selectedPetId === item._id}}">
+            <van-icon name="success" size="28rpx" color="#fff" />
+          </view>
         </view>
       </view>
       <view wx:if="{{petList.length === 0}}" class="pet-picker__empty">
+        <van-icon name="info-o" size="48rpx" color="#C4B8AC" />
         <text>暂无宠物档案，请先添加宠物</text>
       </view>
     </view>

@@ -96,6 +96,10 @@ Page({
     this.setData({ userText: e.detail.value });
   },
 
+  onFillExample() {
+    this.setData({ userText: '附近可以寄养猫咪的地方，价格实惠一点' });
+  },
+
   // 核心：触发智能匹配
   async onMatchTap() {
     if (this.data.loading) return;
@@ -116,19 +120,27 @@ Page({
         breed: pet.breed || '',
       };
 
-      const aiRes = await wx.cloud.callFunction({
-        name: 'ai_handler',
-        data: {
-          action: 'smart_match_parse',
-          userText: this.data.userText,
-          petInfo,
-        },
-      });
+      let aiRes;
+      try {
+        aiRes = await wx.cloud.callFunction({
+          name: 'ai_handler',
+          data: {
+            action: 'smart_match_parse',
+            userText: this.data.userText,
+            petInfo,
+          },
+        });
+      } catch (cloudErr) {
+        console.error('[SmartMatch] 云函数调用异常:', cloudErr);
+        wx.showToast({ title: '网络异常，请重试', icon: 'none' });
+        this.setData({ loading: false });
+        return;
+      }
 
       const { success, parsed, msg } = aiRes.result || {};
-      console.log('[SmartMatch] AI parsed:', JSON.stringify(parsed));
+      console.log('[SmartMatch] AI parsed:', JSON.stringify(parsed), 'success:', success, 'msg:', msg);
       if (!success || !parsed) {
-        wx.showToast({ title: msg || 'AI 解析失败', icon: 'none' });
+        wx.showToast({ title: msg || 'AI 解析失败，请检查 AI 模型配置', icon: 'none', duration: 3000 });
         this.setData({ loading: false });
         return;
       }

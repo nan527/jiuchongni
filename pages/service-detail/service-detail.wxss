@@ -1,10 +1,55 @@
-/* pages/service-detail/service-detail.wxss */
+/* pages/service-detail/service-detail.less */
+/* ===== 变量 ===== */
+/* ===== 动画 ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+@keyframes pulse {
+  0%,
+  100% {
+    transform: scale(1);
+  }
+  50% {
+    transform: scale(1.05);
+  }
+}
+.anim-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+}
+.anim-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+}
+/* ===== 页面 ===== */
 .detail-page {
   min-height: 100vh;
-  background: #f5f5f5;
-  padding-bottom: 140rpx;
+  background: #FFF8F0;
+  padding-bottom: 160rpx;
 }
-
 /* ===== 自定义导航栏 ===== */
 .nav-bar {
   position: fixed;
@@ -12,16 +57,14 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: #FF9800;
+  background: linear-gradient(135deg, #FF9800 0%, #FFB74D 50%, #FF8A65 100%);
 }
-
 .nav-bar__inner {
   display: flex;
   align-items: center;
   height: 88rpx;
   padding: 0 16rpx;
 }
-
 .nav-bar__back {
   width: 72rpx;
   height: 72rpx;
@@ -29,163 +72,186 @@
   align-items: center;
   justify-content: center;
 }
-
 .nav-bar__right {
   width: 72rpx;
 }
-
-.img-swiper { width: 100%; height: 500rpx; }
-.swiper-img { width: 100%; height: 100%; }
-
+.nav-bar__title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2rpx;
+}
+/* ===== 图片轮播 ===== */
+.img-swiper {
+  width: 100%;
+  height: 500rpx;
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+.swiper-img {
+  width: 100%;
+  height: 100%;
+}
 .img-placeholder {
-  width: 100%; height: 360rpx;
-  background: #eee;
-  display: flex; align-items: center; justify-content: center;
+  width: 100%;
+  height: 360rpx;
+  background: #F0E6D8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
 }
-
+/* ===== 服务信息 ===== */
 .info-section {
-  background: #fff;
-  margin: 20rpx 24rpx 0;
-  border-radius: 20rpx;
+  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
+  margin: 20rpx 28rpx 0;
+  border-radius: 28rpx;
   padding: 28rpx;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.1s forwards;
 }
-
+.info-section + .info-section {
+  animation-delay: 0.15s;
+}
+.info-section + .info-section + .info-section {
+  animation-delay: 0.2s;
+}
 .svc-title-row {
   display: flex;
   align-items: center;
   gap: 16rpx;
 }
-
 .svc-name {
   font-size: 36rpx;
   font-weight: 700;
-  color: #333;
+  color: #3D2C1E;
 }
-
 .svc-price-row {
   display: flex;
   align-items: baseline;
   margin-top: 16rpx;
 }
-
 .svc-price {
-  font-size: 44rpx;
+  font-size: 48rpx;
   font-weight: 800;
   color: #FF9800;
 }
-
 .svc-unit {
   font-size: 26rpx;
-  color: #999;
+  color: #8C7A6B;
   margin-left: 4rpx;
 }
-
 .svc-desc {
   font-size: 26rpx;
-  color: #666;
+  color: #8C7A6B;
   margin-top: 16rpx;
   line-height: 1.7;
 }
-
 /* ===== 所属机构卡片 ===== */
 .agency-card {
   padding: 24rpx;
 }
-
 .agency-card__header {
   display: flex;
   align-items: center;
 }
-
 .agency-card__logo {
   width: 100rpx;
   height: 100rpx;
-  border-radius: 16rpx;
-  background: #f5f5f5;
+  border-radius: 20rpx;
+  background: #F0E6D8;
   flex-shrink: 0;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
 }
-
 .agency-card__info {
   flex: 1;
   margin-left: 20rpx;
   min-width: 0;
 }
-
 .agency-card__name {
   font-size: 30rpx;
   font-weight: 600;
-  color: #333;
+  color: #3D2C1E;
   display: block;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .agency-card__meta {
   display: flex;
   align-items: center;
   margin-top: 8rpx;
   gap: 6rpx;
 }
-
 .agency-card__addr {
   font-size: 22rpx;
-  color: #999;
+  color: #8C7A6B;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
-
 .agency-card__tags {
   margin-top: 8rpx;
 }
-
 .agency-card__env {
   display: flex;
   gap: 12rpx;
   margin-top: 20rpx;
 }
-
 .agency-card__env-img {
   width: 200rpx;
   height: 140rpx;
-  border-radius: 12rpx;
-  background: #f5f5f5;
+  border-radius: 16rpx;
+  background: #F0E6D8;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
 }
-
+/* ===== 板块标题 ===== */
 .section-title {
-  font-size: 28rpx;
+  font-size: 30rpx;
   font-weight: 700;
-  color: #333;
-  margin-bottom: 16rpx;
+  color: #3D2C1E;
+  margin-bottom: 20rpx;
+  position: relative;
+  padding-left: 20rpx;
 }
-
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6rpx;
+  bottom: 6rpx;
+  width: 6rpx;
+  border-radius: 3rpx;
+  background: linear-gradient(180deg, #FF9800, #FFB74D, #FF8A65);
+}
+/* ===== 笼位面板 ===== */
 .cage-panel {
-  background: #fff7ed;
-  border: 1rpx solid #ffd9a8;
-  border-radius: 14rpx;
-  padding: 16rpx 18rpx;
-  margin-bottom: 16rpx;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+  border: none;
+  border-radius: 18rpx;
+  padding: 20rpx 24rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(255, 152, 0, 0.08);
 }
-
 .cage-panel__row {
   display: flex;
   justify-content: space-between;
   align-items: center;
 }
-
 .cage-panel__title {
   font-size: 24rpx;
   color: #9a5700;
   font-weight: 600;
 }
-
 .cage-panel__value {
   font-size: 24rpx;
-  color: #e65100;
+  color: #FF7043;
   font-weight: 700;
 }
-
 .cage-panel__desc {
   display: block;
   margin-top: 8rpx;
@@ -193,7 +259,6 @@
   color: #a8742e;
   line-height: 1.5;
 }
-
 .cage-panel__warn {
   display: block;
   margin-top: 8rpx;
@@ -201,99 +266,96 @@
   color: #c62828;
   font-weight: 600;
 }
-
+/* ===== 宠物空提示 ===== */
 .pet-empty-tip {
-  background: #fff7ed;
-  border: 1rpx solid #ffdfb8;
-  border-radius: 14rpx;
-  padding: 18rpx 20rpx;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+  border: none;
+  border-radius: 18rpx;
+  padding: 20rpx 24rpx;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  margin-bottom: 16rpx;
+  margin-bottom: 20rpx;
+  box-shadow: 0 2rpx 12rpx rgba(255, 152, 0, 0.08);
 }
-
 .pet-empty-tip__text {
   font-size: 24rpx;
   color: #b26a00;
 }
-
 .pet-empty-tip__btn {
   display: flex;
   align-items: center;
 }
-
+/* ===== 宠物选择器 ===== */
 .pet-selector {
   display: flex;
   flex-direction: column;
-  gap: 14rpx;
-  margin-bottom: 16rpx;
+  gap: 16rpx;
+  margin-bottom: 20rpx;
 }
-
 .pet-opt {
   display: flex;
   align-items: center;
-  padding: 16rpx;
-  border-radius: 16rpx;
-  border: 1rpx solid #f0f0f0;
-  background: #fafafa;
+  padding: 20rpx;
+  border-radius: 20rpx;
+  border: none;
+  background: linear-gradient(180deg, #FFF8F0, #FFF8F0);
+  box-shadow: inset 4rpx 4rpx 8rpx rgba(174, 144, 116, 0.1), inset -4rpx -4rpx 8rpx rgba(255, 255, 255, 0.8);
+  transition: all 0.2s ease;
 }
-
 .pet-opt--active {
-  border-color: #ffcc80;
-  background: #fff7ed;
+  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+  box-shadow: inset 4rpx 4rpx 8rpx rgba(174, 144, 116, 0.1), inset -4rpx -4rpx 8rpx rgba(255, 255, 255, 0.8), 0 0 0 2rpx rgba(255, 152, 0, 0.2);
 }
-
 .pet-opt__avatar {
-  width: 76rpx;
-  height: 76rpx;
+  width: 80rpx;
+  height: 80rpx;
   border-radius: 50%;
-  background: #eee;
+  background: #F0E6D8;
   flex-shrink: 0;
+  box-shadow: 0 2rpx 8rpx rgba(174, 144, 116, 0.15);
 }
-
 .pet-opt__info {
   flex: 1;
-  margin-left: 16rpx;
+  margin-left: 20rpx;
   display: flex;
   flex-direction: column;
 }
-
 .pet-opt__name {
   font-size: 28rpx;
-  color: #333;
+  color: #3D2C1E;
   font-weight: 600;
 }
-
 .pet-opt__detail {
   font-size: 22rpx;
-  color: #999;
+  color: #8C7A6B;
   margin-top: 4rpx;
 }
-
+/* ===== 已选宠物 ===== */
 .selected-pet {
-  margin: 10rpx 0 14rpx;
-  padding: 12rpx 16rpx;
-  background: #fff3e0;
-  border-radius: 12rpx;
+  margin: 12rpx 0 16rpx;
+  padding: 14rpx 20rpx;
+  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+  border-radius: 14rpx;
 }
-
 .selected-pet__label {
   font-size: 24rpx;
   color: #a05b00;
 }
-
 .selected-pet__name {
   font-size: 24rpx;
-  color: #e65100;
+  color: #FF7043;
   font-weight: 600;
 }
-
+/* ===== 底部操作栏 ===== */
 .bottom-bar {
   position: fixed;
-  bottom: 0; left: 0; right: 0;
+  bottom: 0;
+  left: 0;
+  right: 0;
   padding: 20rpx 48rpx;
   padding-bottom: calc(20rpx + env(safe-area-inset-bottom));
-  background: #fff;
-  box-shadow: 0 -2rpx 12rpx rgba(0,0,0,0.06);
+  background: #FFFAF5;
+  box-shadow: 0 -4rpx 16rpx rgba(174, 144, 116, 0.1);
+  z-index: 50;
 }

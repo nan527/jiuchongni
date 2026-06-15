@@ -5,6 +5,9 @@
     "van-icon": "/miniprogram_npm/@vant/weapp/icon/index",
     "van-button": "/miniprogram_npm/@vant/weapp/button/index",
     "van-field": "/miniprogram_npm/@vant/weapp/field/index",
-    "van-cell": "/miniprogram_npm/@vant/weapp/cell/index"
+    "van-cell": "/miniprogram_npm/@vant/weapp/cell/index",
+    "van-rate": "/miniprogram_npm/@vant/weapp/rate/index",
+    "van-loading": "/miniprogram_npm/@vant/weapp/loading/index",
+    "review-popup": "/components/review-popup/review-popup"
   }
 }

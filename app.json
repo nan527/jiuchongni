@@ -101,6 +101,11 @@
     "empty-state": "/components/empty-state/empty-state",
     "review-popup": "/components/review-popup/review-popup"
   },
+  "permission": {
+    "scope.userLocation": {
+      "desc": "你的位置信息将用于计算与机构服务的距离"
+    }
+  },
   "style": "v2",
   "sitemapLocation": "sitemap.json"
 }

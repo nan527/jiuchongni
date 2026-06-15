@@ -43,12 +43,47 @@
       <van-icon name="home-o" size="32rpx" color="#FF9800" />
       <text class="info-row__text">共 {{agency.totalCages}} 个笼位</text>
     </view>
+    <view class="info-row" wx:if="{{agency.appointmentMethod}}">
+      <van-icon name="notes-o" size="32rpx" color="#FF9800" />
+      <text class="info-row__text">预约方式：{{agency.appointmentMethod}}</text>
+    </view>
   </view>
 
   <!-- 机构简介 -->
   <view class="intro-section" wx:if="{{agency.orgIntro}}">
     <text class="section-title">机构简介</text>
     <text class="intro-text">{{agency.orgIntro}}</text>
+  </view>
+
+  <!-- 招牌服务 -->
+  <view class="highlight-section" wx:if="{{agency.signatureService}}">
+    <view class="highlight-card">
+      <view class="highlight-card__icon-wrap">
+        <van-icon name="star-o" size="36rpx" color="#FF9800" />
+      </view>
+      <view class="highlight-card__body">
+        <text class="highlight-card__label">招牌服务</text>
+        <text class="highlight-card__text">{{agency.signatureService}}</text>
+      </view>
+    </view>
+  </view>
+
+  <!-- 服务范围 & 笼位详情 -->
+  <view class="detail-tags-section" wx:if="{{agency.serviceScope || agency.cageDesc}}">
+    <view class="detail-tag-card" wx:if="{{agency.serviceScope}}">
+      <view class="detail-tag-card__header">
+        <van-icon name="apps-o" size="28rpx" color="#FF9800" />
+        <text class="detail-tag-card__title">服务范围</text>
+      </view>
+      <text class="detail-tag-card__text">{{agency.serviceScope}}</text>
+    </view>
+    <view class="detail-tag-card" wx:if="{{agency.cageDesc}}">
+      <view class="detail-tag-card__header">
+        <van-icon name="home-o" size="28rpx" color="#FF9800" />
+        <text class="detail-tag-card__title">笼位详情</text>
+      </view>
+      <text class="detail-tag-card__text">{{agency.cageDesc}}</text>
+    </view>
   </view>
 
   <!-- 环境照片 -->
@@ -84,7 +119,7 @@
           <text class="svc-item__name">{{item.name}}</text>
           <view class="svc-item__price-row">
             <text class="svc-item__price">¥{{item.price}}</text>
-            <text class="svc-item__unit">/{{item.priceUnit || '次'}}</text>
+            <text class="svc-item__unit">{{item.priceUnit || '/次'}}</text>
           </view>
         </view>
       </view>
@@ -95,9 +130,104 @@
     </view>
   </view>
 
+  <!-- 联系方式 -->
+  <view class="contact-section" wx:if="{{agency.emergencyContact || agency.backupPhone}}">
+    <text class="section-title">联系方式</text>
+    <view class="contact-card">
+      <view class="contact-row" wx:if="{{agency.emergencyContact}}">
+        <view class="contact-row__icon-wrap">
+          <van-icon name="user-o" size="28rpx" color="#FF9800" />
+        </view>
+        <view class="contact-row__info">
+          <text class="contact-row__label">联系人</text>
+          <text class="contact-row__value">{{agency.emergencyContact}}</text>
+        </view>
+      </view>
+      <view class="contact-row" wx:if="{{agency.backupPhone}}">
+        <view class="contact-row__icon-wrap">
+          <van-icon name="phone-o" size="28rpx" color="#FF9800" />
+        </view>
+        <view class="contact-row__info">
+          <text class="contact-row__label">备用电话</text>
+          <text class="contact-row__value">{{agency.backupPhone}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 用户评价 -->
+  <view class="review-section">
+    <view class="review-header">
+      <text class="section-title">用户评价</text>
+      <view class="review-write-btn {{canReview ? 'review-write-btn--active' : ''}}" bindtap="openReview">
+        <van-icon name="edit" size="24rpx" color="{{canReview ? '#FF9800' : '#C4B8AC'}}" />
+        <text class="review-write-btn__text">写评价</text>
+      </view>
+    </view>
+
+    <!-- 评分概览 -->
+    <view class="review-overview" wx:if="{{totalReviews > 0}}">
+      <view class="review-overview__score">
+        <text class="review-overview__num">{{avgRating}}</text>
+        <view class="review-overview__stars">
+          <van-rate value="{{avgRatingRound}}" size="28rpx" color="#FF9800" void-color="#E0D5CC" readonly allow-half />
+        </view>
+        <text class="review-overview__count">{{totalReviews}}条评价</text>
+      </view>
+      <view class="review-overview__good">
+        <text class="review-overview__good-num">{{goodRate}}%</text>
+        <text class="review-overview__good-label">好评率</text>
+      </view>
+    </view>
+
+    <!-- 加载中 -->
+    <view class="loading-wrap" wx:if="{{reviewLoading}}">
+      <van-loading type="spinner" color="#FF9800" size="40rpx" />
+    </view>
+
+    <!-- 评价列表 -->
+    <view class="review-list" wx:if="{{!reviewLoading && reviews.length > 0}}">
+      <view class="review-item" wx:for="{{reviews}}" wx:key="_id">
+        <view class="review-item__header">
+          <view class="review-item__svc">
+            <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="small">{{item.catLabel}}</van-tag>
+            <text class="review-item__svc-name">{{item.serviceName}}</text>
+          </view>
+          <view class="review-item__stars">
+            <van-rate value="{{item.rating}}" size="24rpx" color="#FF9800" void-color="#E0D5CC" readonly />
+          </view>
+        </view>
+        <view class="review-item__body">
+          <text class="review-item__content">{{item.content}}</text>
+        </view>
+        <view class="review-item__footer">
+          <text class="review-item__pet">宠物: {{item.petName}}</text>
+          <text class="review-item__time">{{item.createTimeStr}}</text>
+        </view>
+        <!-- 机构回复 -->
+        <view class="review-item__reply" wx:if="{{item.reply}}">
+          <view class="reply-header">
+            <van-icon name="chat-o" size="24rpx" color="#FF9800" />
+            <text class="reply-label">机构回复</text>
+          </view>
+          <text class="reply-content">{{item.reply}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-review" wx:if="{{!reviewLoading && reviews.length === 0}}">
+      <van-icon name="comment-o" size="80rpx" color="#C4B8AC" />
+      <text class="empty-review__text">暂无评价，快来写第一条评价吧</text>
+    </view>
+  </view>
+
 </view>
 
 <!-- 加载中 -->
 <view class="loading-wrap" wx:if="{{loading}}">
   <van-loading type="spinner" color="#FF9800" size="48rpx" />
 </view>
+
+<!-- 评价弹窗 -->
+<review-popup show="{{showReview}}" orderId="{{reviewOrderId}}" bind:submit="submitReview" bind:close="onCloseReview" />

@@ -1,0 +1,134 @@
+<h2>第二批优化：视觉一致性</h2>
+<p class="subtitle">统一视觉语言，提升品牌一致性</p>
+
+<div class="section">
+  <h3>优化目标</h3>
+  <p>解决4个视觉一致性问题，建立统一的视觉规范，提升品牌形象和用户体验。</p>
+</div>
+
+<div class="section">
+  <h3>问题清单</h3>
+  <div class="cards">
+    <div class="card" data-choice="1" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>1. px与rpx单位混用</h3>
+        <p><strong>问题：</strong>app.wxss中使用px，页面样式使用rpx</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>统一使用rpx单位</li>
+          <li>转换app.wxss中的px为rpx</li>
+          <li>建立单位使用规范</li>
+        </ul>
+        <p><strong>影响：</strong>提升不同屏幕尺寸下的显示一致性</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="2" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>2. 自定义导航栏与系统导航栏冲突风险</h3>
+        <p><strong>问题：</strong>部分页面可能忘记设置navigationStyle: custom</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>检查所有页面的json配置</li>
+          <li>统一设置navigationStyle: custom</li>
+          <li>建立配置检查机制</li>
+        </ul>
+        <p><strong>影响：</strong>避免导航栏重叠问题</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="3" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>3. 机构首页背景不一致</h3>
+        <p><strong>问题：</strong>agency页面使用#f5f5f5，其他页面使用#FFF8F0</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>统一使用暖色调背景#FFF8F0</li>
+          <li>更新agency页面背景色</li>
+          <li>建立背景色变量</li>
+        </ul>
+        <p><strong>影响：</strong>提升视觉一致性，强化品牌色</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="4" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>4. 底部安全区处理不统一</h3>
+        <p><strong>问题：</strong>部分页面用固定高度，部分用safe-area-inset-bottom</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>统一使用safe-area-inset-bottom</li>
+          <li>在全局样式中处理安全区</li>
+          <li>建立安全区处理规范</li>
+        </ul>
+        <p><strong>影响：</strong>提升不同设备的兼容性</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>实施步骤</h3>
+  <div class="mockup">
+    <div class="mockup-header">第二批优化流程</div>
+    <div class="mockup-body">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="background: #e3f2fd; padding: 12px; border-radius: 8px;">
+          <strong>步骤1：建立视觉规范</strong><br>
+          定义单位、颜色、安全区等视觉规范
+        </div>
+        <div style="background: #f3e5f5; padding: 12px; border-radius: 8px;">
+          <strong>步骤2：统一单位使用</strong><br>
+          转换app.wxss中的px为rpx，建立单位规范
+        </div>
+        <div style="background: #e8f5e8; padding: 12px; border-radius: 8px;">
+          <strong>步骤3：检查导航栏配置</strong><br>
+          检查所有页面json配置，确保navigationStyle: custom
+        </div>
+        <div style="background: #fff3e0; padding: 12px; border-radius: 8px;">
+          <strong>步骤4：统一背景色</strong><br>
+          更新agency页面背景色为#FFF8F0
+        </div>
+        <div style="background: #fce4ec; padding: 12px; border-radius: 8px;">
+          <strong>步骤5：统一安全区处理</strong><br>
+          全局处理安全区，删除固定高度占位
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>预期成果</h3>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>收益</h4>
+      <ul>
+        <li>视觉一致性提升80%</li>
+        <li>品牌识别度增强</li>
+        <li>不同设备兼容性提升</li>
+        <li>用户体验更加统一</li>
+        <li>维护成本降低</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>风险</h4>
+      <ul>
+        <li>单位转换可能影响布局</li>
+        <li>背景色更新可能影响其他样式</li>
+        <li>安全区处理需要全面测试</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>验证标准</h3>
+  <ul>
+    <li>所有页面使用rpx单位</li>
+    <li>导航栏配置统一</li>
+    <li>背景色一致</li>
+    <li>安全区处理统一</li>
+    <li>不同设备显示正常</li>
+  </ul>
+</div>

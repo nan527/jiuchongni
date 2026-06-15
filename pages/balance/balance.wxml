@@ -33,7 +33,7 @@
     >
       <text class="recharge-item__amount">{{item.amount}}元</text>
       <text class="recharge-item__gift" wx:if="{{item.gift > 0}}">送{{item.gift}}元</text>
-      <text class="recharge-item__gift" wx:else>&nbsp;</text>
+      <text class="recharge-item__gift" wx:else> </text>
     </view>
   </view>
 

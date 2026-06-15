@@ -16,20 +16,29 @@
   <!-- 查看模式 -->
   <view wx:if="{{!editing}}">
 
-    <!-- 宠物头图 -->
-    <view class="pet-hero">
-      <image
-        class="pet-hero__img"
-        src="{{pet.photo || '/static/pet/logo.png'}}"
-        mode="aspectFill"
-      />
-      <view class="pet-hero__overlay">
-        <text class="pet-hero__name">{{pet.name}}</text>
-        <view class="pet-hero__meta">
-          <text class="pet-hero__species">{{pet.species}}</text>
-          <text wx:if="{{pet.age}}" class="pet-hero__age">{{pet.age}}岁</text>
+    <!-- 宠物相册 -->
+    <view class="pet-gallery">
+      <scroll-view wx:if="{{photos.length > 1}}" class="gallery-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="gallery-list">
+          <view class="gallery-item {{index === 0 ? 'gallery-item--first' : ''}}" wx:for="{{photos}}" wx:key="*this" bindtap="previewPhoto" data-url="{{item}}">
+            <image class="gallery-item__img" src="{{item}}" mode="aspectFill" />
+          </view>
         </view>
-        <view wx:if="{{statusConfig}}" class="pet-hero__status" style="background:{{statusConfig.bg}};">
+      </scroll-view>
+      <view wx:elif="{{photos.length === 1}}" class="gallery-single" bindtap="previewPhoto" data-url="{{photos[0]}}">
+        <image class="gallery-single__img" src="{{photos[0]}}" mode="aspectFill" />
+      </view>
+      <view wx:else class="gallery-single gallery-single--empty">
+        <van-icon name="photo-o" size="80rpx" color="#E8D9C8" />
+      </view>
+
+      <view class="pet-gallery__info">
+        <text class="pet-gallery__name">{{pet.name}}</text>
+        <view class="pet-gallery__meta">
+          <text class="pet-gallery__species">{{pet.species}}</text>
+          <text wx:if="{{pet.age}}" class="pet-gallery__age">{{pet.age}}岁</text>
+        </view>
+        <view wx:if="{{statusConfig}}" class="pet-gallery__status" style="background:{{statusConfig.bg}};">
           <text style="color:{{statusConfig.color}};">{{statusConfig.label}}</text>
         </view>
       </view>
@@ -48,6 +57,14 @@
           <text class="info-item__value">{{pet.age ? pet.age + '岁' : '-'}}</text>
         </view>
         <view class="info-item">
+          <text class="info-item__label">性别</text>
+          <text class="info-item__value">{{pet.gender === 'male' ? '弟弟' : pet.gender === 'female' ? '妹妹' : '-'}}</text>
+        </view>
+        <view class="info-item">
+          <text class="info-item__label">体重</text>
+          <text class="info-item__value">{{pet.weight ? pet.weight + ' kg' : '-'}}</text>
+        </view>
+        <view class="info-item">
           <text class="info-item__label">性格</text>
           <text class="info-item__value">{{pet.character || '-'}}</text>
         </view>
@@ -55,7 +72,94 @@
           <text class="info-item__label">特殊需求</text>
           <text class="info-item__value">{{pet.special_needs || '无'}}</text>
         </view>
+        <view class="info-item">
+          <text class="info-item__label">绝育状态</text>
+          <text class="info-item__value">{{pet.neutered ? '已绝育' : '未绝育'}}</text>
+        </view>
       </view>
+    </view>
+
+    <!-- 个性化寄养方案 -->
+    <view class="plan-section">
+      <view class="plan-header" bindtap="togglePlan">
+        <view class="plan-header__left">
+          <view class="plan-header__icon">
+            <van-icon name="bulb-o" size="32rpx" color="#fff" />
+          </view>
+          <text class="plan-header__title">个性化寄养方案</text>
+        </view>
+        <view class="plan-header__right">
+          <van-icon wx:if="{{aiPlanLoading}}" name="replay" size="28rpx" color="#FF9800" class="plan-header__spin" />
+          <van-icon wx:else name="{{planExpanded ? 'arrow-up' : 'arrow-down'}}" size="28rpx" color="#8C7A6B" />
+        </view>
+      </view>
+
+      <!-- 折叠内容 -->
+      <view class="plan-body" wx:if="{{planExpanded}}">
+        <view class="loading-wrap" wx:if="{{aiPlanLoading}}">
+          <van-loading type="spinner" color="#FF9800" size="40rpx" />
+          <text class="loading-wrap__text">AI 正在定制方案...</text>
+        </view>
+
+        <view class="plan-card" wx:if="{{!aiPlanLoading && aiPlan}}">
+          <text class="plan-card__summary">{{aiPlan.summary}}</text>
+
+          <view class="plan-block" wx:if="{{aiPlan.diet}}">
+            <view class="plan-block__label">
+              <van-icon name="smile-o" size="26rpx" color="#FF9800" />
+              <text>饮食建议</text>
+            </view>
+            <text class="plan-block__value">{{aiPlan.diet}}</text>
+          </view>
+
+          <view class="plan-block" wx:if="{{aiPlan.services.length > 0}}">
+            <view class="plan-block__label">
+              <van-icon name="service-o" size="26rpx" color="#FF9800" />
+              <text>推荐服务</text>
+            </view>
+            <view class="plan-tags">
+              <van-tag wx:for="{{aiPlan.services}}" wx:key="*this" round plain color="#FFF3E0" text-color="#FF9800" size="medium" custom-style="margin-right:12rpx;margin-bottom:12rpx;">{{item}}</van-tag>
+            </view>
+          </view>
+
+          <view class="plan-block" wx:if="{{aiPlan.careTips.length > 0}}">
+            <view class="plan-block__label">
+              <van-icon name="bulb-o" size="26rpx" color="#FF9800" />
+              <text>护理注意</text>
+            </view>
+            <view class="plan-tips">
+              <text wx:for="{{aiPlan.careTips}}" wx:key="*this" class="plan-tip__item">{{index + 1}}. {{item}}</text>
+            </view>
+          </view>
+        </view>
+
+        <view class="empty-health" wx:if="{{!aiPlanLoading && !aiPlan && aiPlanError}}">
+          <van-icon name="warning-o" size="60rpx" color="#F0E6D8" />
+          <text class="empty-health__text">{{aiPlanError}}</text>
+          <van-button round plain type="primary" color="#FF9800" size="small" bindtap="generateServicePlan" custom-style="margin-top:16rpx;">重新生成</van-button>
+        </view>
+
+        <!-- 推荐寄养服务 -->
+        <view class="recommend-wrap" wx:if="{{!recommendLoading && recommendServices.length > 0}}">
+          <text class="recommend-wrap__title">为你推荐</text>
+          <scroll-view class="recommend-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+            <view class="recommend-list">
+              <view class="recommend-item" wx:for="{{recommendServices}}" wx:key="_id" bindtap="onServiceTap" data-id="{{item._id}}">
+                <image class="recommend-item__img" src="{{item.coverImage || '/static/pet/logo.png'}}" mode="aspectFill" />
+                <view class="recommend-item__body">
+                  <text class="recommend-item__name">{{item.name}}</text>
+                  <text class="recommend-item__agency" wx:if="{{item.agencyName}}">{{item.agencyName}}</text>
+                  <view class="recommend-item__bottom">
+                    <text class="recommend-item__price">¥{{item.price}}</text>
+                    <text class="recommend-item__unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
+                  </view>
+                </view>
+              </view>
+            </view>
+          </scroll-view>
+        </view>
+      </view>
+
     </view>
 
     <!-- 健康记录 -->
@@ -99,50 +203,103 @@
 
   </view>
 
-  <!-- 编辑模式 -->
-  <view wx:if="{{editing}}" class="edit-mode">
-    <view class="edit-header">
-      <text class="edit-header__title">编辑宠物信息</text>
-      <van-icon name="cross" size="40rpx" color="#8C7A6B" bindtap="cancelEdit" />
-    </view>
-
-    <view class="edit-form">
-      <view class="form-field">
-        <text class="form-field__label">宠物昵称 <text class="form-field__required">*</text></text>
-        <input class="form-field__input" value="{{name}}" bindinput="onNameChange" />
-      </view>
-      <view class="form-field">
-        <text class="form-field__label">品种 <text class="form-field__required">*</text></text>
-        <input class="form-field__input" value="{{species}}" bindinput="onSpeciesChange" />
-      </view>
-      <view class="form-field">
-        <text class="form-field__label">年龄</text>
-        <input class="form-field__input" type="digit" value="{{age}}" bindinput="onAgeChange" />
-      </view>
-      <view class="form-field">
-        <text class="form-field__label">性格描述</text>
-        <input class="form-field__input" value="{{character}}" bindinput="onCharacterChange" />
-      </view>
-      <view class="form-field">
-        <text class="form-field__label">特殊需求</text>
-        <input class="form-field__input" value="{{special}}" bindinput="onSpecialChange" />
-      </view>
-      <view class="form-field">
-        <text class="form-field__label">宠物照片</text>
-        <van-uploader file-list="{{fileList}}" bind:after-read="afterRead" max-count="1" />
+  <!-- 编辑模式弹窗 -->
+  <van-popup
+    show="{{editing}}"
+    position="bottom"
+    round
+    bind:close="cancelEdit"
+    custom-style="height: 92vh;"
+    closeable
+  >
+    <view class="form-popup">
+      <view class="form-popup__header">
+        <text class="form-popup__title">编辑宠物信息</text>
       </view>
 
-      <van-button
-        type="primary"
-        block
-        round
-        loading="{{saving}}"
-        color="linear-gradient(135deg, #FF9800, #FFB74D)"
-        bindtap="saveEdit"
-        custom-style="margin-top: 32rpx;"
-      >保存修改</van-button>
+      <view class="form-popup__body">
+        <!-- 基本信息 -->
+        <view class="form-section-title">基本信息</view>
+        <view class="form-card">
+          <view class="form-field">
+            <text class="form-field__label">宠物昵称 <text class="form-field__required">*</text></text>
+            <input class="form-field__input" placeholder="请输入宠物姓名" value="{{name}}" bindinput="onNameChange" />
+          </view>
+
+          <view class="form-field">
+            <text class="form-field__label">品种 <text class="form-field__required">*</text></text>
+            <input class="form-field__input" placeholder="如：布偶猫、金毛" value="{{species}}" bindinput="onSpeciesChange" />
+          </view>
+
+          <view class="form-field">
+            <text class="form-field__label">性别</text>
+            <view class="gender-selector">
+              <view class="gender-option {{gender === 'male' ? 'gender-option--active' : ''}}" bindtap="onGenderChange" data-value="male">
+                <van-icon name="{{gender === 'male' ? 'success' : 'circle'}}" size="24rpx" color="{{gender === 'male' ? '#fff' : '#C4B8AC'}}" />
+                <text>弟弟</text>
+              </view>
+              <view class="gender-option {{gender === 'female' ? 'gender-option--active' : ''}}" bindtap="onGenderChange" data-value="female">
+                <van-icon name="{{gender === 'female' ? 'success' : 'circle'}}" size="24rpx" color="{{gender === 'female' ? '#fff' : '#C4B8AC'}}" />
+                <text>妹妹</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="form-field">
+            <text class="form-field__label">年龄</text>
+            <input class="form-field__input" placeholder="请输入年龄" type="digit" value="{{age}}" bindinput="onAgeChange" />
+          </view>
+
+          <view class="form-field">
+            <text class="form-field__label">体重 (kg)</text>
+            <input class="form-field__input" placeholder="如：4.5" type="digit" value="{{weight}}" bindinput="onWeightChange" />
+          </view>
+        </view>
+
+        <!-- 健康档案 -->
+        <view class="form-section-title">健康档案</view>
+        <view class="form-card">
+          <view class="form-field form-field--switch">
+            <text class="form-field__label">已绝育</text>
+            <van-switch checked="{{neutered}}" active-color="#FF9800" bind:change="onNeuteredChange" />
+          </view>
+
+          <view class="form-field">
+            <text class="form-field__label">性格描述</text>
+            <input class="form-field__input" placeholder="如：活泼、粘人" value="{{character}}" bindinput="onCharacterChange" />
+          </view>
+
+          <view class="form-field">
+            <text class="form-field__label">特殊需求</text>
+            <input class="form-field__input" placeholder="如：需要喂药、不能吃鸡肉" value="{{special}}" bindinput="onSpecialChange" />
+          </view>
+        </view>
+
+        <!-- 宠物照片 -->
+        <view class="form-section-title">宠物照片</view>
+        <view class="form-card">
+          <view class="upload-row">
+            <van-uploader
+              file-list="{{fileList}}"
+              bind:after-read="afterRead"
+              bind:delete="onPhotoDelete"
+              max-count="5"
+              multiple
+            />
+          </view>
+        </view>
+
+        <view class="form-body__spacer"></view>
+      </view>
+
+      <view class="form-popup__footer">
+        <view class="form-popup__save" bindtap="saveEdit">
+          <van-icon name="success" size="28rpx" color="#fff" />
+          <text>{{saving ? '保存中...' : '保存修改'}}</text>
+        </view>
+      </view>
     </view>
-  </view>
+  </van-popup>
 
 </view>
 

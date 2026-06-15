@@ -1,4 +1,40 @@
 /* pages/agency-detail/agency-detail.wxss */
+/* ===== 变量 ===== */
+/* ===== 动画 ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+.anim-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+}
+.anim-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+}
 /* ===== 自定义导航栏 ===== */
 .nav-bar {
   position: fixed;
@@ -6,7 +42,7 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: #FF9800;
+  background: linear-gradient(135deg, #FF9800 0%, #FFB74D 50%, #FF8A65 100%);
 }
 .nav-bar__inner {
   display: flex;
@@ -24,6 +60,14 @@
 .nav-bar__right {
   width: 72rpx;
 }
+.nav-bar__title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2rpx;
+}
 .detail-page {
   min-height: 100vh;
   background: #FFF8F0;
@@ -34,6 +78,8 @@
   position: relative;
   width: 100%;
   height: 400rpx;
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
 }
 .agency-hero__img {
   width: 100%;
@@ -58,11 +104,13 @@
 }
 /* ===== 信息行 ===== */
 .info-section {
-  background: #FFFAF5;
+  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
   margin: 20rpx 32rpx 0;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   padding: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.1s forwards;
 }
 .info-row {
   display: flex;
@@ -85,23 +133,112 @@
   color: #3D2C1E;
   display: block;
   margin-bottom: 20rpx;
+  position: relative;
+  padding-left: 20rpx;
+}
+.section-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 6rpx;
+  bottom: 6rpx;
+  width: 6rpx;
+  border-radius: 3rpx;
+  background: linear-gradient(180deg, #FF9800, #FFB74D, #FF8A65);
 }
 /* ===== 机构简介 ===== */
 .intro-section {
-  background: #FFFAF5;
+  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
   margin: 20rpx 32rpx 0;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   padding: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.15s forwards;
 }
 .intro-text {
   font-size: 26rpx;
   color: #8C7A6B;
   line-height: 1.7;
 }
+/* ===== 招牌服务高亮 ===== */
+.highlight-section {
+  margin: 20rpx 32rpx 0;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.18s forwards;
+}
+.highlight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  border-left: 6rpx solid #FF9800;
+  box-shadow: 0 2rpx 12rpx rgba(255, 152, 0, 0.08);
+}
+.highlight-card__icon-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: rgba(255, 152, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+.highlight-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+.highlight-card__label {
+  font-size: 24rpx;
+  color: #FF9800;
+  font-weight: 600;
+}
+.highlight-card__text {
+  font-size: 26rpx;
+  color: #3D2C1E;
+  line-height: 1.6;
+}
+/* ===== 服务范围 & 笼位详情标签卡 ===== */
+.detail-tags-section {
+  margin: 20rpx 32rpx 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.22s forwards;
+}
+.detail-tag-card {
+  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+}
+.detail-tag-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
+.detail-tag-card__title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: #3D2C1E;
+}
+.detail-tag-card__text {
+  font-size: 26rpx;
+  color: #8C7A6B;
+  line-height: 1.6;
+}
 /* ===== 环境照片 ===== */
 .env-section {
   margin: 20rpx 32rpx 0;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.2s forwards;
 }
 .env-scroll {
   white-space: nowrap;
@@ -112,10 +249,18 @@
   border-radius: 20rpx;
   margin-right: 16rpx;
   background: #F0E6D8;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+.env-img:active {
+  transform: scale(0.96);
+  box-shadow: 3rpx 3rpx 8rpx rgba(174, 144, 116, 0.12), -3rpx -3rpx 8rpx rgba(255, 255, 255, 0.95);
 }
 /* ===== 服务列表 ===== */
 .svc-section {
   margin: 20rpx 32rpx 0;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.25s forwards;
 }
 .svc-list {
   display: flex;
@@ -124,14 +269,15 @@
 }
 .svc-item {
   display: flex;
-  background: #FFFAF5;
-  border-radius: 20rpx;
+  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
+  border-radius: 24rpx;
   overflow: hidden;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
-  transition: transform 0.15s ease;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 .svc-item:active {
-  transform: scale(0.98);
+  transform: scale(0.985);
+  box-shadow: 3rpx 3rpx 8rpx rgba(174, 144, 116, 0.12), -3rpx -3rpx 8rpx rgba(255, 255, 255, 0.95);
 }
 .svc-item__img {
   width: 180rpx;
@@ -178,11 +324,58 @@
 }
 .empty-svc__text {
   font-size: 26rpx;
-  color: #8C7A6B;
+  color: #C4B8AC;
 }
 /* ===== 加载状态 ===== */
 .loading-wrap {
   display: flex;
   justify-content: center;
   padding: 80rpx 0;
+}
+/* ===== 联系方式 ===== */
+.contact-section {
+  margin: 20rpx 32rpx 0;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.3s forwards;
+}
+.contact-card {
+  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
+  border-radius: 24rpx;
+  padding: 8rpx 24rpx;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+}
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 0;
+}
+.contact-row + .contact-row {
+  border-top: 1rpx solid #F0E6D8;
+}
+.contact-row__icon-wrap {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #FFF3E0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+}
+.contact-row__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+.contact-row__label {
+  font-size: 22rpx;
+  color: #C4B8AC;
+}
+.contact-row__value {
+  font-size: 28rpx;
+  color: #3D2C1E;
+  font-weight: 500;
 }

@@ -1,11 +1,54 @@
 /* ===== 登录页样式 ===== */
+
+/* ===== 变量 ===== */
+@bg-page: #FFF8F0;
+@bg-card: #FFFAF5;
+@color-primary: #FF9800;
+@color-primary-light: #FFB74D;
+@color-accent: #FF7043;
+@color-text: #3D2C1E;
+@color-text-sub: #8C7A6B;
+@color-text-muted: #C4B8AC;
+@color-divider: #F0E6D8;
+@shadow-dark: rgba(174, 144, 116, 0.15);
+@shadow-light: rgba(255, 255, 255, 0.9);
+@shadow-raised: 6rpx 6rpx 16rpx @shadow-dark, -6rpx -6rpx 16rpx @shadow-light;
+
+/* ===== 动画 ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30rpx); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10rpx); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+/* ===== 页面 ===== */
 .container {
   min-height: 100vh;
-  background: linear-gradient(180deg, #fff8f0 0%, #ffffff 60%);
-  padding: 0 48rpx;
+  background: @bg-page;
+  padding: 0 28rpx;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
+  overflow-x: hidden;
 }
 
 /* ===== 自定义导航栏 ===== */
@@ -15,7 +58,7 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  background: linear-gradient(135deg, @color-primary 0%, @color-primary-light 50%, #FF8A65 100%);
 }
 
 .nav-bar__inner {
@@ -35,7 +78,6 @@
   align-items: center;
   justify-content: center;
   height: 72rpx;
-  cursor: pointer;
 }
 
 .nav-bar__title {
@@ -47,90 +89,104 @@
   letter-spacing: 2rpx;
 }
 
-/* Logo 区域 */
+/* ===== Logo 区域 ===== */
 .header {
-  margin-top: 140rpx;
-  margin-bottom: 60rpx;
+  margin-top: 120rpx;
+  margin-bottom: 48rpx;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
+  opacity: 0;
+  animation: fadeInUp 0.6s ease forwards;
 }
 
 .logo-wrapper {
-  width: 160rpx;
-  height: 160rpx;
-  border-radius: 40rpx;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-bottom: 28rpx;
+  margin-bottom: 32rpx;
   overflow: hidden;
-  box-shadow: 0 8rpx 24rpx rgba(255, 152, 0, 0.15);
+  background: transparent;
+  animation: float 3s ease-in-out infinite;
 }
 
 .logo-img {
-  width: 160rpx;
-  height: 160rpx;
+  width: 180rpx;
+  height: 180rpx;
 }
 
 .app-name {
-  font-size: 52rpx;
+  font-size: 56rpx;
   font-weight: 800;
-  color: #333;
-  letter-spacing: 4rpx;
+  color: @color-text;
+  letter-spacing: 6rpx;
+  margin-bottom: 16rpx;
 }
 
 .app-slogan {
   font-size: 24rpx;
-  color: #999;
-  margin-top: 12rpx;
-  letter-spacing: 2rpx;
+  color: @color-text-sub;
+  letter-spacing: 4rpx;
+  font-weight: 400;
 }
 
-/* 角色选择 */
+/* ===== 角色选择 ===== */
 .role-section {
-  margin-bottom: 48rpx;
+  margin-bottom: 40rpx;
+  opacity: 0;
+  animation: fadeInUp 0.6s ease 0.15s forwards;
 }
 
 .section-title {
   font-size: 28rpx;
-  color: #999;
+  color: @color-text-sub;
   margin-bottom: 24rpx;
   padding-left: 8rpx;
+  font-weight: 500;
 }
 
 .role-card {
   display: flex;
   align-items: center;
-  background: #fff;
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
   border-radius: 24rpx;
   padding: 32rpx 28rpx;
-  margin-bottom: 24rpx;
-  border: 2rpx solid #f0f0f0;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.03);
+  margin-bottom: 20rpx;
+  border: 2rpx solid transparent;
+  box-shadow: @shadow-raised;
+  transition: all 0.3s ease;
+}
+
+.role-card:active {
+  transform: scale(0.98);
 }
 
 .role-card--active {
-  border-color: #FF9800;
-  background: #FFFBF5;
-  box-shadow: 0 6rpx 20rpx rgba(255, 152, 0, 0.12);
+  border-color: rgba(255, 152, 0, 0.3);
+  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+  box-shadow: 0 8rpx 24rpx rgba(255, 152, 0, 0.15), 0 4rpx 12rpx rgba(255, 152, 0, 0.1);
 }
 
 .role-card__left {
-  width: 80rpx;
-  height: 80rpx;
+  width: 88rpx;
+  height: 88rpx;
   border-radius: 50%;
-  background: #f7f8fa;
+  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
   display: flex;
   align-items: center;
   justify-content: center;
   margin-right: 24rpx;
   flex-shrink: 0;
+  box-shadow: 4rpx 4rpx 12rpx rgba(174, 144, 116, 0.12), -4rpx -4rpx 12rpx rgba(255, 255, 255, 0.8);
 }
 
 .role-card--active .role-card__left {
-  background: #FFF3E0;
+  background: linear-gradient(135deg, @color-primary, @color-primary-light);
+  box-shadow: 0 6rpx 20rpx rgba(255, 152, 0, 0.3);
 }
 
 .role-card__center {
@@ -142,13 +198,13 @@
 .role-card__label {
   font-size: 32rpx;
   font-weight: 600;
-  color: #333;
+  color: @color-text;
   margin-bottom: 6rpx;
 }
 
 .role-card__desc {
   font-size: 24rpx;
-  color: #999;
+  color: @color-text-sub;
   line-height: 1.4;
 }
 
@@ -157,33 +213,61 @@
   margin-left: 16rpx;
 }
 
-/* 登录按钮 */
+/* ===== 登录按钮 ===== */
 .login-section {
-  margin-bottom: 60rpx;
+  margin-bottom: 48rpx;
+  opacity: 0;
+  animation: fadeInUp 0.6s ease 0.3s forwards;
 }
 
-/* 底部区域 */
+.wechat-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 96rpx;
+  border-radius: 48rpx;
+  background: linear-gradient(135deg, #07C160, #06AD56);
+  box-shadow: 0 8rpx 24rpx rgba(7, 193, 96, 0.3);
+  transition: all 0.2s ease;
+}
+
+.wechat-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.2);
+}
+
+.wechat-btn__text {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 4rpx;
+}
+
+/* ===== 底部区域 ===== */
 .footer {
   margin-top: auto;
   padding-bottom: 80rpx;
   position: relative;
+  opacity: 0;
+  animation: fadeInUp 0.6s ease 0.45s forwards;
 }
 
 .agreement {
   display: flex;
   align-items: center;
   justify-content: center;
+  gap: 4rpx;
 }
 
 .agreement__text {
   font-size: 24rpx;
-  color: #999;
+  color: @color-text-muted;
 }
 
 .agreement__link {
   font-size: 24rpx;
-  color: #FF9800;
-  margin-left: 4rpx;
+  color: @color-primary;
+  font-weight: 500;
 }
 
 /* 管理员入口 */
@@ -192,13 +276,19 @@
   right: 0;
   bottom: 80rpx;
   font-size: 24rpx;
-  color: #ccc;
+  color: @color-text-muted;
   padding: 8rpx 0;
+  transition: color 0.2s ease;
+}
+
+.admin-entry:active {
+  color: @color-primary;
 }
 
 /* ===== 管理员弹窗 ===== */
 .admin-popup {
   padding: 48rpx 40rpx 40rpx;
+  background: @bg-page;
 }
 
 .admin-popup__header {
@@ -211,14 +301,15 @@
 .admin-popup__title {
   font-size: 32rpx;
   font-weight: 700;
-  color: #333;
+  color: @color-text;
   margin-top: 16rpx;
 }
 
 .admin-popup__form {
-  background: #f7f8fa;
-  border-radius: 16rpx;
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  border-radius: 20rpx;
   padding: 0 28rpx;
+  box-shadow: @shadow-raised;
 }
 
 .admin-popup__row {
@@ -229,22 +320,23 @@
 
 .admin-popup__label {
   font-size: 28rpx;
-  color: #666;
+  color: @color-text-sub;
   width: 80rpx;
   flex-shrink: 0;
+  font-weight: 500;
 }
 
 .admin-popup__input {
   flex: 1;
   font-size: 28rpx;
-  color: #333;
+  color: @color-text;
   height: 88rpx;
   line-height: 88rpx;
 }
 
 .admin-popup__divider {
   height: 1rpx;
-  background: #e8e8e8;
+  background: @color-divider;
 }
 
 .admin-popup__btns {
@@ -262,14 +354,21 @@
   justify-content: center;
   font-size: 28rpx;
   font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-popup__btn:active {
+  transform: scale(0.98);
 }
 
 .admin-popup__btn--cancel {
-  background: #f5f5f5;
-  color: #666;
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  color: @color-text-sub;
+  box-shadow: @shadow-raised;
 }
 
 .admin-popup__btn--confirm {
-  background: linear-gradient(135deg, #FF9800, #F57C00);
+  background: linear-gradient(135deg, @color-primary, @color-primary-light);
   color: #fff;
+  box-shadow: 0 8rpx 24rpx rgba(255, 152, 0, 0.3);
 }

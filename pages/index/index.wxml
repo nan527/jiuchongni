@@ -8,36 +8,68 @@
         <text class="hero-greeting__title">就宠你</text>
         <text class="hero-greeting__sub">让每一只毛孩都被温柔以待</text>
       </view>
-      <van-search
-        value="{{searchKeyword}}"
-        placeholder="搜索机构或服务"
-        shape="round"
-        background="transparent"
-        bind:change="onSearchChange"
-        bind:search="onSearch"
-        bind:focus="onSearchFocus"
-        bind:clear="onSearchClear"
-        use-action-slot
-      >
-        <view slot="action" class="search-btn" bindtap="goToSearch">搜索</view>
-      </van-search>
+      <view class="hero-search">
+        <view class="hero-search__input-wrap">
+          <van-icon name="search" size="32rpx" color="#8C7A6B" />
+          <input
+            class="hero-search__input"
+            value="{{searchKeyword}}"
+            placeholder="搜索机构或服务"
+            confirm-type="search"
+            bindinput="onSearchChange"
+            bindconfirm="onSearch"
+            bindfocus="onSearchFocus"
+          />
+          <van-icon
+            wx:if="{{searchKeyword}}"
+            name="clear"
+            size="32rpx"
+            color="#8C7A6B"
+            class="hero-search__clear"
+            bindtap="onSearchClear"
+          />
+        </view>
+        <view class="hero-search__btn" bindtap="goToSearch"><text>搜索</text></view>
 
-      <!-- 搜索建议 -->
-      <view class="search-suggestions" wx:if="{{showSuggestions}}">
-        <view
-          class="suggestion-item"
-          wx:for="{{searchSuggestions}}"
-          wx:key="_id"
-          data-id="{{item._id}}"
-          data-name="{{item.name}}"
-          bindtap="onSuggestionTap"
-        >
-          <van-icon name="search" size="28rpx" color="#999" />
-          <text class="suggestion-text">{{item.name}}</text>
-          <text class="suggestion-address">{{item.address}}</text>
+        <!-- 搜索建议 -->
+        <view class="search-suggestions" wx:if="{{showSuggestions}}">
+          <view
+            class="suggestion-item"
+            wx:for="{{searchSuggestions}}"
+            wx:key="_id"
+            data-id="{{item._id}}"
+            data-name="{{item.name}}"
+            data-type="{{item.type}}"
+            bindtap="onSuggestionTap"
+          >
+            <van-icon name="{{item.type === 'service' ? 'service-o' : 'shop-o'}}" size="32rpx" color="#999" />
+            <view class="suggestion-info">
+              <text class="suggestion-text">{{item.name}}</text>
+              <text class="suggestion-subtitle">{{item.subtitle}}</text>
+            </view>
+            <van-tag round plain color="{{item.type === 'service' ? '#E3F2FD' : '#FFF3E0'}}" text-color="{{item.type === 'service' ? '#2196F3' : '#FF9800'}}" size="medium">{{item.typeLabel}}</van-tag>
+          </view>
         </view>
       </view>
     </view>
+  </view>
+
+  <!-- 轮播海报 -->
+  <view class="banner-section">
+    <swiper
+      class="banner-swiper"
+      indicator-dots="{{true}}"
+      autoplay="{{true}}"
+      interval="4000"
+      duration="500"
+      circular="{{true}}"
+      indicator-color="rgba(255,255,255,0.5)"
+      indicator-active-color="#FF9800"
+    >
+      <swiper-item wx:for="{{banners}}" wx:key="index">
+        <image class="banner-image" src="{{item}}" mode="aspectFill" lazy-load="{{index > 0}}" />
+      </swiper-item>
+    </swiper>
   </view>
 
   <!-- 功能入口 -->
@@ -47,6 +79,18 @@
         <van-icon name="shop-o" size="44rpx" color="#FF9800" />
       </view>
       <text class="func-entry__label">浏览机构</text>
+    </view>
+    <view class="func-entry__item" bindtap="toPet">
+      <view class="func-entry__icon func-entry__icon--green">
+        <van-icon name="friends-o" size="44rpx" color="#66BB6A" />
+      </view>
+      <text class="func-entry__label">宠物档案</text>
+    </view>
+    <view class="func-entry__item" bindtap="toHealth">
+      <view class="func-entry__icon func-entry__icon--red">
+        <van-icon name="like-o" size="44rpx" color="#EF5350" />
+      </view>
+      <text class="func-entry__label">健康管理</text>
     </view>
     <view class="func-entry__item" bindtap="toAI">
       <view class="func-entry__icon func-entry__icon--purple">
@@ -63,9 +107,9 @@
   </view>
 
   <!-- 推荐机构 -->
-  <view class="section-bar">
+  <view class="section-bar" style="animation-delay: 0.2s">
     <text class="section-bar__title">推荐机构</text>
-    <view class="section-bar__more" bindtap="toBrowseAgencies">
+    <view class="section-bar__more" bindtap="toBrowseAgencies" hover-class="section-bar__more--active" hover-stay-time="100">
       <text>查看更多</text>
       <van-icon name="arrow" size="24rpx" color="#8C7A6B" />
     </view>
@@ -75,17 +119,17 @@
     <van-loading type="spinner" color="#FF9800" size="48rpx" />
   </view>
 
-  <view class="card-grid" wx:if="{{agencyList.length > 0}}">
-    <view class="agency-card" wx:for="{{agencyList}}" wx:key="_id" bindtap="onAgencyTap" data-id="{{item._id}}">
-      <image class="agency-card__img" src="{{item.storefrontImage || item.envImages[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
-      <view class="agency-card__body">
-        <view class="agency-card__tag-row">
+  <view class="scroll-cards" wx:if="{{agencyList.length > 0}}">
+    <view class="scroll-cards__item" wx:for="{{agencyList}}" wx:key="_id" bindtap="onAgencyTap" data-id="{{item._id}}" style="animation-delay: {{300 + index * 80}}ms" hover-class="scroll-cards__item--active" hover-stay-time="100">
+      <image class="scroll-cards__img" src="{{item.storefrontImage || item.envImages[0] || '/static/pet/logo.png'}}" mode="aspectFill" lazy-load="true" />
+      <view class="scroll-cards__body">
+        <view class="scroll-cards__tag-row">
           <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.businessType}}</van-tag>
         </view>
-        <text class="agency-card__name">{{item.orgName}}</text>
-        <view class="agency-card__loc">
+        <text class="scroll-cards__name">{{item.orgName}}</text>
+        <view class="scroll-cards__loc">
           <van-icon name="location-o" size="22rpx" color="#8C7A6B" />
-          <text class="agency-card__loc-text">{{item.detailAddress || item.region || '暂无地址'}}</text>
+          <text class="scroll-cards__loc-text">{{item.detailAddress || item.region || '暂无地址'}}</text>
         </view>
       </view>
     </view>
@@ -97,7 +141,7 @@
   </view>
 
   <!-- 机构服务 -->
-  <view class="section-bar">
+  <view class="section-bar" style="animation-delay: 0.35s">
     <text class="section-bar__title">机构服务</text>
     <view class="section-bar__more" bindtap="toBrowseServices">
       <text>查看更多</text>
@@ -109,21 +153,21 @@
     <van-loading type="spinner" color="#FF9800" size="48rpx" />
   </view>
 
-  <view class="card-grid" wx:if="{{svcList.length > 0}}">
-    <view class="svc-card" wx:for="{{svcList}}" wx:key="_id" bindtap="onSvcTap" data-id="{{item._id}}">
-      <image class="svc-card__img" src="{{item.images[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
-      <view class="svc-card__body">
-        <view class="svc-card__tag-row">
+  <view class="scroll-cards" wx:if="{{svcList.length > 0}}">
+    <view class="scroll-cards__item" wx:for="{{svcList}}" wx:key="_id" bindtap="onSvcTap" data-id="{{item._id}}" style="animation-delay: {{400 + index * 80}}ms" hover-class="scroll-cards__item--active" hover-stay-time="100">
+      <image class="scroll-cards__img" src="{{item.images[0] || '/static/pet/logo.png'}}" mode="aspectFill" lazy-load="true" />
+      <view class="scroll-cards__body">
+        <view class="scroll-cards__tag-row">
           <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.catTitle}}</van-tag>
         </view>
-        <text class="svc-card__name">{{item.name}}</text>
-        <view class="svc-card__agency" wx:if="{{item.agencyName}}">
+        <text class="scroll-cards__name">{{item.name}}</text>
+        <view class="scroll-cards__agency" wx:if="{{item.agencyName}}">
           <van-icon name="shop-o" size="20rpx" color="#999" />
-          <text>{{item.agencyName}}</text>
+          <text style="font-size:22rpx;color:#999;margin-left:6rpx">{{item.agencyName}}</text>
         </view>
-        <view class="svc-card__price-row">
-          <text class="svc-card__price">¥{{item.price}}</text>
-          <text class="svc-card__unit">/{{item.priceUnit || '次'}}</text>
+        <view class="scroll-cards__price-row">
+          <text class="scroll-cards__price">¥{{item.price}}</text>
+          <text class="scroll-cards__unit">/{{item.priceUnit || '次'}}</text>
         </view>
       </view>
     </view>

@@ -125,7 +125,7 @@
     <view class="info-rows">
       <view class="info-row" wx:if="{{order.price}}">
         <text class="info-row__label">服务价格</text>
-        <text class="info-row__value info-row__value--price">¥{{order.price}}/{{order.unit || '次'}}</text>
+        <text class="info-row__value info-row__value--price">¥{{order.price}}{{order.unit || '/次'}}</text>
       </view>
       <view class="info-row" wx:if="{{order.checkinDate}}">
         <text class="info-row__label">入住日期</text>

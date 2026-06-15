@@ -1,113 +1,151 @@
 /* ===== 登录页样式 ===== */
+
+/* ===== 变量 ===== */
+
+/* ===== 动画 ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30rpx); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-10rpx); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+/* ===== 页面 ===== */
 .container {
   min-height: 100vh;
-  background: linear-gradient(160deg, #fff8f0 0%, #ffffff 40%, #fefefe 100%);
-  padding: 0 56rpx;
+  background: #FFF8F0;
+  padding: 0 28rpx;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
-  position: relative;
-  overflow: hidden;
+  overflow-x: hidden;
 }
 
-/* 装饰背景圆 */
-.container::before {
-  content: '';
-  position: absolute;
-  top: -200rpx;
-  right: -150rpx;
-  width: 500rpx;
-  height: 500rpx;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,152,0,0.06) 0%, transparent 70%);
-  pointer-events: none;
+/* ===== 自定义导航栏 ===== */
+.nav-bar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: linear-gradient(135deg, #FF9800 0%, #FFB74D 50%, #FF8A65 100%);
 }
 
-.container::after {
-  content: '';
-  position: absolute;
-  bottom: -100rpx;
-  left: -200rpx;
-  width: 400rpx;
-  height: 400rpx;
-  border-radius: 50%;
-  background: radial-gradient(circle, rgba(255,183,77,0.05) 0%, transparent 70%);
-  pointer-events: none;
+.nav-bar__inner {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+  padding: 0 16rpx;
 }
 
-/* Logo 区域 */
+.nav-bar__left,
+.nav-bar__right {
+  width: 72rpx;
+}
+
+.nav-bar__left {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 72rpx;
+}
+
+.nav-bar__title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2rpx;
+}
+
+/* ===== Logo 区域 ===== */
 .header {
   margin-top: 120rpx;
-  margin-bottom: 72rpx;
+  margin-bottom: 48rpx;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  position: relative;
-  z-index: 1;
+  opacity: 0;
+  animation: fadeInUp 0.6s ease forwards;
 }
 
 .logo-wrapper {
-  width: 168rpx;
-  height: 168rpx;
-  border-radius: 44rpx;
+  width: 180rpx;
+  height: 180rpx;
+  border-radius: 50%;
   display: flex;
   align-items: center;
   justify-content: center;
   margin-bottom: 32rpx;
   overflow: hidden;
-  box-shadow: 0 12rpx 40rpx rgba(255, 152, 0, 0.18);
-  background: #fff;
+  background: transparent;
+  animation: float 3s ease-in-out infinite;
 }
 
 .logo-img {
-  width: 168rpx;
-  height: 168rpx;
+  width: 180rpx;
+  height: 180rpx;
 }
 
 .app-name {
   font-size: 56rpx;
   font-weight: 800;
-  color: #222;
+  color: #3D2C1E;
   letter-spacing: 6rpx;
-  background: linear-gradient(135deg, #FF9800, #F57C00);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
+  margin-bottom: 16rpx;
 }
 
 .app-slogan {
   font-size: 24rpx;
-  color: #aaa;
-  margin-top: 14rpx;
-  letter-spacing: 3rpx;
-  font-weight: 300;
+  color: #8C7A6B;
+  letter-spacing: 4rpx;
+  font-weight: 400;
 }
 
-/* 角色选择 */
+/* ===== 角色选择 ===== */
 .role-section {
-  margin-bottom: 48rpx;
-  position: relative;
-  z-index: 1;
+  margin-bottom: 40rpx;
+  opacity: 0;
+  animation: fadeInUp 0.6s ease 0.15s forwards;
 }
 
 .section-title {
-  font-size: 26rpx;
-  color: #bbb;
-  margin-bottom: 28rpx;
+  font-size: 28rpx;
+  color: #8C7A6B;
+  margin-bottom: 24rpx;
   padding-left: 8rpx;
   font-weight: 500;
-  letter-spacing: 1rpx;
 }
 
 .role-card {
   display: flex;
   align-items: center;
-  background: #fff;
-  border-radius: 28rpx;
-  padding: 36rpx 32rpx;
+  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
+  border-radius: 24rpx;
+  padding: 32rpx 28rpx;
   margin-bottom: 20rpx;
-  border: 2rpx solid #f2f2f2;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.03);
+  border: 2rpx solid transparent;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
   transition: all 0.3s ease;
 }
 
@@ -116,28 +154,27 @@
 }
 
 .role-card--active {
-  border-color: #FF9800;
-  background: linear-gradient(135deg, #FFFBF5, #FFF8EE);
-  box-shadow: 0 8rpx 32rpx rgba(255, 152, 0, 0.14);
-  transform: translateY(-2rpx);
+  border-color: rgba(255, 152, 0, 0.3);
+  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
+  box-shadow: 0 8rpx 24rpx rgba(255, 152, 0, 0.15), 0 4rpx 12rpx rgba(255, 152, 0, 0.1);
 }
 
 .role-card__left {
   width: 88rpx;
   height: 88rpx;
-  border-radius: 24rpx;
-  background: #f7f8fa;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
   display: flex;
   align-items: center;
   justify-content: center;
-  margin-right: 28rpx;
+  margin-right: 24rpx;
   flex-shrink: 0;
-  transition: all 0.3s ease;
+  box-shadow: 4rpx 4rpx 12rpx rgba(174, 144, 116, 0.12), -4rpx -4rpx 12rpx rgba(255, 255, 255, 0.8);
 }
 
 .role-card--active .role-card__left {
-  background: linear-gradient(135deg, #FFF3E0, #FFE0B2);
-  box-shadow: 0 4rpx 12rpx rgba(255, 152, 0, 0.15);
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  box-shadow: 0 6rpx 20rpx rgba(255, 152, 0, 0.3);
 }
 
 .role-card__center {
@@ -148,23 +185,15 @@
 
 .role-card__label {
   font-size: 32rpx;
-  font-weight: 700;
-  color: #333;
-  margin-bottom: 8rpx;
-}
-
-.role-card--active .role-card__label {
-  color: #E65100;
+  font-weight: 600;
+  color: #3D2C1E;
+  margin-bottom: 6rpx;
 }
 
 .role-card__desc {
-  font-size: 23rpx;
-  color: #aaa;
-  line-height: 1.5;
-}
-
-.role-card--active .role-card__desc {
-  color: #F57C00;
+  font-size: 24rpx;
+  color: #8C7A6B;
+  line-height: 1.4;
 }
 
 .role-card__right {
@@ -172,139 +201,162 @@
   margin-left: 16rpx;
 }
 
-/* 宠主登录模式切换 */
-.login-mode-tabs {
-  display: flex;
-  flex-direction: row !important;
-  align-items: center;
-  margin-bottom: 36rpx;
-  position: relative;
-  z-index: 1;
-  background: #f5f5f5;
-  border-radius: 24rpx;
-  padding: 8rpx;
-  width: 100%;
-  box-sizing: border-box;
+/* ===== 登录按钮 ===== */
+.login-section {
+  margin-bottom: 48rpx;
+  opacity: 0;
+  animation: fadeInUp 0.6s ease 0.3s forwards;
 }
 
-.mode-tab {
-  width: 50%;
-  display: flex;
-  flex-direction: row !important;
-  align-items: center;
-  justify-content: center;
-  height: 80rpx;
-  border-radius: 20rpx;
-  font-size: 28rpx;
-  color: #999;
-  background: transparent;
-  transition: all 0.3s ease;
-}
-
-.mode-tab:active {
-  opacity: 0.8;
-}
-
-.mode-tab--active {
-  color: #333;
-  background: #fff;
-  font-weight: 600;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
-}
-
-.mode-tab__icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  margin-right: 12rpx;
-}
-
-.mode-tab__text {
-  font-size: 28rpx;
-  line-height: 80rpx;
-}
-
-/* 账号输入区 */
-.account-section {
-  margin-bottom: 28rpx;
-  position: relative;
-  z-index: 1;
-  background: #fff;
-  border-radius: 24rpx;
-  padding: 8rpx 0;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.03);
-}
-
-.register-row {
+.wechat-btn {
   display: flex;
   align-items: center;
   justify-content: center;
-  padding: 20rpx 0 12rpx;
+  height: 96rpx;
+  border-radius: 48rpx;
+  background: linear-gradient(135deg, #07C160, #06AD56);
+  box-shadow: 0 8rpx 24rpx rgba(7, 193, 96, 0.3);
+  transition: all 0.2s ease;
 }
 
-.register-tip {
-  font-size: 24rpx;
-  color: #bbb;
+.wechat-btn:active {
+  transform: scale(0.98);
+  box-shadow: 0 4rpx 12rpx rgba(7, 193, 96, 0.2);
 }
 
-.register-link {
-  font-size: 24rpx;
-  color: #FF9800;
-  margin-left: 8rpx;
-  font-weight: 600;
-}
-
-.register-form-title {
-  font-size: 28rpx;
+.wechat-btn__text {
+  font-size: 32rpx;
   font-weight: 700;
-  color: #333;
-  margin-bottom: 12rpx;
-  padding: 24rpx 32rpx 0;
+  color: #fff;
+  letter-spacing: 4rpx;
 }
 
-.register-actions {
-  display: flex;
-  margin-top: 24rpx;
-  padding: 0 32rpx 24rpx;
-}
-
-/* 底部按钮 */
-.footer-btn {
+/* ===== 底部区域 ===== */
+.footer {
   margin-top: auto;
   padding-bottom: 80rpx;
   position: relative;
-  z-index: 1;
-}
-
-.login-btn-wrap {
-  border-radius: 48rpx;
-  overflow: hidden;
-  box-shadow: 0 12rpx 40rpx rgba(255, 152, 0, 0.3);
+  opacity: 0;
+  animation: fadeInUp 0.6s ease 0.45s forwards;
 }
 
 .agreement {
-  margin-top: 36rpx;
   display: flex;
   align-items: center;
   justify-content: center;
-}
-
-.admin-entry {
-  display: block;
-  text-align: center;
-  font-size: 24rpx;
-  color: #999;
-  margin-top: 24rpx;
+  gap: 4rpx;
 }
 
 .agreement__text {
   font-size: 24rpx;
-  color: #bbb;
+  color: #C4B8AC;
 }
 
 .agreement__link {
   font-size: 24rpx;
   color: #FF9800;
-  margin-left: 4rpx;
   font-weight: 500;
+}
+
+/* 管理员入口 */
+.admin-entry {
+  position: absolute;
+  right: 0;
+  bottom: 80rpx;
+  font-size: 24rpx;
+  color: #C4B8AC;
+  padding: 8rpx 0;
+  transition: color 0.2s ease;
+}
+
+.admin-entry:active {
+  color: #FF9800;
+}
+
+/* ===== 管理员弹窗 ===== */
+.admin-popup {
+  padding: 48rpx 40rpx 40rpx;
+  background: #FFF8F0;
+}
+
+.admin-popup__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  margin-bottom: 40rpx;
+}
+
+.admin-popup__title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D2C1E;
+  margin-top: 16rpx;
+}
+
+.admin-popup__form {
+  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
+  border-radius: 20rpx;
+  padding: 0 28rpx;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+}
+
+.admin-popup__row {
+  display: flex;
+  align-items: center;
+  height: 88rpx;
+}
+
+.admin-popup__label {
+  font-size: 28rpx;
+  color: #8C7A6B;
+  width: 80rpx;
+  flex-shrink: 0;
+  font-weight: 500;
+}
+
+.admin-popup__input {
+  flex: 1;
+  font-size: 28rpx;
+  color: #3D2C1E;
+  height: 88rpx;
+  line-height: 88rpx;
+}
+
+.admin-popup__divider {
+  height: 1rpx;
+  background: #F0E6D8;
+}
+
+.admin-popup__btns {
+  display: flex;
+  margin-top: 40rpx;
+  gap: 24rpx;
+}
+
+.admin-popup__btn {
+  flex: 1;
+  height: 80rpx;
+  border-radius: 40rpx;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 28rpx;
+  font-weight: 600;
+  transition: all 0.2s ease;
+}
+
+.admin-popup__btn:active {
+  transform: scale(0.98);
+}
+
+.admin-popup__btn--cancel {
+  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
+  color: #8C7A6B;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+}
+
+.admin-popup__btn--confirm {
+  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  color: #fff;
+  box-shadow: 0 8rpx 24rpx rgba(255, 152, 0, 0.3);
 }

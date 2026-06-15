@@ -33,7 +33,7 @@
         bindtap="onRoleClick"
       >
         <view class="role-card__left">
-          <van-icon name="{{ item.icon }}" size="48rpx" color="{{ role === item.value ? '#FF9800' : '#999' }}" />
+          <van-icon name="{{ item.icon }}" size="44rpx" color="{{ role === item.value ? '#fff' : '#C4B8AC' }}" />
         </view>
         <view class="role-card__center">
           <text class="role-card__label">{{ item.label }}</text>
@@ -48,20 +48,10 @@
 
   <!-- 微信登录按钮 -->
   <view class="login-section">
-    <van-button
-      type="primary"
-      block
-      round
-      size="large"
-      loading="{{ logging }}"
-      loading-text="登录中…"
-      color="#07c160"
-      bindtap="login"
-      custom-style="font-size:34rpx;font-weight:700;letter-spacing:4rpx;height:96rpx;"
-    >
-      <van-icon name="wechat" size="44rpx" color="#fff" custom-style="margin-right:12rpx;vertical-align:middle;" />
-      微信一键登录
-    </van-button>
+    <view class="wechat-btn" bindtap="login">
+      <van-icon name="wechat" size="44rpx" color="#fff" custom-style="margin-right:12rpx;" />
+      <text class="wechat-btn__text">微信一键登录</text>
+    </view>
   </view>
 
   <!-- 底部区域 -->
@@ -91,12 +81,12 @@
       <view class="admin-popup__form">
         <view class="admin-popup__row">
           <text class="admin-popup__label">账号</text>
-          <input class="admin-popup__input" placeholder="请输入管理员账号" value="{{ adminAccount }}" bindinput="onAdminAccountChange" />
+          <input class="admin-popup__input" placeholder="请输入管理员账号" value="{{ adminAccount }}" bindinput="onAdminAccountChange" placeholder-style="color:#C4B8AC;" />
         </view>
         <view class="admin-popup__divider"></view>
         <view class="admin-popup__row">
           <text class="admin-popup__label">密码</text>
-          <input class="admin-popup__input" placeholder="请输入密码" password value="{{ adminPassword }}" bindinput="onAdminPasswordChange" />
+          <input class="admin-popup__input" placeholder="请输入密码" password value="{{ adminPassword }}" bindinput="onAdminPasswordChange" placeholder-style="color:#C4B8AC;" />
         </view>
       </view>
       <view class="admin-popup__btns">

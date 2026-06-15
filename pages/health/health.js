@@ -20,6 +20,14 @@ const TYPE_LABEL = {
   note: '备注',
 };
 
+const RISK_RECOMMENDATIONS = {
+  weight: { text: '体重变化异常，建议预约体检服务', category: 'medical', icon: 'medal-o' },
+  vaccine: { text: '疫苗即将过期，建议尽快预约接种', category: 'medical', icon: 'shield-o' },
+  deworming: { text: '驱虫周期已到，建议预约驱虫服务', category: 'medical', icon: 'good-job-o' },
+  diet: { text: '饮食可能不均衡，建议咨询营养师', category: 'extra', icon: 'smile-o' },
+  default: { text: '建议咨询专业宠物医生', category: 'medical', icon: 'shop-o' },
+};
+
 Page({
   data: {
     petList: [],
@@ -28,19 +36,41 @@ Page({
     loading: true,
     // 状态数据
     latestWeight: '',
+    prevWeight: '',
     weightTrend: '',
     lastVaccine: '',
     lastDeworming: '',
+    vaccineCountdown: null,
+    dewormingCountdown: null,
     // 提醒
     reminders: [],
     // 最近记录
     recentRecords: [],
+    allRecords: [],
+    filteredAllRecords: [],
+    showAllRecordsPopup: false,
+    allRecordsTypeFilter: 'all',
+    allRecordsTimeFilter: 'all',
+    // 时间轴
+    vaccineTimelineAll: [],
+    dewormingTimelineAll: [],
+    showFullVaccine: false,
+    showFullDeworming: false,
+    showTimelineDetail: false,
+    timelineDetail: null,
     // AI 风险预警
     riskAlerts: [],
     riskSummary: '',
     riskLoading: false,
     riskError: '',
     riskDate: '',
+    recommendations: [],
+    matchedServices: [],
+    showHistoryPopup: false,
+    historyRisks: [],
+    hasUnsavedRisk: false,
+    showHistoryDetail: false,
+    historyDetail: null,
     // 图表数据
     weightChart: [],
     vaccineTimeline: [],
@@ -48,6 +78,27 @@ Page({
     // 导航栏
     statusBarHeight: 0,
     navBarHeight: 0,
+    // Tab
+    activeTab: 'overview',
+  },
+
+  switchTab(e) {
+    const tab = e.currentTarget.dataset.tab;
+    if (tab === this.data.activeTab) return;
+    this.setData({ activeTab: tab });
+    if (tab === 'trends') {
+      setTimeout(() => this._redrawChart(), 300);
+    }
+  },
+
+  _redrawChart() {
+    const { weightChart } = this.data;
+    if (weightChart.length === 0) return;
+    const weights = weightChart.map(p => p.value);
+    const maxWeight = Math.max(...weights);
+    const minWeight = Math.min(...weights);
+    const range = maxWeight - minWeight || 1;
+    this._drawWeightCurve(weightChart, minWeight, range);
   },
 
   onLoad() {
@@ -77,7 +128,7 @@ Page({
     try {
       const res = await withTimeout(
         db.collection('pets').where({ ownerId: userId }).orderBy('createTime', 'desc').get(),
-        8000
+        15000
       );
       const petList = (res.data || []).filter(p => p.ownerId === userId);
       let selectedPetId = this.data.selectedPetId;
@@ -106,7 +157,6 @@ Page({
 
   async loadPetHealth(petId) {
     const pet = this.data.petList.find(p => p._id === petId);
-    // 所有权校验：只能查看自己宠物的健康记录
     if (!pet || pet.ownerId !== this._userId) {
       this.setData({ selectedPet: null, recentRecords: [], healthLoading: false });
       return;
@@ -120,17 +170,23 @@ Page({
           .orderBy('record_date', 'desc')
           .limit(50)
           .get(),
-        8000
+        15000
       );
 
       const records = res.data || [];
 
       // 提取体重数据
       const weightRecords = records.filter(r => r.type === 'weight');
-      const latestWeight = weightRecords.length > 0 ? weightRecords[0].value : '';
+      // 本次体重优先取宠物档案，上次体重取 health_records 最新记录
+      const petWeight = pet.weight ? String(pet.weight) : '';
+      const recordLatestWeight = weightRecords.length > 0 ? weightRecords[0].value : '';
+      const latestWeight = petWeight || recordLatestWeight || '';
+      const prevWeight = (petWeight && recordLatestWeight && petWeight !== recordLatestWeight)
+        ? recordLatestWeight
+        : (weightRecords.length > 1 ? weightRecords[1].value : '');
       let weightTrend = '';
-      if (weightRecords.length >= 2) {
-        const diff = parseFloat(weightRecords[0].value) - parseFloat(weightRecords[1].value);
+      if (latestWeight && prevWeight) {
+        const diff = parseFloat(latestWeight) - parseFloat(prevWeight);
         if (diff > 0.05) weightTrend = 'up';
         else if (diff < -0.05) weightTrend = 'down';
       }
@@ -141,11 +197,24 @@ Page({
       const lastVaccine = vaccineRecords.length > 0 ? this._formatDate(vaccineRecords[0].record_date) : '';
       const lastDeworming = dewormingRecords.length > 0 ? this._formatDate(dewormingRecords[0].record_date) : '';
 
+      // 计算倒计时
+      const vaccineCountdown = this._calcCountdown(vaccineRecords, 90);
+      const dewormingCountdown = this._calcCountdown(dewormingRecords, 30);
+
       // 生成提醒
       const reminders = this._buildReminders(vaccineRecords, dewormingRecords);
 
-      // 最近记录（取前 8 条）
-      const recentRecords = records.slice(0, 8).map(r => ({
+      // 最近记录（取前 5 条）
+      const recentRecords = records.slice(0, 5).map(r => ({
+        ...r,
+        typeLabel: TYPE_LABEL[r.type] || r.type,
+        displayValue: this._getDisplayValue(r),
+        dateStr: this._formatDate(r.record_date),
+        note: r.note || r.food_intake || '',
+      }));
+
+      // 全部记录（用于弹窗筛选）
+      const allRecords = records.map(r => ({
         ...r,
         typeLabel: TYPE_LABEL[r.type] || r.type,
         displayValue: this._getDisplayValue(r),
@@ -156,29 +225,57 @@ Page({
       // 处理体重趋势图数据
       const weightChart = this._buildWeightChart(weightRecords);
 
-      // 处理疫苗时间线
-      const vaccineTimeline = this._buildTimeline(vaccineRecords, 'vaccine');
+      // 处理疫苗时间线（倒序：较新在上）
+      const vaccineTimelineAll = this._buildTimeline(vaccineRecords, 'vaccine');
+      const vaccineTimeline = vaccineTimelineAll.slice(0, 4);
 
-      // 处理驱虫时间线
-      const dewormingTimeline = this._buildTimeline(dewormingRecords, 'deworming');
+      // 处理驱虫时间线（倒序：较新在上）
+      const dewormingTimelineAll = this._buildTimeline(dewormingRecords, 'deworming');
+      const dewormingTimeline = dewormingTimelineAll.slice(0, 4);
 
       // 加载已保存的风险预警记录
       this.loadSavedRisk(petId);
 
       this.setData({
         latestWeight,
+        prevWeight,
         weightTrend,
         lastVaccine,
         lastDeworming,
+        vaccineCountdown,
+        dewormingCountdown,
         reminders,
         recentRecords,
+        allRecords,
         weightChart,
         vaccineTimeline,
+        vaccineTimelineAll,
         dewormingTimeline,
+        dewormingTimelineAll,
+        showFullVaccine: false,
+        showFullDeworming: false,
+        allRecordsTypeFilter: 'all',
+        allRecordsTimeFilter: 'all',
+        filteredAllRecords: allRecords,
       });
     } catch (e) {
       console.warn('[Health] loadPetHealth', e);
     }
+  },
+
+  _calcCountdown(records, intervalDays) {
+    if (records.length === 0) return null;
+    const latest = records[0];
+    let nextDate;
+    // 优先使用录入时填写的下次日期
+    if (latest.next_date) {
+      nextDate = new Date(latest.next_date);
+    } else {
+      const lastDate = new Date(latest.record_date);
+      nextDate = new Date(lastDate.getTime() + intervalDays * 24 * 60 * 60 * 1000);
+    }
+    const daysLeft = Math.ceil((nextDate - new Date()) / (1000 * 60 * 60 * 24));
+    return { daysLeft, nextDate: this._formatDateFull(nextDate) };
   },
 
   _buildReminders(vaccineRecords, dewormingRecords) {
@@ -219,18 +316,27 @@ Page({
   // 加载已保存的风险预警记录
   async loadSavedRisk(petId) {
     try {
-      const res = await db.collection('health_risk_records')
-        .where({ petId })
-        .orderBy('analyzeTime', 'desc')
-        .limit(1)
-        .get();
+      const res = await withTimeout(
+        db.collection('health_risk_records')
+          .where({ petId })
+          .orderBy('analyzeTime', 'desc')
+          .limit(1)
+          .get(),
+        15000
+      );
       if (res.data && res.data.length > 0) {
         const saved = res.data[0];
+        const risks = saved.risks || [];
+        const recommendations = saved.recommendations || this._buildRecommendations(risks);
+        const matchedServices = await this._loadMatchedServices(risks);
         this.setData({
-          riskAlerts: saved.risks || [],
+          riskAlerts: risks,
           riskSummary: saved.summary || '',
           riskDate: saved.analyzeTime || '',
           riskError: '',
+          recommendations,
+          matchedServices,
+          hasUnsavedRisk: false,
         });
       }
     } catch (e) {
@@ -245,33 +351,59 @@ Page({
 
     this.setData({ riskLoading: true, riskError: '' });
 
+    let records = [];
     try {
-      // 获取健康记录
       const res = await withTimeout(
         db.collection('health_records')
           .where({ pet_id: pet._id })
           .orderBy('record_date', 'desc')
           .limit(30)
           .get(),
-        8000
+        15000
       );
-      const records = res.data || [];
+      records = res.data || [];
+    } catch (e) {
+      console.error('[Health] 查询健康记录失败:', e);
+      this.setData({ riskLoading: false, riskError: '加载健康记录失败，请检查网络后重试' });
+      return;
+    }
 
-      // 调用 AI 分析
-      const aiRes = await wx.cloud.callFunction({
-        name: 'ai_handler',
-        data: {
-          action: 'health_risk_analysis',
-          pet_info: { name: pet.name, species: pet.species, age: pet.age, breed: pet.breed, weight: pet.weight },
-          health_records: records.map(r => ({
-            type: r.type,
-            value: r.value || r.vaccine_name || r.medicine_name || r.result || '',
-            createTime: r.record_date || r.createTime || '',
-          })),
-        },
-      });
+    let aiRes;
+    try {
+      aiRes = await withTimeout(
+        wx.cloud.callFunction({
+          name: 'ai_handler',
+          data: {
+            action: 'health_risk_analysis',
+            pet_info: { name: pet.name, species: pet.species, age: pet.age, breed: pet.breed, weight: pet.weight },
+            health_records: records.map(r => ({
+              type: r.type,
+              value: r.value || r.vaccine_name || r.medicine_name || r.result || '',
+              createTime: r.record_date || r.createTime || '',
+            })),
+          },
+        }),
+        60000
+      );
+    } catch (e) {
+      console.error('[Health] AI 云函数调用失败:', e);
+      const msg = e.message === 'timeout' ? '分析超时，请稍后重试' : 'AI 分析服务暂时不可用，请稍后重试';
+      this.setData({ riskLoading: false, riskError: msg });
+      return;
+    }
 
-      const { risks = [], summary = '' } = aiRes.result || {};
+    // 检查云函数返回的错误
+    if (aiRes.result && aiRes.result.success === false && !aiRes.result.risks) {
+      console.error('[Health] 云函数返回错误:', aiRes.result.msg);
+      this.setData({ riskLoading: false, riskError: aiRes.result.msg || 'AI 分析失败，请稍后重试' });
+      return;
+    }
+
+    const { risks = [], summary = '' } = aiRes.result || {};
+
+    try {
+      const recommendations = this._buildRecommendations(risks);
+      const matchedServices = await this._loadMatchedServices(risks);
 
       this.setData({
         riskAlerts: risks,
@@ -279,37 +411,189 @@ Page({
         riskLoading: false,
         riskDate: new Date().toISOString().slice(0, 16).replace('T', ' '),
         riskError: '',
+        recommendations,
+        matchedServices,
+        hasUnsavedRisk: true,
       });
-
-      // 保存到数据库
-      this.saveRiskToDB(pet._id, risks, summary);
     } catch (e) {
-      console.warn('[Health] runRiskAnalysis', e);
-      this.setData({ riskLoading: false, riskError: '分析失败，请重试' });
+      console.error('[Health] 处理分析结果失败:', e);
+      this.setData({ riskLoading: false, riskError: '分析结果处理失败，请重试' });
+      return;
     }
+  },
+
+  _buildRecommendations(risks) {
+    if (!risks || risks.length === 0) return [];
+    const recs = [];
+    const seen = new Set();
+    for (const risk of risks) {
+      const type = this._detectRiskType(risk.title);
+      if (seen.has(type)) continue;
+      seen.add(type);
+      const cfg = RISK_RECOMMENDATIONS[type] || RISK_RECOMMENDATIONS.default;
+      recs.push({ type, ...cfg });
+    }
+    return recs;
+  },
+
+  _detectRiskType(title) {
+    if (!title) return 'default';
+    const t = title.toLowerCase();
+    if (t.includes('体重')) return 'weight';
+    if (t.includes('疫苗') || t.includes('免疫')) return 'vaccine';
+    if (t.includes('驱虫')) return 'deworming';
+    if (t.includes('饮食') || t.includes('营养')) return 'diet';
+    return 'default';
+  },
+
+  async _loadMatchedServices(risks) {
+    if (!risks || risks.length === 0) return [];
+    const type = this._detectRiskType(risks[0].title);
+
+    // 每种风险类型的匹配规则：关键词(加分)、排除词(直接过滤)、推荐原因
+    const RULES = {
+      weight: {
+        keywords: { '体检': 10, '检查': 8, '诊疗': 7, '全科': 6, '门诊': 6, '健康': 5, '体重': 8, '医疗': 4, '内科': 5 },
+        exclude: ['绝育', '美容', '洁牙', '洗牙', '寄养', '上门', '洗澡', '造型', '修剪', '染色'],
+        reason: '体重变化需排查原因，建议做全面体检',
+      },
+      vaccine: {
+        keywords: { '疫苗': 10, '接种': 8, '免疫': 8, '狂犬': 7, '猫三联': 7, '驱虫': 2 },
+        exclude: ['绝育', '美容', '洁牙', '寄养', '上门', '洗澡', '造型'],
+        reason: '疫苗即将到期，建议预约接种服务',
+      },
+      deworming: {
+        keywords: { '驱虫': 10, '体内': 6, '体外': 6, '寄生虫': 8 },
+        exclude: ['绝育', '美容', '洁牙', '寄养', '上门', '洗澡', '造型'],
+        reason: '驱虫周期已到，建议预约驱虫服务',
+      },
+      diet: {
+        keywords: { '营养': 8, '饮食': 8, '食品': 6, '配餐': 6, '减肥': 8, '体重管理': 8, '咨询': 4 },
+        exclude: ['绝育', '美容', '洁牙', '寄养', '上门', '洗澡'],
+        reason: '饮食可能不均衡，建议咨询营养师',
+      },
+      default: {
+        keywords: { '体检': 8, '检查': 6, '健康': 5, '诊疗': 4 },
+        exclude: ['绝育', '美容', '洁牙', '寄养'],
+        reason: '建议做一次全面健康检查',
+      },
+    };
+    const rule = RULES[type] || RULES.default;
+
+    try {
+      // 查询所有服务（不过滤 category，因为相关服务可能在不同分类下）
+      const { data: services } = await withTimeout(
+        db.collection('agency_services').limit(50).get(),
+        15000
+      );
+
+      // 评分 + 过滤
+      const scored = [];
+      for (const s of services) {
+        const name = (s.name || '').toLowerCase();
+        const desc = (s.desc || '').toLowerCase();
+        const text = name + desc;
+
+        // 排除不相关的服务
+        if (rule.exclude.some(k => text.includes(k))) continue;
+
+        // 计算相关性得分
+        let score = 0;
+        let matchedKeyword = '';
+        for (const [kw, pts] of Object.entries(rule.keywords)) {
+          if (text.includes(kw)) {
+            score += pts;
+            if (!matchedKeyword || pts > rule.keywords[matchedKeyword]) {
+              matchedKeyword = kw;
+            }
+          }
+        }
+
+        // 没匹配到任何关键词的服务跳过
+        if (score === 0) continue;
+
+        scored.push({ ...s, _score: score, _matchedKeyword: matchedKeyword });
+      }
+
+      // 按得分降序，取前 3
+      scored.sort((a, b) => b._score - a._score);
+      const top3 = scored.slice(0, 3);
+
+      if (top3.length === 0) return [];
+
+      // 并行查询机构名称
+      const agencyIds = [...new Set(top3.map(s => s.agencyProfileId).filter(Boolean))];
+      const agencyMap = {};
+      await Promise.all(agencyIds.map(async (id) => {
+        try {
+          const res = await withTimeout(
+            db.collection('agency_profiles').doc(id).get(),
+            15000
+          );
+          agencyMap[id] = res.data.orgName || res.data.name || '';
+        } catch (e) { /* ignore */ }
+      }));
+
+      return top3.map(s => ({
+        _id: s._id,
+        name: s.name,
+        price: s.price,
+        unit: s.unit || '',
+        agencyName: agencyMap[s.agencyProfileId] || '',
+        desc: s.desc || '',
+        reason: rule.reason,
+      }));
+    } catch (e) {
+      console.warn('[Health] _loadMatchedServices', e);
+      return [];
+    }
+  },
+
+  // 用户主动保存当前预警
+  async saveCurrentRisk() {
+    const pet = this.data.selectedPet;
+    const risks = this.data.riskAlerts;
+    const summary = this.data.riskSummary;
+    if (!pet || risks.length === 0) return;
+    await this.saveRiskToDB(pet._id, risks, summary);
   },
 
   // 保存风险记录到数据库
   async saveRiskToDB(petId, risks, summary) {
+    if (!petId) {
+      console.warn('[Health] saveRiskToDB: petId 为空');
+      wx.showToast({ title: '宠物信息缺失，保存失败', icon: 'none' });
+      return;
+    }
+    if (!this._userId) {
+      console.warn('[Health] saveRiskToDB: _userId 为空');
+      wx.showToast({ title: '用户信息缺失，保存失败', icon: 'none' });
+      return;
+    }
     try {
-      // 删除该宠物旧的风险记录
-      const old = await db.collection('health_risk_records').where({ petId }).get();
-      for (const doc of old.data || []) {
-        await db.collection('health_risk_records').doc(doc._id).remove();
-      }
-      // 插入新记录
-      await db.collection('health_risk_records').add({
-        data: {
-          petId,
-          ownerId: this._userId,
-          risks,
-          summary,
-          analyzeTime: new Date().toISOString(),
-          createTime: db.serverDate(),
-        },
-      });
+      const recommendations = this._buildRecommendations(risks);
+      const matchedServices = await this._loadMatchedServices(risks);
+      const doc = {
+        petId,
+        ownerId: this._userId,
+        risks: risks || [],
+        summary: summary || '',
+        recommendations,
+        matchedServices,
+        analyzeTime: new Date().toISOString(),
+        createTime: db.serverDate(),
+      };
+      console.log('[Health] saveRiskToDB 准备保存:', doc);
+      const res = await withTimeout(
+        db.collection('health_risk_records').add({ data: doc }),
+        15000
+      );
+      console.log('[Health] saveRiskToDB 保存成功:', res._id);
+      this.setData({ hasUnsavedRisk: false });
+      wx.showToast({ title: '预警记录已保存', icon: 'success' });
     } catch (e) {
-      console.warn('[Health] saveRiskToDB', e);
+      console.error('[Health] saveRiskToDB 保存失败:', e);
+      wx.showToast({ title: '保存失败：' + (e.message || '未知错误'), icon: 'none' });
     }
   },
 
@@ -374,8 +658,8 @@ Page({
 
         ctx.clearRect(0, 0, width, height);
 
-        const padLeft = 8;
-        const padRight = 8;
+        const padLeft = 28;
+        const padRight = 28;
         const padTop = 36;
         const padBottom = 48;
         const chartW = width - padLeft - padRight;
@@ -475,18 +759,22 @@ Page({
   _buildTimeline(records, type) {
     if (records.length === 0) return [];
 
-    return records.slice(0, 5).map((r, i) => {
+    return records.map((r) => {
       const date = new Date(r.record_date);
       const name = type === 'vaccine'
         ? (r.vaccine_name || r.value || '疫苗接种')
         : (r.medicine_name || r.value || '驱虫');
       return {
+        _id: r._id,
         name,
-        date: this._formatDate(r.record_date),
+        date: this._formatDateFull(r.record_date),
         year: date.getFullYear(),
-        isFirst: i === 0,
-        isLast: i === Math.min(records.length, 5) - 1,
-        status: i === 0 ? '已完成' : '已完成',
+        status: '已完成',
+        note: r.note || '',
+        institution: r.institution || '',
+        nextDate: r.next_date ? this._formatDateFull(r.next_date) : '',
+        images: r.images || [],
+        value: r.value || '',
       };
     });
   },
@@ -500,17 +788,203 @@ Page({
     return `${m}-${day}`;
   },
 
+  _formatDateFull(t) {
+    if (!t) return '';
+    const d = typeof t === 'string' ? new Date(t) : (t instanceof Date ? t : new Date(t));
+    if (isNaN(d.getTime())) return '';
+    const year = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${m}-${day}`;
+  },
+
   goToAddRecord(e) {
     const type = e.currentTarget.dataset.type || '';
     wx.navigateTo({ url: `/pages/health-add/health-add?petId=${this.data.selectedPetId}&type=${type}` });
   },
 
+  // 全部记录弹窗
   goToAllRecords() {
-    wx.navigateTo({ url: `/pages/health-stats/health_stats?petId=${this.data.selectedPetId}` });
+    this.setData({ showAllRecordsPopup: true });
+  },
+
+  closeAllRecordsPopup() {
+    this.setData({ showAllRecordsPopup: false });
+  },
+
+  onAllRecordsTypeFilter(e) {
+    const typeFilter = e.currentTarget.dataset.type;
+    this.setData({ allRecordsTypeFilter: typeFilter }, () => this.applyAllRecordsFilters());
+  },
+
+  onAllRecordsTimeFilter(e) {
+    const timeFilter = e.currentTarget.dataset.time;
+    this.setData({ allRecordsTimeFilter: timeFilter }, () => this.applyAllRecordsFilters());
+  },
+
+  applyAllRecordsFilters() {
+    const { allRecords, allRecordsTypeFilter, allRecordsTimeFilter } = this.data;
+    let list = [...allRecords];
+
+    if (allRecordsTypeFilter !== 'all') {
+      list = list.filter(r => r.type === allRecordsTypeFilter);
+    }
+
+    if (allRecordsTimeFilter !== 'all') {
+      const now = new Date();
+      if (allRecordsTimeFilter === 'week') {
+        const weekStart = new Date(now.getTime() - (now.getDay() || 7) * 86400000);
+        weekStart.setHours(0, 0, 0, 0);
+        list = list.filter(r => new Date(r.record_date).getTime() >= weekStart.getTime());
+      } else if (allRecordsTimeFilter === 'month') {
+        const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+        list = list.filter(r => new Date(r.record_date).getTime() >= monthStart.getTime());
+      }
+    }
+
+    this.setData({ filteredAllRecords: list });
+  },
+
+  // 时间轴展开/收起
+  toggleVaccineTimeline() {
+    const { showFullVaccine, vaccineTimelineAll } = this.data;
+    this.setData({
+      showFullVaccine: !showFullVaccine,
+      vaccineTimeline: !showFullVaccine ? vaccineTimelineAll : vaccineTimelineAll.slice(0, 4),
+    });
+  },
+
+  toggleDewormingTimeline() {
+    const { showFullDeworming, dewormingTimelineAll } = this.data;
+    this.setData({
+      showFullDeworming: !showFullDeworming,
+      dewormingTimeline: !showFullDeworming ? dewormingTimelineAll : dewormingTimelineAll.slice(0, 4),
+    });
+  },
+
+  onTimelineTap(e) {
+    const { index, type } = e.currentTarget.dataset;
+    const list = type === 'vaccine' ? this.data.vaccineTimeline : this.data.dewormingTimeline;
+    const item = list[index];
+    if (!item) return;
+    this.setData({ timelineDetail: item, showTimelineDetail: true });
+  },
+
+  closeTimelineDetail() {
+    this.setData({ showTimelineDetail: false });
+  },
+
+  previewImage(e) {
+    const { urls, current } = e.currentTarget.dataset;
+    wx.previewImage({ urls, current });
   },
 
   toPetArchive() {
     wx.navigateTo({ url: '/packagePet/pages/pet/pet' });
+  },
+
+  goToServices(e) {
+    const category = e.currentTarget.dataset.category || '';
+    wx.navigateTo({ url: `/pages/browse-agencies/browse-agencies?category=${category}` });
+  },
+
+  goToServiceDetail(e) {
+    const serviceId = e.currentTarget.dataset.id;
+    if (serviceId) {
+      wx.navigateTo({ url: `/pages/service-detail/service-detail?serviceId=${serviceId}` });
+    }
+  },
+
+  async openRiskHistory() {
+    this.setData({ showHistoryPopup: true });
+    await this.loadRiskHistory();
+  },
+
+  closeRiskHistory() {
+    this.setData({ showHistoryPopup: false });
+  },
+
+  onHistoryTap(e) {
+    const index = e.currentTarget.dataset.index;
+    const item = this.data.historyRisks[index];
+    if (!item) return;
+    this.setData({
+      historyDetail: item,
+      showHistoryDetail: true,
+    });
+  },
+
+  closeHistoryDetail() {
+    this.setData({ showHistoryDetail: false, historyDetail: null });
+  },
+
+  async onDeleteHistory(e) {
+    const index = e.currentTarget.dataset.index;
+    const item = this.data.historyRisks[index];
+    if (!item) return;
+
+    const res = await wx.showModal({
+      title: '确认删除',
+      content: '删除后无法恢复，是否继续？',
+      confirmColor: '#E53935',
+    });
+    if (!res.confirm) return;
+
+    try {
+      await withTimeout(
+        db.collection('health_risk_records').doc(item._id).remove(),
+        15000
+      );
+      const historyRisks = this.data.historyRisks.filter((_, i) => i !== index);
+      this.setData({ historyRisks });
+      wx.showToast({ title: '已删除', icon: 'success' });
+    } catch (err) {
+      console.error('[Health] 删除预警记录失败:', err);
+      wx.showToast({ title: '删除失败', icon: 'none' });
+    }
+  },
+
+  async loadRiskHistory() {
+    const pet = this.data.selectedPet;
+    if (!pet) {
+      console.warn('[Health] loadRiskHistory: 未选中宠物');
+      return;
+    }
+    console.log('[Health] loadRiskHistory 查询 petId:', pet._id);
+    try {
+      const { data: list } = await withTimeout(
+        db.collection('health_risk_records')
+          .where({ petId: pet._id })
+          .orderBy('analyzeTime', 'desc')
+          .limit(20)
+          .get(),
+        15000
+      );
+      console.log('[Health] loadRiskHistory 查询结果条数:', list.length);
+      const levelOrder = { high: 5, warning: 4, medium: 3, info: 2, low: 1 };
+      const historyRisks = list.map(item => {
+        const risks = item.risks || [];
+        let maxLevel = '';
+        let maxOrder = 0;
+        risks.forEach(r => {
+          const order = levelOrder[r.level] || 0;
+          if (order > maxOrder) {
+            maxOrder = order;
+            maxLevel = r.level;
+          }
+        });
+        return {
+          ...item,
+          dateStr: item.analyzeTime ? item.analyzeTime.slice(0, 16).replace('T', ' ') : '',
+          riskCount: risks.length,
+          maxLevel,
+        };
+      });
+      this.setData({ historyRisks });
+    } catch (e) {
+      console.error('[Health] loadRiskHistory 查询失败:', e);
+      wx.showToast({ title: '加载历史失败', icon: 'none' });
+    }
   },
 
   onGoBack() {

@@ -238,6 +238,13 @@ Page({
 
       await db.collection('health_records').add({ data: recordData });
 
+      // 体重记录同步更新宠物档案
+      if (activeType === 'weight' && this.data.weight) {
+        await db.collection('pets').doc(petId).update({
+          data: { weight: parseFloat(this.data.weight) },
+        });
+      }
+
       wx.showToast({ title: '记录成功', icon: 'success' });
       setTimeout(() => wx.navigateBack(), 800);
     } catch (e) {

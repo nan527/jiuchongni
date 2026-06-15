@@ -1,6 +1,7 @@
 // pages/pet-detail/pet-detail.js
 const authService = require('../../services/authService');
 const { getStatusBarHeight } = require('../../utils/helpers');
+const { resolveTempUrls } = require('../../utils/fileHelper');
 
 const STATUS_CONFIG = {
   agency_foster:   { label: '寄养中',   color: '#FF9800', bg: '#FFF3E0' },
@@ -38,6 +39,16 @@ Page({
     saving: false,
     statusBarHeight: 0,
     navBarHeight: 0,
+    // AI 个性化寄养方案
+    aiPlan: null,
+    aiPlanLoading: false,
+    aiPlanError: '',
+    planExpanded: false,
+    // 推荐服务
+    recommendServices: [],
+    recommendLoading: false,
+    // 相册
+    photos: [],
   },
 
   onGoBack() {
@@ -60,7 +71,8 @@ Page({
     this._userId = userInfo._id;
     if (id) {
       await this.loadPet(id);
-      this.loadHealthRecords(id);
+      await this.loadHealthRecords(id);
+      this.generateServicePlan();
     }
   },
 
@@ -76,8 +88,10 @@ Page({
         setTimeout(() => wx.navigateBack(), 800);
         return;
       }
+      const photos = pet.photos || (pet.photo ? [pet.photo] : []);
       this.setData({
         pet,
+        photos,
         statusConfig: STATUS_CONFIG[pet.petStatus] || null,
         loading: false,
       });
@@ -122,16 +136,19 @@ Page({
 
   // 编辑模式
   startEdit() {
-    const { pet } = this.data;
+    const { pet, photos } = this.data;
     this.setData({
       editing: true,
       name: pet.name || '',
       species: pet.species || '',
       age: pet.age ? String(pet.age) : '',
+      gender: pet.gender || '',
+      weight: pet.weight ? String(pet.weight) : '',
+      neutered: !!pet.neutered,
       character: pet.character || '',
       special: pet.special_needs || '',
-      photoUrl: pet.photo || '',
-      fileList: pet.photo ? [{ url: pet.photo }] : [],
+      photoUrl: photos[0] || '',
+      fileList: photos.map(url => ({ url })),
     });
   },
 
@@ -142,23 +159,61 @@ Page({
   onNameChange(e) { this.setData({ name: e.detail.value || e.detail }); },
   onSpeciesChange(e) { this.setData({ species: e.detail.value || e.detail }); },
   onAgeChange(e) { this.setData({ age: e.detail.value || e.detail }); },
+  onGenderChange(e) { this.setData({ gender: e.currentTarget.dataset.value }); },
+  onWeightChange(e) { this.setData({ weight: e.detail.value || e.detail }); },
+  onNeuteredChange(e) { this.setData({ neutered: e.detail }); },
   onCharacterChange(e) { this.setData({ character: e.detail.value || e.detail }); },
   onSpecialChange(e) { this.setData({ special: e.detail.value || e.detail }); },
 
   async afterRead(event) {
-    const { file } = event.detail;
+    const files = event.detail.file;
+    const fileArray = Array.isArray(files) ? files : [files];
+    if (fileArray.length === 0) return;
+
     wx.showLoading({ title: '上传中' });
     try {
-      const res = await wx.cloud.uploadFile({
-        cloudPath: `pets/${Date.now()}-${Math.floor(Math.random() * 1000)}.jpg`,
-        filePath: file.url,
+      const uploadPromises = fileArray.map((file, idx) =>
+        wx.cloud.uploadFile({
+          cloudPath: `pets/${Date.now()}-${idx}-${Math.floor(Math.random() * 1000)}.jpg`,
+          filePath: file.url,
+        })
+      );
+      const results = await Promise.all(uploadPromises);
+      const newFileIDs = results.map(r => r.fileID);
+      const allPhotos = [...this.data.photos, ...newFileIDs].slice(0, 5);
+      this.setData({
+        photos: allPhotos,
+        photoUrl: allPhotos[0],
+        fileList: allPhotos.map(url => ({ url })),
       });
-      this.setData({ photoUrl: res.fileID, fileList: [{ url: file.url }] });
       wx.hideLoading();
     } catch (err) {
       wx.hideLoading();
       wx.showToast({ title: '上传失败', icon: 'none' });
     }
+  },
+
+  onPhotoDelete(event) {
+    const { index } = event.detail;
+    const newPhotos = this.data.photos.filter((_, i) => i !== index);
+    this.setData({
+      photos: newPhotos,
+      photoUrl: newPhotos[0] || '',
+      fileList: newPhotos.map(url => ({ url })),
+    });
+  },
+
+  previewPhoto(e) {
+    const { url } = e.currentTarget.dataset;
+    const { photos } = this.data;
+    wx.previewImage({
+      current: url,
+      urls: photos,
+    });
+  },
+
+  togglePlan() {
+    this.setData({ planExpanded: !this.data.planExpanded });
   },
 
   async saveEdit() {
@@ -181,9 +236,13 @@ Page({
           name: this.data.name,
           species: this.data.species,
           age: this.data.age ? parseInt(this.data.age) : 0,
+          gender: this.data.gender,
+          weight: this.data.weight ? parseFloat(this.data.weight) : 0,
+          neutered: this.data.neutered,
           character: this.data.character,
           special_needs: this.data.special,
-          photo: this.data.photoUrl,
+          photos: this.data.photos,
+          photo: this.data.photos[0] || '',
         },
       });
       wx.showToast({ title: '保存成功' });
@@ -218,6 +277,94 @@ Page({
         }
       },
     });
+  },
+
+  // AI 个性化寄养方案
+  async generateServicePlan() {
+    const { pet, healthRecords } = this.data;
+    if (!pet) return;
+    this.setData({ aiPlanLoading: true, aiPlanError: '' });
+    try {
+      const aiRes = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: {
+          action: 'pet_service_customize',
+          pet_info: {
+            name: pet.name,
+            species: pet.species,
+            age: pet.age,
+            character: pet.character,
+            special_needs: pet.special_needs,
+          },
+          health_records: (healthRecords || []).map(r => ({
+            type: r.type,
+            value: r.value || r.vaccine_name || r.medicine_name || r.result || '',
+            food_intake: r.food_intake || '',
+            createTime: r.record_date || r.createTime || '',
+          })),
+        },
+      });
+      const { success, plan, msg } = aiRes.result || {};
+      if (success && plan) {
+        this.setData({ aiPlan: plan, aiPlanLoading: false });
+        this.loadRecommendServices();
+      } else {
+        this.setData({ aiPlanLoading: false, aiPlanError: msg || '生成失败' });
+      }
+    } catch (e) {
+      console.warn('[PetDetail] generateServicePlan', e);
+      this.setData({ aiPlanLoading: false, aiPlanError: '生成失败，请重试' });
+    }
+  },
+
+  // 加载推荐寄养服务
+  async loadRecommendServices() {
+    this.setData({ recommendLoading: true });
+    const db = wx.cloud.database();
+    try {
+      const res = await db.collection('agency_services')
+        .where({ category: 'foster' })
+        .orderBy('createTime', 'desc')
+        .limit(3)
+        .get();
+      let services = res.data || [];
+
+      // 加载机构名称
+      const profileIds = [...new Set(services.map(s => s.agencyProfileId).filter(Boolean))];
+      const agencyMap = {};
+      if (profileIds.length > 0) {
+        try {
+          const agencyRes = await db.collection('agency_profiles')
+            .where({ _id: db.command.in(profileIds) })
+            .field({ _id: true, orgName: true })
+            .get();
+          (agencyRes.data || []).forEach(a => { agencyMap[a._id] = a.orgName; });
+        } catch (e) { /* ignore */ }
+      }
+
+      // 解析图片
+      const allFileIDs = [];
+      services.forEach(s => { if (s.images && s.images.length) allFileIDs.push(s.images[0]); });
+      const resolvedUrls = allFileIDs.length > 0 ? await resolveTempUrls(allFileIDs) : [];
+      const urlMap = {};
+      allFileIDs.forEach((id, i) => { urlMap[id] = resolvedUrls[i]; });
+
+      services = services.map(s => ({
+        ...s,
+        coverImage: s.images && s.images.length ? (urlMap[s.images[0]] || s.images[0]) : '',
+        agencyName: agencyMap[s.agencyProfileId] || '',
+      }));
+
+      this.setData({ recommendServices: services, recommendLoading: false });
+    } catch (e) {
+      console.warn('[PetDetail] loadRecommendServices', e);
+      this.setData({ recommendServices: [], recommendLoading: false });
+    }
+  },
+
+  onServiceTap(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.navigateTo({ url: `/pages/service-detail/service-detail?id=${id}` });
   },
 
   onShareAppMessage() {

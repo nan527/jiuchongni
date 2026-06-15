@@ -1,4 +1,5 @@
 <!-- pages/ai/ai.wxml -->
+<wxs src="./ai.wxs" module="tools" />
 <view class="ai-page" style="padding-top: {{ navBarHeight }}px;">
 
   <!-- 自定义导航栏 -->
@@ -51,7 +52,7 @@
     </view>
     <view class="works-grid">
       <view
-        class="works-item {{batchMode && selectedWorks.indexOf(item._id) >= 0 ? 'works-item--selected' : ''}}"
+        class="works-item {{batchMode && tools.contains(selectedWorks, item._id) ? 'works-item--selected' : ''}}"
         wx:for="{{myWorks}}"
         wx:key="_id"
         bindtap="onWorkTap"
@@ -63,7 +64,7 @@
         <image class="works-item__img" src="{{item.resultUrl}}" mode="aspectFill" />
         <view class="works-item__style">{{item.styleName}}</view>
         <view class="works-item__check" wx:if="{{batchMode}}">
-          <van-icon name="{{selectedWorks.indexOf(item._id) >= 0 ? 'success' : 'circle'}}" size="28rpx" color="#fff" />
+          <van-icon name="{{tools.contains(selectedWorks, item._id) ? 'success' : 'circle'}}" size="28rpx" color="#fff" />
         </view>
       </view>
     </view>

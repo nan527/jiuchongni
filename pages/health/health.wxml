@@ -39,219 +39,496 @@
     <!-- 健康状态卡 -->
     <view class="status-card">
       <view class="status-card__row">
+        <!-- 体重对比 -->
         <view class="status-card__item">
-          <text class="status-card__value">{{latestWeight || '-'}}</text>
-          <text class="status-card__unit">kg</text>
-          <text class="status-card__trend" wx:if="{{weightTrend === 'up'}}">↑</text>
-          <text class="status-card__trend status-card__trend--down" wx:if="{{weightTrend === 'down'}}">↓</text>
+          <text class="status-card__label">体重变化</text>
+          <view class="status-card__weight-compare">
+            <text class="status-card__weight-prev">{{prevWeight || '-'}}kg</text>
+            <text class="status-card__weight-arrow">→</text>
+            <text class="status-card__weight-curr">{{latestWeight || '-'}}kg</text>
+            <text class="status-card__trend" wx:if="{{weightTrend === 'up'}}">↑</text>
+            <text class="status-card__trend status-card__trend--down" wx:if="{{weightTrend === 'down'}}">↓</text>
+          </view>
         </view>
         <view class="status-card__divider"></view>
+        <!-- 疫苗状态 -->
         <view class="status-card__item">
-          <text class="status-card__label">上次疫苗</text>
+          <text class="status-card__label">疫苗状态</text>
           <text class="status-card__date">{{lastVaccine || '未记录'}}</text>
+          <text class="status-card__countdown {{vaccineCountdown && vaccineCountdown.daysLeft <= 0 ? 'status-card__countdown--overdue' : ''}}" wx:if="{{vaccineCountdown}}">
+            {{vaccineCountdown.daysLeft <= 0 ? '已过期' : vaccineCountdown.daysLeft + '天后到期'}}
+          </text>
+          <text class="status-card__countdown" wx:if="{{!vaccineCountdown}}">--</text>
         </view>
         <view class="status-card__divider"></view>
+        <!-- 驱虫状态 -->
         <view class="status-card__item">
-          <text class="status-card__label">上次驱虫</text>
+          <text class="status-card__label">驱虫状态</text>
           <text class="status-card__date">{{lastDeworming || '未记录'}}</text>
+          <text class="status-card__countdown {{dewormingCountdown && dewormingCountdown.daysLeft <= 0 ? 'status-card__countdown--overdue' : ''}}" wx:if="{{dewormingCountdown}}">
+            {{dewormingCountdown.daysLeft <= 0 ? '已过期' : dewormingCountdown.daysLeft + '天后到期'}}
+          </text>
+          <text class="status-card__countdown" wx:if="{{!dewormingCountdown}}">--</text>
         </view>
       </view>
     </view>
 
-    <!-- 体重趋势图 -->
-    <view class="chart-card" wx:if="{{weightChart.length > 0}}">
-      <view class="section-header">
-        <text class="section-header__title">体重趋势</text>
-        <text class="section-header__sub">近{{weightChart.length}}次记录</text>
+    <!-- Tab 栏 -->
+    <view class="tab-bar">
+      <view class="tab-item {{activeTab === 'overview' ? 'tab-item--active' : ''}}" data-tab="overview" bindtap="switchTab">
+        <van-icon name="apps-o" size="28rpx" />
+        <text>概览</text>
       </view>
-      <view class="weight-chart-wrap">
-        <canvas id="weightCanvas" type="2d" class="weight-canvas" />
+      <view class="tab-item {{activeTab === 'trends' ? 'tab-item--active' : ''}}" data-tab="trends" bindtap="switchTab">
+        <van-icon name="chart-trending-o" size="28rpx" />
+        <text>趋势</text>
       </view>
-      <view class="weight-chart__legend">
-        <view class="weight-chart__legend-item">
-          <view class="weight-chart__legend-dot weight-chart__legend-dot--max"></view>
-          <text>最高</text>
-        </view>
-        <view class="weight-chart__legend-item">
-          <view class="weight-chart__legend-dot weight-chart__legend-dot--min"></view>
-          <text>最低</text>
-        </view>
+      <view class="tab-item {{activeTab === 'alerts' ? 'tab-item--active' : ''}}" data-tab="alerts" bindtap="switchTab">
+        <van-icon name="shield-o" size="28rpx" />
+        <text>预警</text>
       </view>
     </view>
 
-    <!-- 疫苗时间线 -->
-    <view class="timeline-card" wx:if="{{vaccineTimeline.length > 0}}">
-      <view class="section-header">
-        <text class="section-header__title">疫苗记录</text>
-      </view>
-      <view class="timeline">
-        <view class="timeline__item {{item.isFirst ? 'timeline__item--first' : ''}} {{item.isLast ? 'timeline__item--last' : ''}}"
-              wx:for="{{vaccineTimeline}}" wx:key="date">
-          <view class="timeline__dot"></view>
-          <view class="timeline__line" wx:if="{{!item.isLast}}"></view>
-          <view class="timeline__content">
-            <text class="timeline__name">{{item.name}}</text>
-            <text class="timeline__date">{{item.date}}</text>
-            <view class="timeline__status timeline__status--done">{{item.status}}</view>
+    <!-- ===== 概览 Tab ===== -->
+    <view class="tab-panel" hidden="{{activeTab !== 'overview'}}">
+      <!-- 待办提醒 -->
+      <view class="reminder-card" wx:if="{{reminders.length > 0}}">
+        <view class="section-header">
+          <text class="section-header__title">待办提醒</text>
+        </view>
+        <view class="reminder-list">
+          <view class="reminder-item {{item.isOverdue ? 'reminder-item--overdue' : ''}}" wx:for="{{reminders}}" wx:key="index">
+            <van-icon name="warning-o" size="32rpx" color="{{item.isOverdue ? '#E53935' : '#FF9800'}}" />
+            <text class="reminder-item__text">{{item.title}}</text>
+            <text class="reminder-item__date">{{item.dueDateStr}}</text>
           </view>
         </view>
       </view>
-    </view>
 
-    <!-- 驱虫时间线 -->
-    <view class="timeline-card" wx:if="{{dewormingTimeline.length > 0}}">
-      <view class="section-header">
-        <text class="section-header__title">驱虫记录</text>
-      </view>
-      <view class="timeline">
-        <view class="timeline__item {{item.isFirst ? 'timeline__item--first' : ''}} {{item.isLast ? 'timeline__item--last' : ''}}"
-              wx:for="{{dewormingTimeline}}" wx:key="date">
-          <view class="timeline__dot"></view>
-          <view class="timeline__line" wx:if="{{!item.isLast}}"></view>
-          <view class="timeline__content">
-            <text class="timeline__name">{{item.name}}</text>
-            <text class="timeline__date">{{item.date}}</text>
-            <view class="timeline__status timeline__status--done">{{item.status}}</view>
-          </view>
+      <!-- 快捷操作 -->
+      <view class="quick-card">
+        <view class="section-header">
+          <text class="section-header__title">快捷记录</text>
         </view>
-      </view>
-    </view>
-
-    <!-- 待办提醒 -->
-    <view class="reminder-card" wx:if="{{reminders.length > 0}}">
-      <view class="section-header">
-        <text class="section-header__title">待办提醒</text>
-      </view>
-      <view class="reminder-list">
-        <view class="reminder-item {{item.isOverdue ? 'reminder-item--overdue' : ''}}" wx:for="{{reminders}}" wx:key="index">
-          <van-icon name="warning-o" size="32rpx" color="{{item.isOverdue ? '#E53935' : '#FF9800'}}" />
-          <text class="reminder-item__text">{{item.title}}</text>
-          <text class="reminder-item__date">{{item.dueDateStr}}</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 快捷操作 -->
-    <view class="quick-card">
-      <view class="section-header">
-        <text class="section-header__title">快捷记录</text>
-      </view>
-      <view class="quick-grid">
-        <view class="quick-item" bindtap="goToAddRecord" data-type="weight">
-          <view class="quick-item__icon quick-item__icon--orange">
-            <van-icon name="chart-trending-o" size="40rpx" color="#F57C00" />
-          </view>
-          <text class="quick-item__label">记录体重</text>
-        </view>
-        <view class="quick-item" bindtap="goToAddRecord" data-type="vaccine">
-          <view class="quick-item__icon quick-item__icon--blue">
-            <van-icon name="shield-o" size="40rpx" color="#1565C0" />
-          </view>
-          <text class="quick-item__label">接种疫苗</text>
-        </view>
-        <view class="quick-item" bindtap="goToAddRecord" data-type="deworming">
-          <view class="quick-item__icon quick-item__icon--green">
-            <van-icon name="good-job-o" size="40rpx" color="#2E7D32" />
-          </view>
-          <text class="quick-item__label">驱虫记录</text>
-        </view>
-        <view class="quick-item" bindtap="goToAddRecord" data-type="checkup">
-          <view class="quick-item__icon quick-item__icon--purple">
-            <van-icon name="notes-o" size="40rpx" color="#7B1FA2" />
-          </view>
-          <text class="quick-item__label">体检记录</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 最近记录 -->
-    <view class="record-card">
-      <view class="section-header">
-        <text class="section-header__title">最近记录</text>
-        <view class="section-header__more" bindtap="goToAllRecords">
-          <text class="section-header__more-text">全部记录</text>
-          <van-icon name="arrow" size="24rpx" color="#8C7A6B" />
-        </view>
-      </view>
-
-      <view class="empty-wrap" wx:if="{{recentRecords.length === 0}}">
-        <van-icon name="edit" size="60rpx" color="#F0E6D8" />
-        <text class="empty-wrap__text">暂无健康记录</text>
-      </view>
-
-      <view class="record-list" wx:if="{{recentRecords.length > 0}}">
-        <view class="record-item" wx:for="{{recentRecords}}" wx:key="_id">
-          <view class="record-item__left">
-            <view class="record-item__type record-item__type--{{item.type}}">
-              {{item.typeLabel}}
+        <view class="quick-grid">
+          <view class="quick-item" bindtap="goToAddRecord" data-type="weight">
+            <view class="quick-item__icon quick-item__icon--orange">
+              <van-icon name="chart-trending-o" size="40rpx" color="#F57C00" />
             </view>
-            <view class="record-item__info">
-              <text class="record-item__value">{{item.displayValue}}</text>
-              <text class="record-item__note" wx:if="{{item.note}}">{{item.note}}</text>
-            </view>
+            <text class="quick-item__label">记录体重</text>
           </view>
-          <text class="record-item__date">{{item.dateStr}}</text>
+          <view class="quick-item" bindtap="goToAddRecord" data-type="vaccine">
+            <view class="quick-item__icon quick-item__icon--blue">
+              <van-icon name="shield-o" size="40rpx" color="#1565C0" />
+            </view>
+            <text class="quick-item__label">接种疫苗</text>
+          </view>
+          <view class="quick-item" bindtap="goToAddRecord" data-type="deworming">
+            <view class="quick-item__icon quick-item__icon--green">
+              <van-icon name="good-job-o" size="40rpx" color="#2E7D32" />
+            </view>
+            <text class="quick-item__label">驱虫记录</text>
+          </view>
+          <view class="quick-item" bindtap="goToAddRecord" data-type="checkup">
+            <view class="quick-item__icon quick-item__icon--purple">
+              <van-icon name="notes-o" size="40rpx" color="#7B1FA2" />
+            </view>
+            <text class="quick-item__label">体检记录</text>
+          </view>
+        </view>
+      </view>
+
+      <!-- 最近记录 -->
+      <view class="record-card">
+        <view class="section-header">
+          <text class="section-header__title">最近记录</text>
+          <view class="section-header__more" bindtap="goToAllRecords">
+            <text class="section-header__more-text">全部记录</text>
+            <van-icon name="arrow" size="24rpx" color="#8C7A6B" />
+          </view>
+        </view>
+
+        <view class="empty-wrap" wx:if="{{recentRecords.length === 0}}">
+          <van-icon name="edit" size="60rpx" color="#F0E6D8" />
+          <text class="empty-wrap__text">暂无健康记录</text>
+        </view>
+
+        <view class="record-list" wx:if="{{recentRecords.length > 0}}">
+          <view class="record-item" wx:for="{{recentRecords}}" wx:key="_id">
+            <view class="record-item__left">
+              <view class="record-item__type record-item__type--{{item.type}}">
+                {{item.typeLabel}}
+              </view>
+              <view class="record-item__info">
+                <text class="record-item__value">{{item.displayValue}}</text>
+                <text class="record-item__note" wx:if="{{item.note}}">{{item.note}}</text>
+              </view>
+            </view>
+            <text class="record-item__date">{{item.dateStr}}</text>
+          </view>
         </view>
       </view>
     </view>
 
-    <!-- AI 健康风险预警 -->
-    <view class="risk-card">
-      <view class="risk-card__header">
-        <van-icon name="shield-o" size="36rpx" color="#FF9800" />
+    <!-- ===== 趋势 Tab ===== -->
+    <view class="tab-panel" hidden="{{activeTab !== 'trends'}}">
+      <!-- 体重趋势图 -->
+      <view class="chart-card" wx:if="{{weightChart.length > 0}}">
+        <view class="section-header">
+          <text class="section-header__title">体重趋势</text>
+          <text class="section-header__sub">近{{weightChart.length}}次记录</text>
+        </view>
+        <view class="weight-chart-wrap">
+          <canvas id="weightCanvas" type="2d" class="weight-canvas" />
+        </view>
+        <view class="weight-chart__legend">
+          <view class="weight-chart__legend-item">
+            <view class="weight-chart__legend-dot weight-chart__legend-dot--max"></view>
+            <text>最高</text>
+          </view>
+          <view class="weight-chart__legend-item">
+            <view class="weight-chart__legend-dot weight-chart__legend-dot--min"></view>
+            <text>最低</text>
+          </view>
+        </view>
+      </view>
+
+      <view class="empty-wrap" wx:if="{{weightChart.length === 0}}">
+        <van-icon name="chart-trending-o" size="60rpx" color="#F0E6D8" />
+        <text class="empty-wrap__text">暂无体重数据</text>
+        <text class="empty-wrap__hint">记录体重后查看趋势图</text>
+      </view>
+
+      <!-- 疫苗时间线 -->
+      <view class="timeline-card" wx:if="{{vaccineTimeline.length > 0}}">
+        <view class="section-header">
+          <text class="section-header__title">疫苗记录</text>
+        </view>
+        <view class="timeline">
+          <view class="timeline__item {{index === 0 ? 'timeline__item--first' : ''}} {{index === vaccineTimeline.length - 1 ? 'timeline__item--last' : ''}}"
+                wx:for="{{vaccineTimeline}}" wx:key="index" bindtap="onTimelineTap" data-index="{{index}}" data-type="vaccine">
+            <view class="timeline__dot"></view>
+            <view class="timeline__line" wx:if="{{index !== vaccineTimeline.length - 1}}"></view>
+            <view class="timeline__content">
+              <text class="timeline__name">{{item.name}}</text>
+              <text class="timeline__date">{{item.date}}</text>
+              <view class="timeline__status timeline__status--done">{{item.status}}</view>
+              <text class="timeline__note" wx:if="{{item.note}}">备注：{{item.note}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="timeline-more" wx:if="{{vaccineTimelineAll.length > 4}}" bindtap="toggleVaccineTimeline">
+          <text>{{showFullVaccine ? '收起' : '查看详情'}}</text>
+          <van-icon name="{{showFullVaccine ? 'arrow-up' : 'arrow-down'}}" size="24rpx" color="#FF9800" />
+        </view>
+      </view>
+
+      <!-- 驱虫时间线 -->
+      <view class="timeline-card" wx:if="{{dewormingTimeline.length > 0}}">
+        <view class="section-header">
+          <text class="section-header__title">驱虫记录</text>
+        </view>
+        <view class="timeline">
+          <view class="timeline__item {{index === 0 ? 'timeline__item--first' : ''}} {{index === dewormingTimeline.length - 1 ? 'timeline__item--last' : ''}}"
+                wx:for="{{dewormingTimeline}}" wx:key="index" bindtap="onTimelineTap" data-index="{{index}}" data-type="deworming">
+            <view class="timeline__dot"></view>
+            <view class="timeline__line" wx:if="{{index !== dewormingTimeline.length - 1}}"></view>
+            <view class="timeline__content">
+              <text class="timeline__name">{{item.name}}</text>
+              <text class="timeline__date">{{item.date}}</text>
+              <view class="timeline__status timeline__status--done">{{item.status}}</view>
+              <text class="timeline__note" wx:if="{{item.note}}">备注：{{item.note}}</text>
+            </view>
+          </view>
+        </view>
+        <view class="timeline-more" wx:if="{{dewormingTimelineAll.length > 4}}" bindtap="toggleDewormingTimeline">
+          <text>{{showFullDeworming ? '收起' : '查看详情'}}</text>
+          <van-icon name="{{showFullDeworming ? 'arrow-up' : 'arrow-down'}}" size="24rpx" color="#FF9800" />
+        </view>
+      </view>
+    </view>
+
+    <!-- ===== 预警 Tab ===== -->
+    <view class="tab-panel" hidden="{{activeTab !== 'alerts'}}">
+      <view class="risk-card">
+        <view class="risk-card__header">
+        <view class="risk-card__icon">
+          <van-icon name="shield-o" size="32rpx" color="#fff" />
+        </view>
         <text class="risk-card__title">AI 健康预警</text>
+        <view class="risk-card__history-btn" bindtap="openRiskHistory">
+          <van-icon name="clock-o" size="26rpx" color="#8C7A6B" />
+          <text>历史</text>
+        </view>
       </view>
 
-      <!-- 有分析结果 -->
-      <block wx:if="{{riskAlerts.length > 0 && !riskLoading}}">
-        <view class="risk-card__date" wx:if="{{riskDate}}">分析时间：{{riskDate}}</view>
-        <view class="risk-card__summary" wx:if="{{riskSummary}}">{{riskSummary}}</view>
-        <view class="risk-item risk-item--{{item.level}}" wx:for="{{riskAlerts}}" wx:key="index">
-          <view class="risk-item__dot"></view>
-          <view class="risk-item__body">
-            <text class="risk-item__title">{{item.title}}</text>
-            <text class="risk-item__desc">{{item.desc}}</text>
+        <!-- 有分析结果 -->
+        <block wx:if="{{riskAlerts.length > 0 && !riskLoading}}">
+          <view class="risk-card__date" wx:if="{{riskDate}}">分析时间：{{riskDate}}</view>
+          <view class="risk-card__summary" wx:if="{{riskSummary}}">{{riskSummary}}</view>
+          <view class="risk-item risk-item--{{item.level}}" wx:for="{{riskAlerts}}" wx:key="index">
+            <view class="risk-item__dot"></view>
+            <view class="risk-item__body">
+              <text class="risk-item__title">{{item.title}}</text>
+              <text class="risk-item__desc">{{item.desc}}</text>
+            </view>
+          </view>
+
+          <!-- 推荐服务 -->
+          <view class="risk-recommend" wx:if="{{matchedServices.length > 0}}">
+            <view class="risk-recommend__title">为您推荐</view>
+            <view class="service-card" wx:for="{{matchedServices}}" wx:key="_id" bindtap="goToServiceDetail" data-id="{{item._id}}">
+              <view class="service-card__info">
+                <text class="service-card__name">{{item.name}}</text>
+                <text class="service-card__reason" wx:if="{{item.reason}}">{{item.reason}}</text>
+                <text class="service-card__agency" wx:if="{{item.agencyName}}">{{item.agencyName}}</text>
+              </view>
+              <view class="service-card__right">
+                <text class="service-card__price">¥{{item.price}}</text>
+                <text class="service-card__unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
+              </view>
+            </view>
+          </view>
+
+          <!-- 无匹配服务时显示通用推荐 -->
+          <view class="risk-recommend" wx:if="{{recommendations.length > 0 && matchedServices.length === 0}}">
+            <view class="risk-recommend__title">推荐服务</view>
+            <view class="risk-recommend__item" wx:for="{{recommendations}}" wx:key="type" bindtap="goToServices" data-category="{{item.category}}">
+              <view class="risk-recommend__icon">
+                <van-icon name="{{item.icon}}" size="28rpx" color="#fff" />
+              </view>
+              <text class="risk-recommend__text">{{item.text}}</text>
+              <van-icon name="arrow" size="24rpx" color="#C4B8AC" />
+            </view>
+          </view>
+        </block>
+
+        <!-- 无结果 + 未分析过 -->
+        <view wx:if="{{riskAlerts.length === 0 && !riskLoading && !riskDate}}" class="risk-card__hint">
+          <van-icon name="shield-o" size="60rpx" color="#F0E6D8" />
+          <text>点击下方按钮，AI 将分析宠物健康数据，主动发现潜在风险</text>
+        </view>
+
+        <!-- 无结果 + 之前分析过 -->
+        <view wx:if="{{riskAlerts.length === 0 && !riskLoading && riskDate}}" class="risk-card__empty">
+          <van-icon name="smile-o" size="60rpx" color="#66BB6A" />
+          <text>暂未发现健康风险，继续保持</text>
+        </view>
+
+        <!-- 加载中 -->
+        <view wx:if="{{riskLoading}}" class="risk-card__loading">
+          <van-loading size="40rpx" color="#FF9800" />
+          <text class="risk-card__loading-text">AI 正在分析健康数据...</text>
+        </view>
+
+        <!-- 错误 -->
+        <view wx:if="{{riskError && !riskLoading}}" class="risk-card__error">
+          <text>{{riskError}}</text>
+        </view>
+
+        <!-- 保存/分析按钮 -->
+        <view class="risk-card__btn-wrap">
+          <view class="risk-card__btn risk-card__btn--save" wx:if="{{hasUnsavedRisk && riskAlerts.length > 0 && !riskLoading}}" bindtap="saveCurrentRisk">
+            <van-icon name="bookmark-o" size="28rpx" color="#fff" />
+            <text>保存预警</text>
+          </view>
+          <view class="risk-card__btn" bindtap="runRiskAnalysis">
+            <van-icon name="{{riskDate ? 'replay' : 'play-circle-o'}}" size="28rpx" color="#fff" />
+            <text>{{riskLoading ? '分析中...' : (riskDate ? '重新分析' : '立即分析')}}</text>
           </view>
         </view>
-      </block>
 
-      <!-- 无结果 + 未分析过 -->
-      <view wx:if="{{riskAlerts.length === 0 && !riskLoading && !riskDate}}" class="risk-card__hint">
-        <text>点击下方按钮，AI 将分析宠物健康数据，主动发现潜在风险</text>
-      </view>
-
-      <!-- 无结果 + 之前分析过 -->
-      <view wx:if="{{riskAlerts.length === 0 && !riskLoading && riskDate}}" class="risk-card__empty">
-        <text>暂未发现健康风险，继续保持</text>
-      </view>
-
-      <!-- 加载中 -->
-      <view wx:if="{{riskLoading}}" class="risk-card__loading">
-        <van-loading size="40rpx" color="#FF9800" />
-        <text class="risk-card__loading-text">AI 正在分析健康数据...</text>
-      </view>
-
-      <!-- 错误 -->
-      <view wx:if="{{riskError && !riskLoading}}" class="risk-card__error">
-        <text>{{riskError}}</text>
-      </view>
-
-      <!-- 分析按钮 -->
-      <view class="risk-card__btn-wrap">
-        <van-button
-          size="small"
-          round
-          type="primary"
-          color="#FF9800"
-          loading="{{riskLoading}}"
-          loading-text="分析中"
-          bindtap="runRiskAnalysis"
-          custom-style="height:64rpx;font-size:24rpx;"
-        >
-          {{riskDate ? '重新分析' : '立即分析'}}
-        </van-button>
+        <!-- 历史预警弹窗 -->
+        <van-popup show="{{showHistoryPopup}}" position="bottom" round bind:close="closeRiskHistory" custom-style="height: 75vh; width: 100vw; overflow-x: hidden;">
+          <view class="history-popup">
+            <view class="history-popup__header">
+              <view class="history-popup__close" bindtap="closeRiskHistory">
+                <van-icon name="cross" size="28rpx" color="#A89585" />
+              </view>
+              <text class="history-popup__title">历史预警</text>
+              <text class="history-popup__subtitle">共 {{historyRisks.length}} 条记录</text>
+            </view>
+            <scroll-view class="history-popup__list" scroll-y>
+              <view class="history-popup__content">
+                <view class="history-item history-item--{{item.maxLevel}}" wx:for="{{historyRisks}}" wx:key="_id" bindtap="onHistoryTap" data-index="{{index}}">
+                  <view class="history-item__top">
+                    <text class="history-item__date">{{item.dateStr}}</text>
+                    <view class="history-item__badge">{{item.riskCount}} 条风险</view>
+                  </view>
+                  <text class="history-item__summary" wx:if="{{item.summary}}">{{item.summary}}</text>
+                  <view class="history-item__footer">
+                    <view class="history-item__risks">
+                      <view class="history-item__risk-tag history-item__risk-tag--{{r.level}}" wx:for="{{item.risks}}" wx:for-item="r" wx:key="index">{{r.title}}</view>
+                    </view>
+                    <view class="history-item__delete" catchtap="onDeleteHistory" data-index="{{index}}">
+                      <van-icon name="delete-o" size="36rpx" color="#E53935" />
+                    </view>
+                  </view>
+                </view>
+                <view class="history-popup__empty" wx:if="{{historyRisks.length === 0}}">
+                  <view class="history-popup__empty-icon">
+                    <van-icon name="shield-o" size="80rpx" color="#F0E6D8" />
+                  </view>
+                  <text class="history-popup__empty-text">暂无历史预警记录</text>
+                  <text class="history-popup__empty-hint">分析宠物健康后可手动保存预警记录</text>
+                </view>
+                <view style="height: 40rpx;"></view>
+              </view>
+            </scroll-view>
+          </view>
+        </van-popup>
       </view>
     </view>
+
+        <!-- 历史预警详情弹窗 -->
+        <van-popup show="{{showHistoryDetail}}" position="bottom" round bind:close="closeHistoryDetail" closeable custom-style="height: 80vh; width: 100vw; overflow-x: hidden;">
+          <view class="history-detail" wx:if="{{historyDetail}}">
+            <view class="history-detail__header">
+              <view class="history-detail__meta">
+                <van-icon name="clock-o" size="24rpx" color="#A89585" />
+                <text class="history-detail__date">{{historyDetail.dateStr}}</text>
+              </view>
+              <view class="history-detail__badge">{{historyDetail.riskCount}} 条风险</view>
+            </view>
+
+            <view class="history-detail__summary" wx:if="{{historyDetail.summary}}">
+              <van-icon name="warning-o" size="28rpx" color="#FF9800" />
+              <text>{{historyDetail.summary}}</text>
+            </view>
+
+            <scroll-view class="history-detail__scroll" scroll-y style="overflow-x: hidden;">
+              <view class="history-detail__section">
+                <text class="history-detail__section-title">风险项</text>
+                <view class="history-detail__risks">
+                  <view class="history-detail__risk history-detail__risk--{{r.level}}" wx:for="{{historyDetail.risks}}" wx:for-item="r" wx:key="index">
+                    <view class="history-detail__risk-dot history-detail__risk-dot--{{r.level}}"></view>
+                    <view class="history-detail__risk-body">
+                      <text class="history-detail__risk-title">{{r.title}}</text>
+                      <text class="history-detail__risk-desc" wx:if="{{r.desc}}">{{r.desc}}</text>
+                    </view>
+                  </view>
+                </view>
+              </view>
+
+              <view class="history-detail__section" wx:if="{{historyDetail.matchedServices.length > 0}}">
+                <text class="history-detail__section-title">推荐服务</text>
+                <view class="history-detail__service-card" wx:for="{{historyDetail.matchedServices}}" wx:key="_id" bindtap="goToServiceDetail" data-id="{{item._id}}">
+                  <view class="history-detail__service-info">
+                    <text class="history-detail__service-name">{{item.name}}</text>
+                    <text class="history-detail__service-reason" wx:if="{{item.reason}}">{{item.reason}}</text>
+                    <text class="history-detail__service-agency" wx:if="{{item.agencyName}}">{{item.agencyName}}</text>
+                  </view>
+                  <view class="history-detail__service-right">
+                    <text class="history-detail__service-price">¥{{item.price}}</text>
+                    <text class="history-detail__service-unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
+                  </view>
+                </view>
+              </view>
+
+              <view class="history-detail__section" wx:if="{{historyDetail.recommendations.length > 0 && historyDetail.matchedServices.length === 0}}">
+                <text class="history-detail__section-title">推荐服务</text>
+                <view class="history-detail__recommend-item" wx:for="{{historyDetail.recommendations}}" wx:key="type" bindtap="goToServices" data-category="{{item.category}}">
+                  <view class="history-detail__recommend-icon">
+                    <van-icon name="{{item.icon}}" size="28rpx" color="#fff" />
+                  </view>
+                  <text class="history-detail__recommend-text">{{item.text}}</text>
+                  <van-icon name="arrow" size="24rpx" color="#C4B8AC" />
+                </view>
+              </view>
+
+              <view style="height: 40rpx;"></view>
+            </scroll-view>
+          </view>
+        </van-popup>
+
+    <!-- 全部记录弹窗 -->
+    <van-popup
+      show="{{showAllRecordsPopup}}"
+      position="bottom"
+      round
+      bind:close="closeAllRecordsPopup"
+      custom-style="height: 85vh;"
+      closeable
+    >
+      <view class="records-popup">
+        <view class="records-popup__header">
+          <text class="records-popup__title">全部记录</text>
+        </view>
+
+        <view class="records-popup__filters">
+          <scroll-view class="records-popup__type-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+            <view class="records-popup__type-list">
+              <view class="filter-pill {{allRecordsTypeFilter === 'all' ? 'filter-pill--active' : ''}}" data-type="all" bindtap="onAllRecordsTypeFilter">全部</view>
+              <view class="filter-pill {{allRecordsTypeFilter === 'weight' ? 'filter-pill--active' : ''}}" data-type="weight" bindtap="onAllRecordsTypeFilter">体重</view>
+              <view class="filter-pill {{allRecordsTypeFilter === 'vaccine' ? 'filter-pill--active' : ''}}" data-type="vaccine" bindtap="onAllRecordsTypeFilter">疫苗</view>
+              <view class="filter-pill {{allRecordsTypeFilter === 'deworming' ? 'filter-pill--active' : ''}}" data-type="deworming" bindtap="onAllRecordsTypeFilter">驱虫</view>
+              <view class="filter-pill {{allRecordsTypeFilter === 'checkup' ? 'filter-pill--active' : ''}}" data-type="checkup" bindtap="onAllRecordsTypeFilter">体检</view>
+            </view>
+          </scroll-view>
+
+          <view class="records-popup__time-row">
+            <view class="time-filter-pill {{allRecordsTimeFilter === 'all' ? 'time-filter-pill--active' : ''}}" data-time="all" bindtap="onAllRecordsTimeFilter">全部时间</view>
+            <view class="time-filter-pill {{allRecordsTimeFilter === 'week' ? 'time-filter-pill--active' : ''}}" data-time="week" bindtap="onAllRecordsTimeFilter">本周</view>
+            <view class="time-filter-pill {{allRecordsTimeFilter === 'month' ? 'time-filter-pill--active' : ''}}" data-time="month" bindtap="onAllRecordsTimeFilter">本月</view>
+          </view>
+        </view>
+
+        <view class="records-popup__stats" wx:if="{{filteredAllRecords.length > 0}}">
+          共 <text class="records-popup__stats-num">{{filteredAllRecords.length}}</text> 条记录
+        </view>
+
+        <scroll-view class="records-popup__list" scroll-y>
+          <view class="records-popup__item" wx:for="{{filteredAllRecords}}" wx:key="_id">
+            <view class="records-popup__item-left">
+              <view class="records-popup__item-type records-popup__item-type--{{item.type}}">{{item.typeLabel}}</view>
+              <view class="records-popup__item-info">
+                <text class="records-popup__item-name">{{item.name || item.displayValue}}</text>
+                <text class="records-popup__item-note" wx:if="{{item.note}}">{{item.note}}</text>
+              </view>
+            </view>
+            <text class="records-popup__item-date">{{item.dateStr}}</text>
+          </view>
+
+          <view class="records-popup__empty" wx:if="{{filteredAllRecords.length === 0}}">
+            <van-icon name="description" size="80rpx" color="#F0E6D8" />
+            <text>暂无符合条件的记录</text>
+          </view>
+
+          <view style="height: 40rpx;"></view>
+        </scroll-view>
+      </view>
+    </van-popup>
+
+    <!-- 时间轴详情弹窗 -->
+    <van-popup show="{{showTimelineDetail}}" position="bottom" round bind:close="closeTimelineDetail" closeable>
+      <view class="timeline-detail" wx:if="{{timelineDetail}}">
+        <view class="timeline-detail__header">
+          <text class="timeline-detail__title">{{timelineDetail.name}}</text>
+          <text class="timeline-detail__date">{{timelineDetail.date}}</text>
+        </view>
+        <view class="timeline-detail__body">
+          <view class="timeline-detail__row" wx:if="{{timelineDetail.institution}}">
+            <text class="timeline-detail__label">机构</text>
+            <text class="timeline-detail__value">{{timelineDetail.institution}}</text>
+          </view>
+          <view class="timeline-detail__row" wx:if="{{timelineDetail.value}}">
+            <text class="timeline-detail__label">内容</text>
+            <text class="timeline-detail__value">{{timelineDetail.value}}</text>
+          </view>
+          <view class="timeline-detail__row" wx:if="{{timelineDetail.nextDate}}">
+            <text class="timeline-detail__label">下次日期</text>
+            <text class="timeline-detail__value">{{timelineDetail.nextDate}}</text>
+          </view>
+          <view class="timeline-detail__row" wx:if="{{timelineDetail.note}}">
+            <text class="timeline-detail__label">备注</text>
+            <text class="timeline-detail__value">{{timelineDetail.note}}</text>
+          </view>
+          <view class="timeline-detail__images" wx:if="{{timelineDetail.images.length > 0}}">
+            <image wx:for="{{timelineDetail.images}}" wx:key="*this" src="{{item}}" mode="aspectFill" class="timeline-detail__img" bindtap="previewImage" data-urls="{{timelineDetail.images}}" data-current="{{item}}" />
+          </view>
+        </view>
+      </view>
+    </van-popup>
 
   </view>
 

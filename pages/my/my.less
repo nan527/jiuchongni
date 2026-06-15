@@ -1,8 +1,60 @@
 /* pages/my/my.less */
 
+/* ===== 变量 ===== */
+@bg-page: #FFF8F0;
+@bg-card: #FFFAF5;
+@color-primary: #FF9800;
+@color-primary-light: #FFB74D;
+@color-accent: #FF7043;
+@color-text: #3D2C1E;
+@color-text-sub: #8C7A6B;
+@color-text-muted: #C4B8AC;
+@color-divider: #F0E6D8;
+@shadow-dark: rgba(174, 144, 116, 0.15);
+@shadow-light: rgba(255, 255, 255, 0.9);
+@shadow-raised: 6rpx 6rpx 16rpx @shadow-dark, -6rpx -6rpx 16rpx @shadow-light;
+@shadow-pressed: 3rpx 3rpx 8rpx rgba(174, 144, 116, 0.12), -3rpx -3rpx 8rpx rgba(255, 255, 255, 0.95);
+@shadow-inset: inset 4rpx 4rpx 8rpx rgba(174, 144, 116, 0.1), inset -4rpx -4rpx 8rpx rgba(255, 255, 255, 0.8);
+
+/* ===== 动画 ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30rpx); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12rpx); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.anim-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.anim-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+}
+
 .my-page {
   min-height: 100vh;
-  background: #FFF8F0;
+  background: @bg-page;
   padding-top: var(--nav-height);
 }
 
@@ -13,7 +65,7 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: #FF9800;
+  background: linear-gradient(135deg, @color-primary 0%, @color-primary-light 50%, #FF8A65 100%);
 }
 
 .nav-bar__inner {
@@ -28,15 +80,54 @@
   width: 72rpx;
 }
 
+.nav-bar__title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2rpx;
+}
+
 /* ===== 渐变头部 ===== */
 .page-header {
-  background: linear-gradient(135deg, #FF9800, #FFB74D);
-  padding: 0 32rpx 48rpx;
+  background: linear-gradient(135deg, @color-primary 0%, @color-primary-light 50%, #FF8A65 100%);
+  padding: 0 32rpx 56rpx;
   border-radius: 0 0 40rpx 40rpx;
+  position: relative;
+  overflow: hidden;
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
+}
+
+.page-header::before {
+  content: '';
+  position: absolute;
+  top: 20rpx;
+  right: -30rpx;
+  width: 160rpx;
+  height: 160rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: float 5s ease-in-out infinite;
+}
+
+.page-header::after {
+  content: '';
+  position: absolute;
+  bottom: 10rpx;
+  left: -20rpx;
+  width: 100rpx;
+  height: 100rpx;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite 1.5s;
 }
 
 .page-header__inner {
   padding-top: 20rpx;
+  position: relative;
+  z-index: 1;
 }
 
 .user-info {
@@ -92,12 +183,14 @@
 /* ===== 统计卡片 ===== */
 .stats-card {
   margin: -24rpx 28rpx 0;
-  background: #FFFAF5;
-  border-radius: 24rpx;
+  background: linear-gradient(180deg, @bg-card, #FFF3E0);
+  border-radius: 28rpx;
   padding: 32rpx 0;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  box-shadow: @shadow-raised;
   position: relative;
   z-index: 1;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.1s forwards;
 }
 
 .stats-card__inner {
@@ -136,29 +229,33 @@
 /* ===== 未登录提示 ===== */
 .login-hint {
   margin: -24rpx 28rpx 0;
-  background: #FFFAF5;
-  border-radius: 24rpx;
+  background: linear-gradient(180deg, @bg-card, #FFF3E0);
+  border-radius: 28rpx;
   padding: 28rpx 32rpx;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  box-shadow: @shadow-raised;
   display: flex;
   align-items: center;
   justify-content: space-between;
   position: relative;
   z-index: 1;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.1s forwards;
 }
 
 .login-hint__text {
   font-size: 26rpx;
-  color: #8C7A6B;
+  color: @color-text-sub;
 }
 
 /* ===== 订单状态卡片 ===== */
 .order-card {
   margin: 20rpx 28rpx 0;
-  background: #FFFAF5;
-  border-radius: 24rpx;
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  border-radius: 28rpx;
   padding: 28rpx 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  box-shadow: @shadow-raised;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.15s forwards;
 }
 
 .order-card__header {
@@ -208,10 +305,17 @@
   width: 88rpx;
   height: 88rpx;
   border-radius: 50%;
-  background: #FFF3E0;
+  background: linear-gradient(180deg, @bg-card, #FFF3E0);
   display: flex;
   align-items: center;
   justify-content: center;
+  box-shadow: @shadow-raised;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.order-card__item:active .order-card__icon {
+  transform: scale(0.94);
+  box-shadow: @shadow-pressed;
 }
 
 .order-card__badge {
@@ -253,10 +357,16 @@
 /* ===== 通用卡片区块 ===== */
 .section-card {
   margin: 20rpx 28rpx 0;
-  background: #FFFAF5;
-  border-radius: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  border-radius: 28rpx;
+  box-shadow: @shadow-raised;
   overflow: hidden;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.2s forwards;
+}
+
+.section-card + .section-card {
+  animation-delay: 0.25s;
 }
 
 .section-card__header {
@@ -321,6 +431,7 @@
   flex-shrink: 0;
   margin-right: 24rpx;
   overflow: hidden;
+  box-shadow: 0 4rpx 12rpx @shadow-dark;
 }
 
 .pet-preview__avatar-img {
@@ -373,9 +484,10 @@
 .health-brief__stats {
   display: flex;
   align-items: center;
-  background: #FFF8F0;
-  border-radius: 16rpx;
+  background: linear-gradient(180deg, @bg-page, #FFF8F0);
+  border-radius: 20rpx;
   padding: 20rpx 0;
+  box-shadow: @shadow-inset;
 }
 
 .health-brief__stat {
@@ -429,9 +541,10 @@
   display: flex;
   align-items: center;
   gap: 10rpx;
-  background: #FFF8E1;
-  border-radius: 12rpx;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+  border-radius: 14rpx;
   padding: 14rpx 18rpx;
+  box-shadow: 0 2rpx 8rpx rgba(174, 144, 116, 0.08);
 }
 
 .health-brief__reminder--overdue {
@@ -446,10 +559,12 @@
 /* ===== 更多工具卡片 ===== */
 .tool-card {
   margin: 20rpx 28rpx 0;
-  background: #FFFAF5;
-  border-radius: 24rpx;
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  border-radius: 28rpx;
   padding: 28rpx 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  box-shadow: @shadow-raised;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.25s forwards;
 }
 
 .tool-card__list {
@@ -472,6 +587,13 @@
   justify-content: center;
   flex-shrink: 0;
   margin-right: 20rpx;
+  box-shadow: @shadow-raised;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.tool-card__item:active .tool-card__icon {
+  transform: scale(0.94);
+  box-shadow: @shadow-pressed;
 }
 
 .tool-card__icon--yellow {
@@ -516,11 +638,17 @@
 }
 
 .logout-btn {
-  background: #FFFAF5;
-  border-radius: 24rpx;
+  background: @bg-card;
+  border-radius: 28rpx;
   padding: 28rpx;
   text-align: center;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  box-shadow: @shadow-raised;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.logout-btn:active {
+  transform: scale(0.985);
+  box-shadow: @shadow-pressed;
 }
 
 .logout-btn__text {

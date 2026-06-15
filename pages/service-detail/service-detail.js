@@ -3,6 +3,21 @@ const authService = require('../../services/authService');
 const { resolveTempUrls } = require('../../utils/fileHelper');
 const { CAT_TITLE_MAP, formatDate, getStatusBarHeight } = require('../../utils/helpers');
 
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
+const CAT_LABEL = {
+  foster: '宠物寄养',
+  grooming: '美容洗护',
+  medical: '医疗健康',
+  door: '上门服务',
+  extra: '商品增值',
+};
+
 Page({
   data: {
     svc: null,
@@ -28,6 +43,18 @@ Page({
     submitting: false,
     statusBarHeight: 0,
     navBarHeight: 0,
+    // 评论相关
+    reviews: [],
+    reviewLoading: true,
+    avgRating: '0.0',
+    avgRatingRound: 0,
+    totalReviews: 0,
+    goodRate: 0,
+    showReview: false,
+    reviewOrderId: '',
+    submittingReview: false,
+    canReview: false,
+    canReviewOrderId: '',
   },
 
   onGoBack() {
@@ -69,6 +96,9 @@ Page({
       });
       this.loadAgencyProfile(svc.agencyProfileId || '');
       this.loadAgencyCageInfo(svc.agencyProfileId || '');
+      // 加载评论
+      this.loadReviews(svc._id);
+      this.checkCanReview(svc._id);
       const userInfo = await authService.checkLogin();
       if (userInfo) {
         this.loadMyPets();
@@ -155,6 +185,129 @@ Page({
     }
   },
 
+  async loadReviews(serviceId) {
+    this.setData({ reviewLoading: true });
+    const db = wx.cloud.database();
+    try {
+      const res = await withTimeout(
+        db.collection('user_orders')
+          .where({
+            serviceId,
+            orderStatus: 'completed',
+          })
+          .orderBy('review.createTime', 'desc')
+          .limit(50)
+          .get(),
+        8000
+      );
+      const allReviews = (res.data || []).filter(o => o.review && o.review.rating);
+      const reviews = allReviews.map(o => ({
+        _id: o._id,
+        serviceName: o.serviceName || '未知服务',
+        catLabel: CAT_LABEL[o.category] || '其他',
+        petName: o.petName || '-',
+        rating: o.review.rating,
+        content: o.review.content || '',
+        reply: o.review.reply || '',
+        createTime: o.review.createTime,
+        createTimeStr: this._formatTime(o.review.createTime),
+      }));
+
+      const total = reviews.length;
+      let sumRating = 0;
+      let goodCount = 0;
+      reviews.forEach(r => {
+        sumRating += r.rating;
+        if (r.rating >= 4) goodCount++;
+      });
+      const avg = total > 0 ? sumRating / total : 0;
+
+      this.setData({
+        reviews,
+        reviewLoading: false,
+        totalReviews: total,
+        avgRating: avg.toFixed(1),
+        avgRatingRound: Math.round(avg * 2) / 2,
+        goodRate: total > 0 ? Math.round((goodCount / total) * 100) : 0,
+      });
+    } catch (e) {
+      this.setData({ reviews: [], reviewLoading: false });
+    }
+  },
+
+  async checkCanReview(serviceId) {
+    const userInfo = await authService.checkLogin();
+    if (!userInfo) return;
+    const db = wx.cloud.database();
+    try {
+      const res = await withTimeout(
+        db.collection('user_orders')
+          .where({
+            serviceId,
+            ownerId: userInfo._id,
+            orderStatus: 'completed',
+          })
+          .get(),
+        8000
+      );
+      const unreviewed = (res.data || []).find(o => !o.review || !o.review.rating);
+      if (unreviewed) {
+        this.setData({ canReview: true, canReviewOrderId: unreviewed._id });
+      }
+    } catch (e) { /* ignore */ }
+  },
+
+  openReview() {
+    if (!this.data.canReview) return;
+    this.setData({
+      showReview: true,
+      reviewOrderId: this.data.canReviewOrderId,
+    });
+  },
+
+  closeReview() {
+    this.setData({ showReview: false, reviewOrderId: '' });
+  },
+
+  onCloseReview() {
+    this.closeReview();
+  },
+
+  async submitReview(e) {
+    const { orderId, rating, content } = e.detail;
+    if (this.data.submittingReview) return;
+    this.setData({ submittingReview: true });
+
+    try {
+      const db = wx.cloud.database();
+      await withTimeout(
+        db.collection('user_orders').doc(orderId).update({
+          data: {
+            review: { rating: rating, content: content.trim(), createTime: db.serverDate() },
+          },
+        }),
+        8000
+      );
+      wx.showToast({ title: '评价成功' });
+      this.setData({ showReview: false, reviewOrderId: '', canReview: false, canReviewOrderId: '' });
+      this.loadReviews(this.data.svc._id);
+    } catch (e) {
+      wx.showToast({ title: '操作失败', icon: 'none' });
+    } finally {
+      this.setData({ submittingReview: false });
+    }
+  },
+
+  _formatTime(t) {
+    if (!t) return '';
+    const d = typeof t === 'string' ? new Date(t) : (t instanceof Date ? t : new Date(t));
+    if (isNaN(d.getTime())) return '';
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  },
+
   onSelectPet(e) {
     const id = e.currentTarget.dataset.id;
     const pet = this.data.myPets.find(p => p._id === id);
@@ -170,11 +323,11 @@ Page({
   },
 
   onPetNameChange(e) { this.setData({ petName: e.detail }); },
-  onPhoneChange(e) { this.setData({ phone: e.detail }); },
-  onRemarkChange(e) { this.setData({ remark: e.detail }); },
-  onReceiverNameChange(e) { this.setData({ receiverName: e.detail }); },
-  onReceiverPhoneChange(e) { this.setData({ receiverPhone: e.detail }); },
-  onReceiverAddressChange(e) { this.setData({ receiverAddress: e.detail }); },
+  onPhoneChange(e) { this.setData({ phone: e.detail.value }); },
+  onRemarkChange(e) { this.setData({ remark: e.detail.value }); },
+  onReceiverNameChange(e) { this.setData({ receiverName: e.detail.value }); },
+  onReceiverPhoneChange(e) { this.setData({ receiverPhone: e.detail.value }); },
+  onReceiverAddressChange(e) { this.setData({ receiverAddress: e.detail.value }); },
   onCheckinDateChange(e) { this.setData({ checkinDate: e.detail.value }); },
 
   onAgencyTap() {
@@ -184,7 +337,7 @@ Page({
     }
   },
   onStayDaysChange(e) {
-    const days = parseInt(e.detail, 10);
+    const days = parseInt(e.detail.value, 10);
     this.setData({ stayDays: Number.isNaN(days) || days <= 0 ? 1 : days });
   },
 

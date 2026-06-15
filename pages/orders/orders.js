@@ -3,6 +3,13 @@ const authService = require('../../services/authService');
 const { resolveTempUrls } = require('../../utils/fileHelper');
 const { formatDate, buildPetInfoText, buildLeaveRemainText, isLeaveExpired, getStatusBarHeight } = require('../../utils/helpers');
 
+function withTimeout(promise, ms) {
+  return Promise.race([
+    promise,
+    new Promise((_, reject) => setTimeout(() => reject(new Error('timeout')), ms)),
+  ]);
+}
+
 const STATUS_FILTER = [
   { key: 'all', label: '全部' },
   { key: 'unpaid', label: '待付款' },
@@ -55,6 +62,11 @@ const CAT_TEXT = {
 
 Page({
   data: {
+    tabList: [
+      { key: 'all', label: '全部' },
+      { key: 'agency', label: '机构服务' },
+      { key: 'express', label: '快递服务' },
+    ],
     activeTab: 0,
     statusFilter: STATUS_FILTER,
     activeStatus: 'all',
@@ -78,7 +90,7 @@ Page({
     const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
-    const headerHeight = navBarHeight + 60;
+    const headerHeight = navBarHeight + 80;
     this.setData({ statusBarHeight, navBarHeight, headerHeight });
 
     if (options.tab !== undefined) {
@@ -119,7 +131,7 @@ Page({
   },
 
   onTabChange(e) {
-    const idx = e.detail.index;
+    const idx = e.currentTarget.dataset.index;
     const statusFilter = idx === 2 ? EXPRESS_STATUS_FILTER : STATUS_FILTER;
     this.setData({ activeTab: idx, activeStatus: 'all', statusFilter });
     this.applyFilter();
@@ -146,7 +158,7 @@ Page({
       }
     }
 
-    this.setData({ filteredOrders: list });
+    this.setData({ filteredOrders: list.map((item, idx) => ({ ...item, _animDelay: idx * 100 })) });
   },
 
   async loadOrders() {
@@ -160,11 +172,14 @@ Page({
     let list = [];
 
     try {
-      const res = await db.collection('user_orders')
-        .where({ ownerId: userId })
-        .orderBy('createTime', 'desc')
-        .limit(50)
-        .get();
+      const res = await withTimeout(
+        db.collection('user_orders')
+          .where({ ownerId: userId })
+          .orderBy('createTime', 'desc')
+          .limit(50)
+          .get(),
+        8000
+      );
       list = (res.data || []).filter(item => item.ownerId === userId).map(item => {
         const configMap = item.orderType === 'express' ? EXPRESS_STATUS_CONFIG : STATUS_CONFIG;
         const config = configMap[item.orderStatus] || {};
@@ -200,10 +215,13 @@ Page({
     if (missingAgencyIds.length > 0) {
       try {
         const _ = db.command;
-        const agencyRes = await db.collection('agency_profiles')
-          .where({ _id: _.in(missingAgencyIds) })
-          .field({ _id: true, orgName: true })
-          .get();
+        const agencyRes = await withTimeout(
+          db.collection('agency_profiles')
+            .where({ _id: _.in(missingAgencyIds) })
+            .field({ _id: true, orgName: true })
+            .get(),
+          8000
+        );
         const agencyMap = {};
         (agencyRes.data || []).forEach(a => { agencyMap[a._id] = a.orgName; });
         list.forEach(o => {
@@ -265,15 +283,21 @@ Page({
     try {
       const db = wx.cloud.database();
       const order = this.data.allOrders.find(o => o._id === orderId);
-      await db.collection('user_orders').doc(orderId).update({
-        data: { orderStatus: 'cancelled', updateTime: db.serverDate() },
-      });
+      await withTimeout(
+        db.collection('user_orders').doc(orderId).update({
+          data: { orderStatus: 'cancelled', updateTime: db.serverDate() },
+        }),
+        8000
+      );
       // 寄养订单取消时重置宠物状态
       if (order && order.category === 'foster' && order.petId) {
         try {
-          await db.collection('pets').doc(order.petId).update({
-            data: { petStatus: '', updateTime: db.serverDate() },
-          });
+          await withTimeout(
+            db.collection('pets').doc(order.petId).update({
+              data: { petStatus: '', updateTime: db.serverDate() },
+            }),
+            8000
+          );
         } catch (petErr) { /* ignore */ }
       }
       this.loadOrders();
@@ -330,14 +354,20 @@ Page({
         try {
           const db = wx.cloud.database();
           const targetOrder = this.data.allOrders.find(o => o._id === id);
-          await db.collection('user_orders').doc(id).update({
-            data: { orderStatus: 'completed', updateTime: db.serverDate() },
-          });
+          await withTimeout(
+            db.collection('user_orders').doc(id).update({
+              data: { orderStatus: 'completed', updateTime: db.serverDate() },
+            }),
+            8000
+          );
           if (targetOrder && targetOrder.orderType === 'agency' && targetOrder.category === 'foster' && targetOrder.petId) {
             try {
-              await db.collection('pets').doc(targetOrder.petId).update({
-                data: { petStatus: '', updateTime: db.serverDate() },
-              });
+              await withTimeout(
+                db.collection('pets').doc(targetOrder.petId).update({
+                  data: { petStatus: '', updateTime: db.serverDate() },
+                }),
+                8000
+              );
             } catch (petErr) { /* ignore */ }
           }
           wx.hideLoading();
@@ -380,9 +410,12 @@ Page({
         if (!res.confirm) return;
         try {
           const db = wx.cloud.database();
-          await db.collection('user_orders').doc(id).update({
-            data: { review: db.command.remove() },
-          });
+          await withTimeout(
+            db.collection('user_orders').doc(id).update({
+              data: { review: db.command.remove() },
+            }),
+            8000
+          );
           wx.showToast({ title: '已删除', icon: 'success' });
           this.loadOrders();
         } catch (e) {
@@ -409,19 +442,25 @@ Page({
     try {
       const db = wx.cloud.database();
       if (editReviewId) {
-        await db.collection('user_orders').doc(editReviewId).update({
-          data: {
-            'review.rating': rating,
-            'review.content': content.trim(),
-          },
-        });
+        await withTimeout(
+          db.collection('user_orders').doc(editReviewId).update({
+            data: {
+              'review.rating': rating,
+              'review.content': content.trim(),
+            },
+          }),
+          8000
+        );
         wx.showToast({ title: '修改成功' });
       } else {
-        await db.collection('user_orders').doc(orderId).update({
-          data: {
-            review: { rating: rating, content: content.trim(), createTime: db.serverDate() },
-          },
-        });
+        await withTimeout(
+          db.collection('user_orders').doc(orderId).update({
+            data: {
+              review: { rating: rating, content: content.trim(), createTime: db.serverDate() },
+            },
+          }),
+          8000
+        );
         wx.showToast({ title: '评价成功' });
       }
       this.setData({ showReview: false, reviewOrderId: '', editReviewId: '' });
@@ -454,19 +493,25 @@ Page({
     try {
       const db = wx.cloud.database();
       if (editReviewId) {
-        await db.collection('user_orders').doc(editReviewId).update({
-          data: {
-            'review.rating': reviewRating,
-            'review.content': reviewContent.trim(),
-          },
-        });
+        await withTimeout(
+          db.collection('user_orders').doc(editReviewId).update({
+            data: {
+              'review.rating': reviewRating,
+              'review.content': reviewContent.trim(),
+            },
+          }),
+          8000
+        );
         wx.showToast({ title: '修改成功' });
       } else {
-        await db.collection('user_orders').doc(reviewOrderId).update({
-          data: {
-            review: { rating: reviewRating, content: reviewContent.trim(), createTime: db.serverDate() },
-          },
-        });
+        await withTimeout(
+          db.collection('user_orders').doc(reviewOrderId).update({
+            data: {
+              review: { rating: reviewRating, content: reviewContent.trim(), createTime: db.serverDate() },
+            },
+          }),
+          8000
+        );
         wx.showToast({ title: '评价成功' });
       }
       this.setData({ showReview: false, reviewOrderId: '', editReviewId: '' });

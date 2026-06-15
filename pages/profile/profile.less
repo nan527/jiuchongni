@@ -1,7 +1,60 @@
 /* pages/profile/profile.less */
+
+/* ===== 变量 ===== */
+@bg-page: #FFF8F0;
+@bg-card: #FFFAF5;
+@color-primary: #FF9800;
+@color-primary-light: #FFB74D;
+@color-accent: #FF7043;
+@color-text: #3D2C1E;
+@color-text-sub: #8C7A6B;
+@color-text-muted: #C4B8AC;
+@color-divider: #F0E6D8;
+@shadow-dark: rgba(174, 144, 116, 0.15);
+@shadow-light: rgba(255, 255, 255, 0.9);
+@shadow-raised: 6rpx 6rpx 16rpx @shadow-dark, -6rpx -6rpx 16rpx @shadow-light;
+@shadow-pressed: 3rpx 3rpx 8rpx rgba(174, 144, 116, 0.12), -3rpx -3rpx 8rpx rgba(255, 255, 255, 0.95);
+@shadow-inset: inset 4rpx 4rpx 8rpx rgba(174, 144, 116, 0.1), inset -4rpx -4rpx 8rpx rgba(255, 255, 255, 0.8);
+
+/* ===== 动画 ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30rpx); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0); }
+  50%      { transform: translateY(-12rpx); }
+}
+
+@keyframes pulse {
+  0%, 100% { transform: scale(1); }
+  50%      { transform: scale(1.05); }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.anim-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.anim-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+}
+
 .profile-page {
   min-height: 100vh;
-  background: #f0f2f5;
+  background: @bg-page;
   padding-bottom: env(safe-area-inset-bottom);
 }
 
@@ -12,7 +65,7 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: #FF9800;
+  background: linear-gradient(135deg, @color-primary 0%, @color-primary-light 50%, #FF8A65 100%);
 }
 
 .nav-bar__inner {
@@ -34,6 +87,15 @@
   width: 72rpx;
 }
 
+.nav-bar__title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2rpx;
+}
+
 /* 页面内容下移，留出导航栏空间 */
 .profile-page {
   padding-top: var(--nav-height);
@@ -42,7 +104,9 @@
 /* ===== 顶部区域 ===== */
 .header {
   position: relative;
-  padding-bottom: 40rpx;
+  padding-bottom: 48rpx;
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
 }
 
 .header-bg {
@@ -51,8 +115,33 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background: linear-gradient(160deg, #FF9800 0%, #FFB74D 50%, #FFE0B2 100%);
+  background: linear-gradient(135deg, @color-primary 0%, @color-primary-light 50%, #FF8A65 100%);
   border-radius: 0 0 48rpx 48rpx;
+  overflow: hidden;
+}
+
+.header-bg::before {
+  content: '';
+  position: absolute;
+  top: 20rpx;
+  right: -30rpx;
+  width: 160rpx;
+  height: 160rpx;
+  background: rgba(255, 255, 255, 0.1);
+  border-radius: 50%;
+  animation: float 5s ease-in-out infinite;
+}
+
+.header-bg::after {
+  content: '';
+  position: absolute;
+  bottom: 10rpx;
+  left: -20rpx;
+  width: 100rpx;
+  height: 100rpx;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 50%;
+  animation: float 6s ease-in-out infinite 1.5s;
 }
 
 .header-content {
@@ -85,13 +174,14 @@
   bottom: 0;
   width: 52rpx;
   height: 52rpx;
-  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  background: linear-gradient(135deg, @color-primary, @color-primary-light);
   border-radius: 50%;
   border: 4rpx solid #fff;
   display: flex;
   align-items: center;
   justify-content: center;
   box-shadow: 0 4rpx 12rpx rgba(255, 152, 0, 0.4);
+  animation: pulse 2.5s ease-in-out infinite;
 }
 
 .header-name {
@@ -114,6 +204,8 @@
   margin: -20rpx 28rpx 24rpx;
   position: relative;
   z-index: 3;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.1s forwards;
 }
 
 .avatar-list {
@@ -130,12 +222,18 @@
   border-radius: 50%;
   overflow: hidden;
   border: 4rpx solid transparent;
+  box-shadow: @shadow-raised;
   transition: all 0.2s;
 }
 
+.avatar-item:active {
+  transform: scale(0.94);
+  box-shadow: @shadow-pressed;
+}
+
 .avatar-item--active {
-  border-color: #FF9800;
-  box-shadow: 0 0 0 4rpx rgba(255, 152, 0, 0.2);
+  border-color: @color-primary;
+  box-shadow: @shadow-raised, 0 0 0 4rpx rgba(255, 152, 0, 0.2);
 }
 
 .avatar-item__img {
@@ -159,16 +257,26 @@
 /* ===== 通用卡片 ===== */
 .card {
   margin: 0 28rpx 24rpx;
-  background: #fff;
-  border-radius: 24rpx;
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  border-radius: 28rpx;
   padding: 32rpx;
-  box-shadow: 0 4rpx 20rpx rgba(0, 0, 0, 0.04);
+  box-shadow: @shadow-raised;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.15s forwards;
+}
+
+.card + .card {
+  animation-delay: 0.2s;
+}
+
+.card + .card + .card {
+  animation-delay: 0.25s;
 }
 
 .card-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #1a1a1a;
+  color: @color-text;
   margin-bottom: 28rpx;
   position: relative;
   padding-left: 20rpx;
@@ -181,7 +289,7 @@
     bottom: 6rpx;
     width: 6rpx;
     border-radius: 3rpx;
-    background: linear-gradient(180deg, #FF9800, #FFB74D);
+    background: linear-gradient(180deg, @color-primary, @color-primary-light, #FF8A65);
   }
 }
 
@@ -198,7 +306,7 @@
   display: flex;
   align-items: center;
   font-size: 26rpx;
-  color: #666;
+  color: @color-text-sub;
   margin-bottom: 14rpx;
 }
 
@@ -206,7 +314,7 @@
   width: 10rpx;
   height: 10rpx;
   border-radius: 50%;
-  background: #FF9800;
+  background: @color-primary;
   margin-right: 12rpx;
   flex-shrink: 0;
 }
@@ -218,15 +326,14 @@
 }
 
 .field-input-wrap {
-  background: #f7f8fa;
+  background: linear-gradient(180deg, @bg-page, #FFF8F0);
   border-radius: 16rpx;
-  border: 2rpx solid transparent;
-  transition: all 0.2s;
+  border: none;
+  box-shadow: @shadow-inset;
+  transition: box-shadow 0.2s ease;
 
   &:focus-within {
-    border-color: rgba(255, 152, 0, 0.3);
-    background: #fff;
-    box-shadow: 0 0 0 4rpx rgba(255, 152, 0, 0.06);
+    box-shadow: @shadow-inset, 0 0 0 2rpx rgba(255, 152, 0, 0.15);
   }
 }
 
@@ -235,23 +342,22 @@
   height: 92rpx;
   padding: 0 28rpx;
   font-size: 28rpx;
-  color: #1a1a1a;
+  color: @color-text;
   box-sizing: border-box;
 }
 
 /* ===== 签名文本框 ===== */
 .textarea-wrap {
-  background: #f7f8fa;
+  background: linear-gradient(180deg, @bg-page, #FFF8F0);
   border-radius: 16rpx;
-  border: 2rpx solid transparent;
+  border: none;
   padding: 4rpx;
-  transition: all 0.2s;
+  box-shadow: @shadow-inset;
+  transition: box-shadow 0.2s ease;
   position: relative;
 
   &:focus-within {
-    border-color: rgba(255, 152, 0, 0.3);
-    background: #fff;
-    box-shadow: 0 0 0 4rpx rgba(255, 152, 0, 0.06);
+    box-shadow: @shadow-inset, 0 0 0 2rpx rgba(255, 152, 0, 0.15);
   }
 }
 
@@ -260,7 +366,7 @@
   min-height: 160rpx;
   padding: 24rpx 28rpx;
   font-size: 28rpx;
-  color: #1a1a1a;
+  color: @color-text;
   box-sizing: border-box;
   line-height: 1.6;
 }
@@ -270,10 +376,12 @@
   bottom: 16rpx;
   right: 24rpx;
   font-size: 22rpx;
-  color: #ccc;
+  color: @color-text-muted;
 }
 
 /* ===== 保存按钮 ===== */
 .save-area {
   padding: 16rpx 40rpx 60rpx;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.3s forwards;
 }

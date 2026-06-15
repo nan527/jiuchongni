@@ -1,5 +1,47 @@
 /* pages/agency-detail/agency-detail.wxss */
 
+/* ===== 变量 ===== */
+@bg-page: #FFF8F0;
+@bg-card: #FFFAF5;
+@color-primary: #FF9800;
+@color-primary-light: #FFB74D;
+@color-accent: #FF7043;
+@color-text: #3D2C1E;
+@color-text-sub: #8C7A6B;
+@color-text-muted: #C4B8AC;
+@color-divider: #F0E6D8;
+@shadow-dark: rgba(174, 144, 116, 0.15);
+@shadow-light: rgba(255, 255, 255, 0.9);
+@shadow-raised: 6rpx 6rpx 16rpx @shadow-dark, -6rpx -6rpx 16rpx @shadow-light;
+@shadow-pressed: 3rpx 3rpx 8rpx rgba(174, 144, 116, 0.12), -3rpx -3rpx 8rpx rgba(255, 255, 255, 0.95);
+@shadow-inset: inset 4rpx 4rpx 8rpx rgba(174, 144, 116, 0.1), inset -4rpx -4rpx 8rpx rgba(255, 255, 255, 0.8);
+
+/* ===== 动画 ===== */
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(30rpx); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@keyframes shimmer {
+  0%   { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+.anim-fade-in-up {
+  opacity: 0;
+  animation: fadeInUp 0.5s ease forwards;
+}
+
+.anim-fade-in {
+  opacity: 0;
+  animation: fadeIn 0.4s ease forwards;
+}
+
 /* ===== 自定义导航栏 ===== */
 .nav-bar {
   position: fixed;
@@ -7,7 +49,7 @@
   left: 0;
   right: 0;
   z-index: 100;
-  background: #FF9800;
+  background: linear-gradient(135deg, @color-primary 0%, @color-primary-light 50%, #FF8A65 100%);
 }
 
 .nav-bar__inner {
@@ -29,9 +71,18 @@
   width: 72rpx;
 }
 
+.nav-bar__title {
+  flex: 1;
+  text-align: center;
+  font-size: 34rpx;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: 2rpx;
+}
+
 .detail-page {
   min-height: 100vh;
-  background: #FFF8F0;
+  background: @bg-page;
   padding-bottom: 60rpx;
 }
 
@@ -40,6 +91,8 @@
   position: relative;
   width: 100%;
   height: 400rpx;
+  opacity: 0;
+  animation: fadeIn 0.5s ease forwards;
 }
 
 .agency-hero__img {
@@ -68,11 +121,13 @@
 
 /* ===== 信息行 ===== */
 .info-section {
-  background: #FFFAF5;
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
   margin: 20rpx 32rpx 0;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   padding: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  box-shadow: @shadow-raised;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.1s forwards;
 }
 
 .info-row {
@@ -82,12 +137,12 @@
 }
 
 .info-row + .info-row {
-  border-top: 1rpx solid #F0E6D8;
+  border-top: 1rpx solid @color-divider;
 }
 
 .info-row__text {
   font-size: 26rpx;
-  color: #3D2C1E;
+  color: @color-text;
   margin-left: 16rpx;
   flex: 1;
 }
@@ -96,29 +151,130 @@
 .section-title {
   font-size: 32rpx;
   font-weight: 700;
-  color: #3D2C1E;
+  color: @color-text;
   display: block;
   margin-bottom: 20rpx;
+  position: relative;
+  padding-left: 20rpx;
+
+  &::before {
+    content: '';
+    position: absolute;
+    left: 0;
+    top: 6rpx;
+    bottom: 6rpx;
+    width: 6rpx;
+    border-radius: 3rpx;
+    background: linear-gradient(180deg, @color-primary, @color-primary-light, #FF8A65);
+  }
 }
 
 /* ===== 机构简介 ===== */
 .intro-section {
-  background: #FFFAF5;
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
   margin: 20rpx 32rpx 0;
-  border-radius: 24rpx;
+  border-radius: 28rpx;
   padding: 24rpx;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
+  box-shadow: @shadow-raised;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.15s forwards;
 }
 
 .intro-text {
   font-size: 26rpx;
-  color: #8C7A6B;
+  color: @color-text-sub;
   line-height: 1.7;
+}
+
+/* ===== 招牌服务高亮 ===== */
+.highlight-section {
+  margin: 20rpx 32rpx 0;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.18s forwards;
+}
+
+.highlight-card {
+  display: flex;
+  align-items: flex-start;
+  gap: 20rpx;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  border-left: 6rpx solid @color-primary;
+  box-shadow: 0 2rpx 12rpx rgba(255, 152, 0, 0.08);
+}
+
+.highlight-card__icon-wrap {
+  width: 64rpx;
+  height: 64rpx;
+  border-radius: 50%;
+  background: rgba(255, 152, 0, 0.12);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.highlight-card__body {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8rpx;
+}
+
+.highlight-card__label {
+  font-size: 24rpx;
+  color: @color-primary;
+  font-weight: 600;
+}
+
+.highlight-card__text {
+  font-size: 26rpx;
+  color: @color-text;
+  line-height: 1.6;
+}
+
+/* ===== 服务范围 & 笼位详情标签卡 ===== */
+.detail-tags-section {
+  margin: 20rpx 32rpx 0;
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.22s forwards;
+}
+
+.detail-tag-card {
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: @shadow-raised;
+}
+
+.detail-tag-card__header {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  margin-bottom: 12rpx;
+}
+
+.detail-tag-card__title {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: @color-text;
+}
+
+.detail-tag-card__text {
+  font-size: 26rpx;
+  color: @color-text-sub;
+  line-height: 1.6;
 }
 
 /* ===== 环境照片 ===== */
 .env-section {
   margin: 20rpx 32rpx 0;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.2s forwards;
 }
 
 .env-scroll {
@@ -130,12 +286,21 @@
   height: 200rpx;
   border-radius: 20rpx;
   margin-right: 16rpx;
-  background: #F0E6D8;
+  background: @color-divider;
+  box-shadow: @shadow-raised;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+}
+
+.env-img:active {
+  transform: scale(0.96);
+  box-shadow: @shadow-pressed;
 }
 
 /* ===== 服务列表 ===== */
 .svc-section {
   margin: 20rpx 32rpx 0;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.25s forwards;
 }
 
 .svc-list {
@@ -146,22 +311,23 @@
 
 .svc-item {
   display: flex;
-  background: #FFFAF5;
-  border-radius: 20rpx;
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  border-radius: 24rpx;
   overflow: hidden;
-  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
-  transition: transform 0.15s ease;
+  box-shadow: @shadow-raised;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
 }
 
 .svc-item:active {
-  transform: scale(0.98);
+  transform: scale(0.985);
+  box-shadow: @shadow-pressed;
 }
 
 .svc-item__img {
   width: 180rpx;
   height: 180rpx;
   flex-shrink: 0;
-  background: #F0E6D8;
+  background: @color-divider;
 }
 
 .svc-item__info {
@@ -175,7 +341,7 @@
 .svc-item__name {
   font-size: 28rpx;
   font-weight: 600;
-  color: #3D2C1E;
+  color: @color-text;
   margin-top: 8rpx;
   display: -webkit-box;
   -webkit-line-clamp: 1;
@@ -192,12 +358,12 @@
 .svc-item__price {
   font-size: 30rpx;
   font-weight: 700;
-  color: #FF9800;
+  color: @color-primary;
 }
 
 .svc-item__unit {
   font-size: 22rpx;
-  color: #8C7A6B;
+  color: @color-text-sub;
   margin-left: 4rpx;
 }
 
@@ -209,7 +375,7 @@
 
 .empty-svc__text {
   font-size: 26rpx;
-  color: #8C7A6B;
+  color: @color-text-muted;
 }
 
 /* ===== 加载状态 ===== */
@@ -218,3 +384,260 @@
   justify-content: center;
   padding: 80rpx 0;
 }
+
+/* ===== 联系方式 ===== */
+.contact-section {
+  margin: 20rpx 32rpx 0;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.3s forwards;
+}
+
+.contact-card {
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  border-radius: 24rpx;
+  padding: 8rpx 24rpx;
+  box-shadow: @shadow-raised;
+}
+
+.contact-row {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  padding: 20rpx 0;
+
+  & + & {
+    border-top: 1rpx solid @color-divider;
+  }
+}
+
+.contact-row__icon-wrap {
+  width: 56rpx;
+  height: 56rpx;
+  border-radius: 50%;
+  background: #FFF3E0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  box-shadow: @shadow-raised;
+}
+
+.contact-row__info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4rpx;
+}
+
+.contact-row__label {
+  font-size: 22rpx;
+  color: @color-text-muted;
+}
+
+.contact-row__value {
+  font-size: 28rpx;
+  color: @color-text;
+  font-weight: 500;
+}
+
+/* ===== 用户评价 ===== */
+.review-section {
+  margin: 20rpx 32rpx 0;
+  opacity: 0;
+  animation: fadeInUp 0.5s ease 0.35s forwards;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.review-write-btn {
+  display: flex;
+  align-items: center;
+  gap: 6rpx;
+  padding: 8rpx 20rpx;
+  border-radius: 24rpx;
+  background: #F5F0EB;
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.review-write-btn--active {
+  background: #FFF3E0;
+}
+
+.review-write-btn__text {
+  font-size: 24rpx;
+  color: @color-text-muted;
+}
+
+.review-write-btn--active .review-write-btn__text {
+  color: @color-primary;
+  font-weight: 500;
+}
+
+.review-overview {
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: @shadow-raised;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 20rpx;
+}
+
+.review-overview__score {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8rpx;
+}
+
+.review-overview__num {
+  font-size: 48rpx;
+  font-weight: 700;
+  color: @color-primary;
+  line-height: 1;
+}
+
+.review-overview__stars {
+  margin-top: 4rpx;
+}
+
+.review-overview__count {
+  font-size: 22rpx;
+  color: @color-text-muted;
+}
+
+.review-overview__good {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.review-overview__good-num {
+  font-size: 36rpx;
+  font-weight: 700;
+  color: @color-accent;
+}
+
+.review-overview__good-label {
+  font-size: 22rpx;
+  color: @color-text-muted;
+}
+
+.review-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16rpx;
+}
+
+.review-item {
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  border-radius: 24rpx;
+  padding: 24rpx;
+  box-shadow: @shadow-raised;
+}
+
+.review-item__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 12rpx;
+}
+
+.review-item__svc {
+  display: flex;
+  align-items: center;
+  gap: 10rpx;
+  flex: 1;
+  min-width: 0;
+}
+
+.review-item__svc-name {
+  font-size: 26rpx;
+  font-weight: 600;
+  color: @color-text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.review-item__stars {
+  flex-shrink: 0;
+  margin-left: 16rpx;
+}
+
+.review-item__body {
+  margin-bottom: 12rpx;
+}
+
+.review-item__content {
+  font-size: 26rpx;
+  color: @color-text-sub;
+  line-height: 1.6;
+}
+
+.review-item__footer {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.review-item__pet {
+  font-size: 22rpx;
+  color: @color-text-muted;
+}
+
+.review-item__time {
+  font-size: 22rpx;
+  color: @color-text-muted;
+}
+
+.review-item__reply {
+  margin-top: 16rpx;
+  padding: 16rpx;
+  background: #FFF8F0;
+  border-radius: 16rpx;
+  border-left: 4rpx solid @color-primary;
+}
+
+.reply-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.reply-label {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: @color-primary;
+}
+
+.reply-content {
+  font-size: 24rpx;
+  color: @color-text-sub;
+  line-height: 1.6;
+}
+
+.empty-review {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 60rpx 0;
+}
+
+.empty-review__text {
+  margin-top: 20rpx;
+  font-size: 26rpx;
+  color: @color-text-muted;
+}
+

@@ -104,7 +104,30 @@ Page({
         .orderBy('createdAt', 'desc')
         .limit(20)
         .get();
-      this.setData({ myWorks: res.data || [] });
+      const works = res.data || [];
+
+      // 批量获取有 resultFileID 的作品的最新临时 URL
+      const fileIDs = works
+        .filter(w => w.resultFileID)
+        .map(w => w.resultFileID);
+
+      if (fileIDs.length > 0) {
+        const urlRes = await wx.cloud.getTempFileURL({ fileList: fileIDs });
+        const urlMap = {};
+        (urlRes.fileList || []).forEach(item => {
+          if (item.tempFileURL) {
+            urlMap[item.fileID] = item.tempFileURL;
+          }
+        });
+
+        works.forEach(w => {
+          if (w.resultFileID && urlMap[w.resultFileID]) {
+            w.resultUrl = urlMap[w.resultFileID];
+          }
+        });
+      }
+
+      this.setData({ myWorks: works });
     } catch (e) {
       console.error('[AI] loadMyWorks failed', e);
     }
@@ -455,7 +478,7 @@ Page({
         throw new Error(result.msg || '保存失败');
       }
 
-      // 写入云数据库
+      // 写入云数据库（用 resultFileID 存永久路径，加载时动态获取临时 URL）
       await db.collection('ai_works').add({
         data: {
           type: 'avatar',
@@ -464,7 +487,6 @@ Page({
           prompt: this.data.customPrompt,
           originalFileID: this.data.avatarOriginalFileID,
           resultFileID: result.fileID,
-          resultUrl: this.data.avatarPreviewUrl,
           createdAt: db.serverDate(),
         },
       });

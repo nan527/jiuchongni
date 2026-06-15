@@ -48,7 +48,10 @@ Page({
     showForm: false,
     name: '',
     species: '',
+    gender: '',
     age: '',
+    weight: '',
+    neutered: false,
     character: '',
     special: '',
     fileList: [],
@@ -184,7 +187,10 @@ Page({
       editingId: pet._id,
       name: pet.name || '',
       species: pet.species || '',
+      gender: pet.gender || '',
       age: pet.age ? String(pet.age) : '',
+      weight: pet.weight ? String(pet.weight) : '',
+      neutered: !!pet.neutered,
       character: pet.character || '',
       special: pet.special_needs || '',
       photoUrl: pet.photo || '',
@@ -220,7 +226,20 @@ Page({
     const show = !this.data.showForm;
     this.setData({
       showForm: show,
-      ...(show ? { editingId: '', name: '', species: '', age: '', character: '', special: '', fileList: [], photoUrl: '', selectedPresetIdx: -1 } : {}),
+      ...(show ? {
+        editingId: '',
+        name: '',
+        species: '',
+        gender: '',
+        age: '',
+        weight: '',
+        neutered: false,
+        character: '',
+        special: '',
+        fileList: [],
+        photoUrl: '',
+        selectedPresetIdx: -1,
+      } : {}),
     });
   },
 
@@ -241,7 +260,10 @@ Page({
 
   onNameChange(e) { this.setData({ name: e.detail.value || e.detail }); },
   onSpeciesChange(e) { this.setData({ species: e.detail.value || e.detail }); },
+  onGenderChange(e) { this.setData({ gender: e.currentTarget.dataset.value }); },
   onAgeChange(e) { this.setData({ age: e.detail.value || e.detail }); },
+  onWeightChange(e) { this.setData({ weight: e.detail.value || e.detail }); },
+  onNeuteredChange(e) { this.setData({ neutered: e.detail }); },
   onCharacterChange(e) { this.setData({ character: e.detail.value || e.detail }); },
   onSpecialChange(e) { this.setData({ special: e.detail.value || e.detail }); },
 
@@ -274,7 +296,10 @@ Page({
       const petData = {
         name: this.data.name,
         species: this.data.species,
+        gender: this.data.gender,
         age: this.data.age ? parseInt(this.data.age) : 0,
+        weight: this.data.weight ? parseFloat(this.data.weight) : 0,
+        neutered: this.data.neutered,
         character: this.data.character,
         special_needs: this.data.special,
         photo: this.data.photoUrl,

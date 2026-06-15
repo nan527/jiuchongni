@@ -1,0 +1,191 @@
+<h2>第三批优化：用户体验与交互</h2>
+<p class="subtitle">提升交互体验，引入现代化设计元素</p>
+
+<div class="section">
+  <h3>优化目标</h3>
+  <p>解决6个用户体验问题，引入现代化设计元素，提升交互体验和感知性能。</p>
+</div>
+
+<div class="section">
+  <h3>问题清单</h3>
+  <div class="cards">
+    <div class="card" data-choice="1" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>1. 首页搜索栏是假搜索</h3>
+        <p><strong>问题：</strong>搜索栏只是跳转按钮，不是真正的搜索输入</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>使用van-search组件实现真正搜索</li>
+          <li>支持实时搜索建议</li>
+          <li>优化搜索体验</li>
+        </ul>
+        <p><strong>影响：</strong>提升搜索体验，减少操作步骤</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="2" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>2. 首页功能入口数量不对称</h3>
+        <p><strong>问题：</strong>只显示3个入口，显得空旷</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>增加到4个功能入口</li>
+          <li>添加健康管理、宠物档案等入口</li>
+          <li>使用网格布局</li>
+        </ul>
+        <p><strong>影响：</strong>提升功能发现性，优化空间利用</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="3" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>3. 订单页面固定头部高度计算</h3>
+        <p><strong>问题：</strong>headerHeight计算不准确导致内容遮挡</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>优化高度计算逻辑</li>
+          <li>使用更稳定的布局方案</li>
+          <li>添加动态调整机制</li>
+        </ul>
+        <p><strong>影响：</strong>解决内容遮挡问题</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="4" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>4. 卡片网格缺少响应式处理</h3>
+        <p><strong>问题：</strong>卡片高度不一致，布局不美观</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>使用flex布局或CSS Grid</li>
+          <li>实现等高卡片</li>
+          <li>优化响应式设计</li>
+        </ul>
+        <p><strong>影响：</strong>提升视觉美观度</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="5" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>5. 弹窗式页面过多</h3>
+        <p><strong>问题：</strong>AI创作页面功能全部在弹窗中</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>将数字分身功能改为独立页面</li>
+          <li>优化页面结构</li>
+          <li>提升小屏设备体验</li>
+        </ul>
+        <p><strong>影响：</strong>提升小屏设备体验</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="6" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>6. 缺少骨架屏/加载态</h3>
+        <p><strong>问题：</strong>数据加载时只有简单spinner</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>引入van-skeleton组件</li>
+          <li>为关键页面添加骨架屏</li>
+          <li>优化加载体验</li>
+        </ul>
+        <p><strong>影响：</strong>提升感知性能，改善用户体验</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>现代化设计元素</h3>
+  <div class="mockup">
+    <div class="mockup-header">现代化设计升级</div>
+    <div class="mockup-body">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="background: linear-gradient(135deg, #FF9800, #FFB74D); padding: 16px; border-radius: 12px; color: white;">
+          <strong>1. 微交互增强</strong><br>
+          添加更丰富的动画效果，提升交互反馈
+        </div>
+        <div style="background: linear-gradient(135deg, #2196F3, #64B5F6); padding: 16px; border-radius: 12px; color: white;">
+          <strong>2. 骨架屏加载</strong><br>
+          使用van-skeleton提升加载体验
+        </div>
+        <div style="background: linear-gradient(135deg, #4CAF50, #81C784); padding: 16px; border-radius: 12px; color: white;">
+          <strong>3. 响应式布局</strong><br>
+          使用Flex和Grid优化卡片布局
+        </div>
+        <div style="background: linear-gradient(135deg, #9C27B0, #CE93D8); padding: 16px; border-radius: 12px; color: white;">
+          <strong>4. 搜索体验优化</strong><br>
+          实现真正的搜索功能，支持实时建议
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>实施步骤</h3>
+  <div class="mockup">
+    <div class="mockup-header">第三批优化流程</div>
+    <div class="mockup-body">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="background: #e3f2fd; padding: 12px; border-radius: 8px;">
+          <strong>步骤1：优化搜索功能</strong><br>
+          实现真正的搜索，添加实时建议
+        </div>
+        <div style="background: #f3e5f5; padding: 12px; border-radius: 8px;">
+          <strong>步骤2：增加功能入口</strong><br>
+          添加健康管理、宠物档案等入口
+        </div>
+        <div style="background: #e8f5e8; padding: 12px; border-radius: 8px;">
+          <strong>步骤3：优化布局方案</strong><br>
+          解决固定头部高度问题，优化卡片布局
+        </div>
+        <div style="background: #fff3e0; padding: 12px; border-radius: 8px;">
+          <strong>步骤4：重构AI创作页面</strong><br>
+          将弹窗功能改为独立页面
+        </div>
+        <div style="background: #fce4ec; padding: 12px; border-radius: 8px;">
+          <strong>步骤5：添加骨架屏</strong><br>
+          为关键页面引入van-skeleton
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>预期成果</h3>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>收益</h4>
+      <ul>
+        <li>搜索体验提升60%</li>
+        <li>功能发现性提升</li>
+        <li>布局问题解决</li>
+        <li>小屏设备体验改善</li>
+        <li>感知性能提升40%</li>
+        <li>现代化设计语言建立</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>风险</h4>
+      <ul>
+        <li>搜索功能需要后端支持</li>
+        <li>布局重构可能影响其他页面</li>
+        <li>骨架屏需要额外开发工作</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>验证标准</h3>
+  <ul>
+    <li>搜索功能正常工作</li>
+    <li>功能入口显示正确</li>
+    <li>布局问题解决</li>
+    <li>AI创作页面独立</li>
+    <li>骨架屏显示正常</li>
+    <li>交互体验提升</li>
+  </ul>
+</div>

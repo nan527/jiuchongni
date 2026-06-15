@@ -30,7 +30,7 @@
     </view>
     <view class="svc-price-row">
       <text class="svc-price">¥{{ svc.price }}</text>
-      <text class="svc-unit">/{{ svc.unit }}</text>
+      <text class="svc-unit">{{ svc.unit || '/次' }}</text>
     </view>
     <text class="svc-desc" wx:if="{{ svc.desc }}">{{ svc.desc }}</text>
   </view>
@@ -77,9 +77,27 @@
 
     <!-- 商品类：收货地址 -->
     <block wx:if="{{ svc.category === 'extra' }}">
-      <van-field label="收货人" placeholder="请输入收货人姓名" value="{{ receiverName }}" bind:change="onReceiverNameChange" required></van-field>
-      <van-field label="收货电话" placeholder="请输入收货人手机号" value="{{ receiverPhone }}" bind:change="onReceiverPhoneChange" type="number" required></van-field>
-      <van-field label="收货地址" placeholder="请输入详细收货地址" value="{{ receiverAddress }}" bind:change="onReceiverAddressChange" type="textarea" autosize="{{ { minHeight: 60 } }}" required></van-field>
+      <view class="custom-field">
+        <view class="custom-field__label">
+          <text class="custom-field__required">*</text>
+          <text class="custom-field__label-text">收货人</text>
+        </view>
+        <input class="custom-field__input" placeholder="请输入收货人姓名" value="{{ receiverName }}" bindinput="onReceiverNameChange" placeholder-class="custom-field__placeholder" />
+      </view>
+      <view class="custom-field">
+        <view class="custom-field__label">
+          <text class="custom-field__required">*</text>
+          <text class="custom-field__label-text">收货电话</text>
+        </view>
+        <input class="custom-field__input" placeholder="请输入收货人手机号" value="{{ receiverPhone }}" bindinput="onReceiverPhoneChange" type="number" placeholder-class="custom-field__placeholder" />
+      </view>
+      <view class="custom-field custom-field--textarea">
+        <view class="custom-field__label">
+          <text class="custom-field__required">*</text>
+          <text class="custom-field__label-text">收货地址</text>
+        </view>
+        <textarea class="custom-field__textarea" placeholder="请输入详细收货地址" value="{{ receiverAddress }}" bindinput="onReceiverAddressChange" placeholder-class="custom-field__placeholder" auto-height maxlength="200" />
+      </view>
     </block>
 
     <!-- 非商品类：选择宠物 -->
@@ -117,13 +135,107 @@
 
     <block wx:if="{{ svc.category === 'foster' }}">
       <picker mode="date" start="{{ today }}" value="{{ checkinDate }}" bindchange="onCheckinDateChange">
-        <van-cell title="寄养开始日期" value="{{ checkinDate || '请选择' }}" is-link />
+        <view class="custom-field">
+          <view class="custom-field__label">
+            <text class="custom-field__label-text">寄养开始日期</text>
+          </view>
+          <view class="custom-field__value">
+            <text class="custom-field__value-text {{ checkinDate ? '' : 'custom-field__value-text--placeholder' }}">{{ checkinDate || '请选择' }}</text>
+            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+          </view>
+        </view>
       </picker>
-      <van-field label="寄养天数" type="number" value="{{ stayDays }}" bind:change="onStayDaysChange" placeholder="请输入寄养天数"></van-field>
+      <view class="custom-field">
+        <view class="custom-field__label">
+          <text class="custom-field__label-text">寄养天数</text>
+        </view>
+        <input class="custom-field__input" placeholder="请输入寄养天数" value="{{ stayDays }}" bindinput="onStayDaysChange" type="number" placeholder-class="custom-field__placeholder" />
+      </view>
     </block>
 
-    <van-field label="联系电话" placeholder="请输入手机号" value="{{ phone }}" bind:change="onPhoneChange" type="number" required></van-field>
-    <van-field label="备注" placeholder="特殊需求说明（选填）" value="{{ remark }}" bind:change="onRemarkChange" type="textarea" autosize="{{ { minHeight: 60 } }}"></van-field>
+    <!-- 联系电话 -->
+    <view class="custom-field">
+      <view class="custom-field__label">
+        <text class="custom-field__required">*</text>
+        <text class="custom-field__label-text">联系电话</text>
+      </view>
+      <input class="custom-field__input" placeholder="请输入手机号" value="{{ phone }}" bindinput="onPhoneChange" type="number" placeholder-class="custom-field__placeholder" />
+    </view>
+
+    <!-- 备注 -->
+    <view class="custom-field custom-field--textarea">
+      <view class="custom-field__label">
+        <text class="custom-field__label-text">备注</text>
+      </view>
+      <textarea class="custom-field__textarea" placeholder="特殊需求说明（选填）" value="{{ remark }}" bindinput="onRemarkChange" placeholder-class="custom-field__placeholder" auto-height maxlength="200" />
+    </view>
+  </view>
+
+  <!-- 用户评价 -->
+  <view class="review-section">
+    <view class="review-header">
+      <text class="section-title">用户评价</text>
+      <view class="review-write-btn {{canReview ? 'review-write-btn--active' : ''}}" bindtap="openReview">
+        <van-icon name="edit" size="24rpx" color="{{canReview ? '#FF9800' : '#C4B8AC'}}" />
+        <text class="review-write-btn__text">写评价</text>
+      </view>
+    </view>
+
+    <!-- 评分概览 -->
+    <view class="review-overview" wx:if="{{totalReviews > 0}}">
+      <view class="review-overview__score">
+        <text class="review-overview__num">{{avgRating}}</text>
+        <view class="review-overview__stars">
+          <van-rate value="{{avgRatingRound}}" size="28rpx" color="#FF9800" void-color="#E0D5CC" readonly allow-half />
+        </view>
+        <text class="review-overview__count">{{totalReviews}}条评价</text>
+      </view>
+      <view class="review-overview__good">
+        <text class="review-overview__good-num">{{goodRate}}%</text>
+        <text class="review-overview__good-label">好评率</text>
+      </view>
+    </view>
+
+    <!-- 加载中 -->
+    <view class="loading-wrap" wx:if="{{reviewLoading}}">
+      <van-loading type="spinner" color="#FF9800" size="40rpx" />
+    </view>
+
+    <!-- 评价列表 -->
+    <view class="review-list" wx:if="{{!reviewLoading && reviews.length > 0}}">
+      <view class="review-item" wx:for="{{reviews}}" wx:key="_id">
+        <view class="review-item__header">
+          <view class="review-item__svc">
+            <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="small">{{item.catLabel}}</van-tag>
+            <text class="review-item__svc-name">{{item.serviceName}}</text>
+          </view>
+          <view class="review-item__stars">
+            <van-rate value="{{item.rating}}" size="24rpx" color="#FF9800" void-color="#E0D5CC" readonly />
+          </view>
+        </view>
+        <view class="review-item__body">
+          <text class="review-item__content">{{item.content}}</text>
+        </view>
+        <view class="review-item__footer">
+          <text class="review-item__pet">宠物: {{item.petName}}</text>
+          <text class="review-item__time">{{item.createTimeStr}}</text>
+        </view>
+        <!-- 机构回复 -->
+        <view class="review-item__reply" wx:if="{{item.reply}}">
+          <view class="reply-header">
+            <van-icon name="chat-o" size="24rpx" color="#FF9800" />
+            <text class="reply-label">机构回复</text>
+          </view>
+          <text class="reply-content">{{item.reply}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-review" wx:if="{{!reviewLoading && reviews.length === 0}}">
+      <van-icon name="comment-o" size="80rpx" color="#C4B8AC" />
+      <text class="empty-review__text">暂无评价，快来写第一条评价吧</text>
+    </view>
   </view>
 
   <!-- 底部操作 -->

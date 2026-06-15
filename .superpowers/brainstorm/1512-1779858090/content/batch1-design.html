@@ -1,0 +1,145 @@
+<h2>第一批优化：代码质量与维护性</h2>
+<p class="subtitle">解决技术债务，建立可维护的代码基础</p>
+
+<div class="section">
+  <h3>优化目标</h3>
+  <p>解决5个代码质量问题，建立统一的组件架构和设计系统，为后续优化奠定基础。</p>
+</div>
+
+<div class="section">
+  <h3>问题清单</h3>
+  <div class="cards">
+    <div class="card" data-choice="1" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>1. 14个页面缺少.wxss文件</h3>
+        <p><strong>问题：</strong>.less文件未编译为.wxss，样式可能无法生效</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>编译所有.less文件生成.wxss</li>
+          <li>或在app.json中确认Less编译器配置正确</li>
+        </ul>
+        <p><strong>影响：</strong>14个页面的样式显示问题</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="2" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>2. 缺少自定义组件抽取</h3>
+        <p><strong>问题：</strong>导航栏、空状态、评价弹窗等重复代码</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>创建<code>custom-nav-bar</code>组件</li>
+          <li>创建<code>empty-state</code>组件</li>
+          <li>创建<code>review-popup</code>组件</li>
+        </ul>
+        <p><strong>影响：</strong>减少约30%的重复代码</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="3" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>3. 变量未被充分利用</h3>
+        <p><strong>问题：</strong>硬编码颜色值，CSS变量和Less变量使用不足</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>统一使用CSS变量<code>--primary-color</code>等</li>
+          <li>更新<code>variable.less</code>定义品牌色</li>
+          <li>全局替换硬编码颜色值</li>
+        </ul>
+        <p><strong>影响：</strong>提升设计一致性，便于主题切换</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="4" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>4. 评价弹窗代码重复</h3>
+        <p><strong>问题：</strong>orders和order-detail页面有相同评价弹窗</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>抽取为<code>review-popup</code>组件</li>
+          <li>统一评价逻辑和样式</li>
+        </ul>
+        <p><strong>影响：</strong>减少代码重复，提升维护性</p>
+      </div>
+    </div>
+
+    <div class="card" data-choice="5" onclick="toggleSelect(this)">
+      <div class="card-body">
+        <h3>5. pet.wxml文件名异常</h3>
+        <p><strong>问题：</strong>存在<code>pet.wxml.wxml</code>双重后缀文件</p>
+        <p><strong>解决方案：</strong></p>
+        <ul>
+          <li>删除或重命名异常文件</li>
+          <li>确保文件命名规范</li>
+        </ul>
+        <p><strong>影响：</strong>避免潜在的文件引用问题</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>实施步骤</h3>
+  <div class="mockup">
+    <div class="mockup-header">第一批优化流程</div>
+    <div class="mockup-body">
+      <div style="display: flex; flex-direction: column; gap: 16px;">
+        <div style="background: #e3f2fd; padding: 12px; border-radius: 8px;">
+          <strong>步骤1：编译Less文件</strong><br>
+          检查并编译14个页面的.less文件，生成.wxss
+        </div>
+        <div style="background: #f3e5f5; padding: 12px; border-radius: 8px;">
+          <strong>步骤2：创建基础组件</strong><br>
+          创建custom-nav-bar、empty-state、review-popup组件
+        </div>
+        <div style="background: #e8f5e8; padding: 12px; border-radius: 8px;">
+          <strong>步骤3：统一变量系统</strong><br>
+          更新variable.less，定义品牌色变量，替换硬编码值
+        </div>
+        <div style="background: #fff3e0; padding: 12px; border-radius: 8px;">
+          <strong>步骤4：重构页面代码</strong><br>
+          使用新组件重构页面，删除重复代码
+        </div>
+        <div style="background: #fce4ec; padding: 12px; border-radius: 8px;">
+          <strong>步骤5：清理异常文件</strong><br>
+          处理pet.wxml.wxml异常文件
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>预期成果</h3>
+  <div class="pros-cons">
+    <div class="pros">
+      <h4>收益</h4>
+      <ul>
+        <li>14个页面样式正常显示</li>
+        <li>代码重复减少30%</li>
+        <li>建立统一的组件架构</li>
+        <li>设计系统基础建立</li>
+        <li>维护效率提升50%</li>
+      </ul>
+    </div>
+    <div class="cons">
+      <h4>风险</h4>
+      <ul>
+        <li>需要全面测试样式兼容性</li>
+        <li>组件抽取可能影响现有逻辑</li>
+        <li>变量替换需要仔细检查</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>验证标准</h3>
+  <ul>
+    <li>所有页面样式正常显示</li>
+    <li>组件功能完整，无回归问题</li>
+    <li>代码重复率降低</li>
+    <li>设计变量使用率提升</li>
+    <li>无异常文件存在</li>
+  </ul>
+</div>

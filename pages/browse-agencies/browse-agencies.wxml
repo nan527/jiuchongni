@@ -3,67 +3,318 @@
 
   <!-- 自定义导航栏 -->
   <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
-    <view class="nav-bar__inner">
+    <view class="nav-bar__inner" style="height: {{navBarContentHeight}}px;">
       <view class="nav-bar__back" bindtap="onGoBack">
         <van-icon name="arrow-left" size="40rpx" color="#fff" />
       </view>
-      <text class="nav-bar__title">浏览机构</text>
+      <text class="nav-bar__title">机构与服务</text>
       <view class="nav-bar__right"></view>
     </view>
   </view>
 
-  <!-- 搜索栏 -->
+  <!-- 搜索栏（带搜索按钮） -->
   <view class="search-bar">
-    <van-search
-      value="{{searchVal}}"
-      placeholder="搜索机构名称、地址"
-      shape="round"
-      background="transparent"
-      bind:change="onSearchChange"
-      bind:search="onSearch"
-    />
-  </view>
-
-  <!-- 分类筛选 -->
-  <scroll-view class="cat-scroll" scroll-x enable-flex>
-    <view
-      class="cat-pill {{activeType === item.key ? 'cat-pill--active' : ''}}"
-      wx:for="{{typeList}}"
-      wx:key="key"
-      bindtap="onTypeTap"
-      data-key="{{item.key}}"
-    >
-      {{item.label}}
+    <view class="search-bar__inner">
+      <view class="search-bar__input-wrap">
+        <van-icon name="search" size="32rpx" color="#8C7A6B" class="search-bar__icon" />
+        <input
+          class="search-bar__input"
+          value="{{searchVal}}"
+          placeholder="搜索机构或服务"
+          confirm-type="search"
+          bindinput="onSearchChange"
+          bindconfirm="onSearch"
+        />
+        <van-icon
+          wx:if="{{searchVal}}"
+          name="clear"
+          size="32rpx"
+          color="#8C7A6B"
+          class="search-bar__clear"
+          bindtap="onSearchClear"
+        />
+      </view>
+      <view class="search-bar__btn" bindtap="onSearch">搜索</view>
+      <view class="search-bar__filter-btn" bindtap="openFilterPanel">
+        <van-icon name="filter-o" size="32rpx" color="#fff" />
+      </view>
     </view>
-  </scroll-view>
 
-  <!-- 加载中 -->
-  <view class="loading-wrap" wx:if="{{loading}}">
-    <van-loading type="spinner" color="#FF9800" size="48rpx" />
-  </view>
-
-  <!-- 机构列表 -->
-  <view class="agency-list" wx:if="{{!loading && agencyList.length > 0}}">
-    <view class="agency-card" wx:for="{{agencyList}}" wx:key="_id" bindtap="onAgencyTap" data-id="{{item._id}}">
-      <image class="agency-card__img" src="{{item.storefrontImage || item.envImages[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
-      <view class="agency-card__body">
-        <text class="agency-card__name">{{item.orgName}}</text>
-        <view class="agency-card__type">
-          <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.businessType}}</van-tag>
-        </view>
-        <view class="agency-card__loc">
-          <van-icon name="location-o" size="22rpx" color="#8C7A6B" />
-          <text class="agency-card__loc-text">{{item.detailAddress || item.region || '暂无地址'}}</text>
-        </view>
-        <text class="agency-card__intro" wx:if="{{item.orgIntro}}">{{item.orgIntro}}</text>
+    <!-- 活跃筛选标签 -->
+    <view class="filter-tags" wx:if="{{selectedRegionText || minRating > 0 || sortByDistance || (activeTab === 'service' && (priceRange[0] > 0 || priceRange[1] < 1000))}}">
+      <view class="filter-tag" wx:if="{{selectedRegionText}}" bindtap="openFilterPanel">
+        <text>{{selectedRegionText}}</text>
+        <van-icon name="cross" size="18rpx" color="#8C7A6B" />
+      </view>
+      <view class="filter-tag" wx:if="{{minRating > 0}}" bindtap="openFilterPanel">
+        <text>{{minRating}}星以上</text>
+        <van-icon name="cross" size="18rpx" color="#8C7A6B" />
+      </view>
+      <view class="filter-tag" wx:if="{{sortByDistance}}" bindtap="openFilterPanel">
+        <text>距离最近</text>
+        <van-icon name="cross" size="18rpx" color="#8C7A6B" />
+      </view>
+      <view class="filter-tag" wx:if="{{activeTab === 'service' && (priceRange[0] > 0 || priceRange[1] < 1000)}}" bindtap="openFilterPanel">
+        <text>¥{{priceRange[0]}}-{{priceRange[1]}}</text>
+        <van-icon name="cross" size="18rpx" color="#8C7A6B" />
       </view>
     </view>
   </view>
 
-  <!-- 空状态 -->
-  <view class="empty-wrap" wx:if="{{!loading && agencyList.length === 0}}">
-    <van-icon name="shop-o" size="80rpx" color="#F0E6D8" />
-    <text class="empty-wrap__text">暂无相关机构</text>
+  <!-- 位置权限提示 -->
+  <view class="location-tip" wx:if="{{(locationAuthStatus === 'denied' || locationAuthStatus === 'unknown') && sortByDistance && !userLocation}}">
+    <van-icon name="location-o" size="28rpx" color="#FF9800" />
+    <text>未获取位置权限，无法按距离排序</text>
+    <view class="location-tip__actions">
+      <view class="location-tip__btn location-tip__btn--secondary" bindtap="onChooseLocation">手动选位置</view>
+      <view class="location-tip__btn" bindtap="onOpenSetting">去设置</view>
+    </view>
   </view>
+
+  <!-- 机构 / 服务 Tab 切换 -->
+  <view class="tab-switch">
+    <view
+      class="tab-switch__item {{activeTab === 'agency' ? 'tab-switch__item--active' : ''}}"
+      bindtap="onTabTap"
+      data-tab="agency"
+    >
+      <van-icon name="shop-o" size="28rpx" />
+      <text>机构</text>
+    </view>
+    <view
+      class="tab-switch__item {{activeTab === 'service' ? 'tab-switch__item--active' : ''}}"
+      bindtap="onTabTap"
+      data-tab="service"
+    >
+      <van-icon name="service-o" size="28rpx" />
+      <text>服务</text>
+    </view>
+  </view>
+
+  <!-- 地图模式切换 -->
+  <view class="map-toggle-bar">
+    <view class="map-toggle-btn" bindtap="toggleMap">
+      <van-icon name="{{showMap ? 'list-o' : 'map-marked'}}" size="28rpx" color="#FF9800" />
+      <text>{{showMap ? '列表模式' : '地图模式'}}</text>
+    </view>
+  </view>
+
+  <!-- 地图组件 -->
+  <view class="map-container" wx:if="{{showMap}}">
+    <map
+      id="browseMap"
+      class="browse-map"
+      latitude="{{mapLatitude}}"
+      longitude="{{mapLongitude}}"
+      scale="12"
+      markers="{{mapMarkers}}"
+      bindmarkertap="onMapMarkerTap"
+      show-location
+    />
+  </view>
+
+  <!-- ===== 机构视图 ===== -->
+  <block wx:if="{{activeTab === 'agency'}}">
+    <!-- 机构分类筛选 -->
+    <scroll-view class="cat-scroll" scroll-x enable-flex>
+      <view
+        class="cat-pill {{activeType === item.key ? 'cat-pill--active' : ''}}"
+        wx:for="{{agencyTypeList}}"
+        wx:key="key"
+        bindtap="onTypeTap"
+        data-key="{{item.key}}"
+      >
+        {{item.label}}
+      </view>
+    </scroll-view>
+
+    <!-- 加载中 -->
+    <view class="loading-wrap" wx:if="{{loading}}">
+      <van-loading type="spinner" color="#FF9800" size="48rpx" />
+    </view>
+
+    <!-- 机构列表 -->
+    <view class="agency-list" wx:if="{{!loading && agencyList.length > 0}}">
+      <view class="agency-card" wx:for="{{agencyList}}" wx:key="_id" bindtap="onAgencyTap" data-id="{{item._id}}" hover-class="agency-card--active" hover-stay-time="100">
+        <image class="agency-card__img" src="{{item.storefrontImage || item.envImages[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
+        <view class="agency-card__body">
+          <view class="agency-card__header">
+            <text class="agency-card__name">{{item.orgName}}</text>
+            <view class="agency-card__rating" wx:if="{{item._rating > 0}}">
+              <van-icon name="star" size="20rpx" color="#FF9800" />
+              <text>{{item._rating}}</text>
+            </view>
+          </view>
+          <view class="agency-card__type">
+            <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.businessType}}</van-tag>
+            <text class="agency-card__distance" wx:if="{{item._distanceStr}}">{{item._distanceStr}}</text>
+          </view>
+          <view class="agency-card__loc">
+            <van-icon name="location-o" size="22rpx" color="#8C7A6B" />
+            <text class="agency-card__loc-text">{{item.detailAddress || item.region || '暂无地址'}}</text>
+          </view>
+          <text class="agency-card__intro" wx:if="{{item.orgIntro}}">{{item.orgIntro}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-wrap" wx:if="{{!loading && agencyList.length === 0}}">
+      <van-icon name="shop-o" size="80rpx" color="#F0E6D8" />
+      <text class="empty-wrap__text">暂无相关机构</text>
+    </view>
+  </block>
+
+  <!-- ===== 服务视图 ===== -->
+  <block wx:if="{{activeTab === 'service'}}">
+    <!-- 服务分类筛选 -->
+    <scroll-view class="cat-scroll" scroll-x enable-flex>
+      <view
+        class="cat-pill {{activeCategory === item.key ? 'cat-pill--active' : ''}}"
+        wx:for="{{serviceCategoryList}}"
+        wx:key="key"
+        bindtap="onCategoryTap"
+        data-key="{{item.key}}"
+      >
+        {{item.label}}
+      </view>
+    </scroll-view>
+
+    <!-- 加载中 -->
+    <view class="loading-wrap" wx:if="{{loading}}">
+      <van-loading type="spinner" color="#FF9800" size="48rpx" />
+    </view>
+
+    <!-- 服务列表 -->
+    <view class="svc-list" wx:if="{{!loading && serviceList.length > 0}}">
+      <view class="svc-card" wx:for="{{serviceList}}" wx:key="_id" bindtap="onServiceTap" data-id="{{item._id}}" hover-class="svc-card--active" hover-stay-time="100">
+        <image class="svc-card__img" src="{{item.images[0] || '/static/pet/logo.png'}}" mode="aspectFill" />
+        <view class="svc-card__body">
+          <view class="svc-card__header">
+            <text class="svc-card__name">{{item.name}}</text>
+            <view class="svc-card__rating" wx:if="{{_agencyRatingMap[item.agencyProfileId] > 0}}">
+              <van-icon name="star" size="20rpx" color="#FF9800" />
+              <text>{{_agencyRatingMap[item.agencyProfileId]}}</text>
+            </view>
+          </view>
+          <view class="svc-card__meta">
+            <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item._catTitle}}</van-tag>
+            <text class="svc-card__agency" wx:if="{{item._agencyName}}">{{item._agencyName}}</text>
+            <text class="svc-card__distance" wx:if="{{item._distanceStr}}">{{item._distanceStr}}</text>
+          </view>
+          <view class="svc-card__bottom">
+            <text class="svc-card__price">¥{{item.price}}</text>
+            <text class="svc-card__unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
+          </view>
+          <text class="svc-card__desc" wx:if="{{item.desc}}">{{item.desc}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-wrap" wx:if="{{!loading && serviceList.length === 0}}">
+      <van-icon name="search" size="80rpx" color="#F0E6D8" />
+      <text class="empty-wrap__text">暂无相关服务</text>
+    </view>
+  </block>
+
+  <!-- 筛选面板 -->
+  <van-popup
+    show="{{showFilterPanel}}"
+    position="right"
+    custom-style="width: 80vw; height: 100vh;"
+    bind:close="closeFilterPanel"
+  >
+    <view class="filter-panel">
+      <view class="filter-panel__header">
+        <text class="filter-panel__title">筛选条件</text>
+        <van-icon name="cross" size="36rpx" color="#8C7A6B" bindtap="closeFilterPanel" />
+      </view>
+
+      <scroll-view class="filter-panel__body" scroll-y>
+        <!-- 价格区间（仅服务） -->
+        <view class="filter-card" wx:if="{{activeTab === 'service'}}">
+          <text class="filter-card__title">价格区间</text>
+          <view class="filter-price">
+            <text class="filter-price__label">¥{{priceRange[0]}} - ¥{{priceRange[1]}}</text>
+            <van-slider
+              value="{{priceRange}}"
+              min="{{0}}"
+              max="{{1000}}"
+              step="{{10}}"
+              bar-height="8rpx"
+              active-color="#FF9800"
+              bind:change="onPriceChange"
+            />
+          </view>
+        </view>
+
+        <!-- 区域选择 -->
+        <view class="filter-card">
+          <text class="filter-card__title">所在区域</text>
+          <picker mode="region" bindchange="onRegionPickerChange" value="{{selectedRegionArray}}">
+            <view class="region-picker-trigger">
+              <van-icon name="location-o" size="32rpx" color="#FF9800" />
+              <text class="region-picker-trigger__text">{{selectedRegionText || '请选择省 / 市 / 区'}}</text>
+              <van-icon name="arrow" size="24rpx" color="#A89585" />
+            </view>
+          </picker>
+        </view>
+
+        <!-- 评分 -->
+        <view class="filter-card">
+          <text class="filter-card__title">最低评分</text>
+          <view class="filter-rating">
+            <van-rate
+              value="{{minRating}}"
+              size="{{40}}"
+              color="#FF9800"
+              void-color="#E0E0E0"
+              bind:change="onRatingChange"
+            />
+            <text class="filter-rating__text" wx:if="{{minRating > 0}}">{{minRating}}星以上</text>
+          </view>
+        </view>
+
+        <!-- 排序与其他 -->
+        <view class="filter-card">
+          <text class="filter-card__title">更多选项</text>
+          <view class="switch-row">
+            <view class="switch-row__info">
+              <van-icon name="location-o" size="32rpx" color="#FF9800" />
+              <text class="switch-row__label">按距离最近排序</text>
+            </view>
+            <van-switch
+              checked="{{sortByDistance}}"
+              active-color="#FF9800"
+              bind:change="onSortByDistanceChange"
+            />
+          </view>
+          <view class="switch-row">
+            <view class="switch-row__info">
+              <van-icon name="clock-o" size="32rpx" color="#FF9800" />
+              <text class="switch-row__label">仅看营业中</text>
+            </view>
+            <van-switch
+              checked="{{isOpenNow}}"
+              active-color="#FF9800"
+              bind:change="onOpenNowChange"
+            />
+          </view>
+        </view>
+      </scroll-view>
+
+      <view class="filter-panel__footer">
+        <view class="filter-panel__reset" bindtap="resetFilters">
+          <van-icon name="replay" size="28rpx" color="#8C7A6B" />
+          <text>重置</text>
+        </view>
+        <view class="filter-panel__confirm" bindtap="confirmFilters">
+          <text>确认</text>
+          <van-icon name="success" size="28rpx" color="#fff" />
+        </view>
+      </view>
+    </view>
+  </van-popup>
 
 </view>

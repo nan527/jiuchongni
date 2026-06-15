@@ -12,6 +12,7 @@ exports.main = async (event, context) => {
   const { action } = event;
 
   // 按 action 分发不同场景
+  try {
   switch (action) {
     case 'analyze_health':
       return await analyzeHealth(event);
@@ -65,8 +66,18 @@ exports.main = async (event, context) => {
       return await smartMatchParse(event);
     case 'health_risk_analysis':
       return await healthRiskAnalysis(event);
+    case 'pet_service_customize':
+      return await petServiceCustomize(event);
+    case 'update_model_prices':
+      return await updateModelPrices(event);
+    case 'cleanup_duplicate_configs':
+      return await cleanupDuplicateConfigs();
     default:
       return { success: false, msg: '未知操作: ' + action };
+  }
+  } catch (mainErr) {
+    console.error('[ai_handler] 未捕获异常:', mainErr.message);
+    return { success: false, msg: '服务内部错误: ' + mainErr.message };
   }
 };
 
@@ -181,16 +192,19 @@ async function analyzeHealth(event) {
 当前数据: 体重 ${healthData.weight || '未知'}kg, 进食量 ${healthData.food || '正常'}。
 请根据以上数据，给出一段简短的(50字以内)养护建议，如果发现体重异常请特别提示。`;
 
-    const response = await axios.post(API_URL, {
-      model: 'deepseek-chat',
-      messages: [{ role: 'user', content: prompt }],
-      temperature: 0.7,
-    }, {
-      headers: { Authorization: `Bearer ${API_KEY}` },
-      timeout: 15000,
-    });
+    const apiResult = await callAnalysisAPI(
+      [{ role: 'user', content: prompt }],
+      { temperature: 0.7, max_tokens: 500 }
+    );
 
-    const suggestion = response.data.choices[0].message.content;
+    if (!apiResult.success) {
+      return {
+        success: false,
+        suggestion: '分析 API 未配置或调用失败，请在管理后台设置 API Key。',
+      };
+    }
+
+    const suggestion = apiResult.content;
 
     return {
       success: true,
@@ -1016,6 +1030,84 @@ function getTodayStr() {
 }
 
 /**
+ * 统一调用分析 API — 强制使用 MiMo 模型
+ * apiKey 优先从 api_configs 读取，其次用环境变量 MIMO_API_KEY / AI_API_KEY
+ */
+async function callAnalysisAPI(messages, options = {}) {
+  const DEFAULT_MIMO_ENDPOINT = 'https://token-plan-cn.xiaomimimo.com/v1/chat/completions';
+  const db = cloud.database();
+
+  // 1. 从 api_configs 获取 MiMo 配置
+  let apiKey = '';
+  let model = 'mimo-v2.5-pro';
+  let endpoint = DEFAULT_MIMO_ENDPOINT;
+
+  try {
+    const configRes = await db.collection('api_configs')
+      .where({ category: 'analysis', enabled: true })
+      .get();
+    const configs = (configRes.data || [])
+      .sort((a, b) => {
+        const tierOrder = { high: 0, medium: 1, low: 2 };
+        return (tierOrder[a.tier] || 2) - (tierOrder[b.tier] || 2);
+      });
+
+    console.log('[callAnalysisAPI] 找到 analysis 配置:', configs.length, '条');
+    for (const c of configs) {
+      console.log(`[callAnalysisAPI] 配置: model=${c.model}, enabled=${c.enabled}, hasKey=${!!c.apiKey}, endpoint=${c.customEndpoint || '默认'}`);
+      if (c.apiKey) {
+        apiKey = c.apiKey;
+        model = c.model;
+        if (c.customEndpoint) endpoint = c.customEndpoint;
+        break;
+      }
+    }
+  } catch (e) {
+    console.warn('[callAnalysisAPI] 读取 api_configs 失败:', e.message);
+  }
+
+  // 2. 兜底：环境变量
+  if (!apiKey) {
+    apiKey = process.env.MIMO_API_KEY || process.env.AI_API_KEY || '';
+    if (apiKey) console.log('[callAnalysisAPI] 使用环境变量 API Key');
+  }
+
+  if (!apiKey) {
+    return { success: false, msg: '未配置 MiMo API Key，请在管理后台或云函数环境变量中配置' };
+  }
+
+  console.log(`[callAnalysisAPI] 调用: endpoint=${endpoint}, model=${model}, key前缀=${apiKey.slice(0, 6)}...`);
+
+  // 3. 调用 MiMo
+  try {
+    const res = await axios.post(endpoint, {
+      model,
+      messages,
+      temperature: options.temperature || 0.5,
+      max_tokens: options.max_tokens || 1500,
+    }, {
+      headers: { Authorization: `Bearer ${apiKey}` },
+      timeout: options.timeout || 60000,
+    });
+
+    const choice = res.data.choices[0];
+    const content = (choice.message && (choice.message.content || choice.message.reasoning_content)) || '';
+    if (content) {
+      return { success: true, content, model };
+    }
+    return { success: false, msg: 'MiMo 返回内容为空' };
+  } catch (err) {
+    const status = err.response ? err.response.status : '无';
+    const errData = err.response ? JSON.stringify(err.response.data).slice(0, 200) : '';
+    console.error(`[callAnalysisAPI] ${model} 调用失败: status=${status}, message=${err.message}, data=${errData}`);
+    if (status === 401) {
+      return { success: false, msg: `MiMo API Key 无效（401），请在管理后台检查 apiKey 是否正确。endpoint=${endpoint}` };
+    }
+    return { success: false, msg: `MiMo 调用失败: ${err.message}` };
+  }
+}
+
+/**
  * 检查用户今天的免费额度
  * @param {Object} event - { model }
  */
@@ -1298,18 +1390,45 @@ async function initApiConfigs() {
     },
     {
       category: 'analysis',
-      provider: 'custom',
-      model: 'analysis-reserved',
-      modelName: '分析 API（预留）',
-      tier: 'low',
+      provider: 'xiaomi',
+      model: 'mimo-v2.5-pro',
+      modelName: 'MiMo 智能分析',
+      tier: 'high',
       apiKey: '',
-      enabled: false,
+      enabled: true,
+      dailyFreeQuota: 0,
+      pricePerUse: 0,
+    },
+    {
+      category: 'analysis',
+      provider: 'xiaomi',
+      model: 'mimo-v2.5',
+      modelName: 'MiMo 分析（备用）',
+      tier: 'medium',
+      apiKey: '',
+      enabled: true,
       dailyFreeQuota: 0,
       pricePerUse: 0,
     },
   ];
 
   try {
+    // 先清理重复条目：同一个 model 只保留一条（取最早的那条）
+    const allConfigs = await db.collection('api_configs').get();
+    const seen = {};
+    const duplicates = [];
+    for (const item of (allConfigs.data || [])) {
+      const key = item.model;
+      if (seen[key]) {
+        duplicates.push(item._id);
+      } else {
+        seen[key] = true;
+      }
+    }
+    for (const id of duplicates) {
+      await db.collection('api_configs').doc(id).remove();
+    }
+
     // 检查每个预设模型是否存在，不存在则创建
     let created = 0;
     for (const preset of presets) {
@@ -1322,7 +1441,7 @@ async function initApiConfigs() {
       }
     }
 
-    return { success: true, msg: `初始化完成，新增 ${created} 条` };
+    return { success: true, msg: `初始化完成，清理 ${duplicates.length} 条重复，新增 ${created} 条` };
   } catch (err) {
     console.error('[initApiConfigs] 失败', err);
     return { success: false, msg: err.message || '初始化失败' };
@@ -1386,18 +1505,8 @@ async function insertTestHealth(event) {
 async function smartMatchParse(event) {
   const { userText = '', petInfo = {} } = event;
   const trimmedText = (userText || '').slice(0, 500);
-  const db = cloud.database();
 
   try {
-    // 获取 mimo-v2.5-pro 模型配置
-    const configRes = await db.collection('api_configs')
-      .where({ model: 'mimo-v2.5-pro', enabled: true })
-      .get();
-    const apiKey = configRes.data[0]?.apiKey;
-    if (!apiKey) {
-      return { success: false, msg: 'AI 模型未配置' };
-    }
-
     const systemPrompt = `你是宠物服务需求分析助手。请分析用户需求并返回一个JSON对象，不要返回其他任何文字。
 
 宠物信息：${JSON.stringify(petInfo)}
@@ -1418,37 +1527,20 @@ serviceCategory：foster寄养 grooming美容 medical医疗 door上门 extra商�
 urgency：normal或urgent
 location：用户提到的城市/省份名，没有则为null`;
 
-    const res = await axios.post('https://token-plan-cn.xiaomimimo.com/v1/chat/completions', {
-      model: 'mimo-v2.5-pro',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: trimmedText || '请根据宠物信息推荐' },
-      ],
-      temperature: 0.3,
-      max_tokens: 2000,
-    }, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-      timeout: 60000,
-    });
+    const apiResult = await callAnalysisAPI([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: trimmedText || '请根据宠物信息推荐' },
+    ], { temperature: 0.3, max_tokens: 2000 });
 
-    console.log('[smartMatchParse] API 响应状态:', res.status);
-    console.log('[smartMatchParse] API 完整响应:', JSON.stringify(res.data).slice(0, 1000));
-
-    // 检查响应结构
-    if (!res.data || !res.data.choices || !res.data.choices[0]) {
-      return { success: false, msg: 'API 响应结构异常: ' + JSON.stringify(res.data).slice(0, 500) };
+    if (!apiResult.success || !apiResult.content) {
+      console.warn('[smartMatchParse] AI 调用失败，使用规则降级:', apiResult.msg);
+      return fallbackSmartMatch(trimmedText, petInfo);
     }
 
-    const choice = res.data.choices[0];
-    const content = (choice.message && choice.message.content) || '';
-    const reasoning = (choice.message && choice.message.reasoning_content) || '';
-    console.log('[smartMatchParse] content:', content.slice(0, 300));
-    console.log('[smartMatchParse] reasoning:', reasoning.slice(0, 300));
+    const content = apiResult.content || '';
 
-    // 尝试从文本中提取有效 JSON（处理嵌套括号）
     function extractJson(text) {
       if (!text) return null;
-      // 找所有 { 的位置，从每个位置尝试匹配到对应的 }
       const results = [];
       for (let i = 0; i < text.length; i++) {
         if (text[i] !== '{') continue;
@@ -1466,28 +1558,111 @@ location：用户提到的城市/省份名，没有则为null`;
           }
         }
       }
-      // 优先返回最后一个匹配（最终答案通常在最后）
       return results.length > 0 ? results[results.length - 1] : null;
     }
 
-    // 策略1：从 content 提取
-    let parsed = extractJson(content);
-    // 策略2：从 reasoning_content 提取
-    if (!parsed) parsed = extractJson(reasoning);
-    // 策略3：合并两个字段尝试
-    if (!parsed && content && reasoning) {
-      parsed = extractJson(reasoning + ' ' + content);
-    }
-
+    const parsed = extractJson(content);
     if (parsed) {
       return { success: true, parsed };
     }
 
-    return { success: false, msg: 'AI 返回格式异常: ' + (content || reasoning).slice(0, 300) };
+    return { success: false, msg: 'AI 返回格式异常: ' + content.slice(0, 300) };
   } catch (e) {
-    console.error('[smartMatchParse]', e.message);
-    return { success: false, msg: '请求失败: ' + e.message };
+    console.error('[smartMatchParse] 异常，使用规则降级:', e.message);
+    return fallbackSmartMatch((event.userText || '').slice(0, 500), event.petInfo || {});
   }
+}
+
+/**
+ * 规则降级：AI 失败时基于关键词提取需求
+ */
+function fallbackSmartMatch(userText, petInfo) {
+  const text = (userText || '').toLowerCase();
+  const keywords = [];
+  const preferences = [];
+  let serviceCategory = null;
+  let budget = null;
+  let location = null;
+  let urgency = 'normal';
+
+  // 服务类型识别
+  if (/寄养|托管|出差|旅行|放家里没人/.test(text)) {
+    serviceCategory = 'foster';
+    keywords.push('寄养');
+  } else if (/洗澡|美容|剪毛|造型|修剪/.test(text)) {
+    serviceCategory = 'grooming';
+    keywords.push('美容');
+  } else if (/看病|医疗|生病|打针|体检|疫苗|绝育/.test(text)) {
+    serviceCategory = 'medical';
+    keywords.push('医疗');
+  } else if (/上门|到家|送上门/.test(text)) {
+    serviceCategory = 'door';
+    keywords.push('上门服务');
+  } else if (/狗粮|猫粮|零食|吃的|用品|玩具/.test(text)) {
+    serviceCategory = 'extra';
+    keywords.push('商品');
+  }
+
+  // 宠物类型
+  if (/猫|喵/.test(text)) keywords.push('猫');
+  if (/狗|犬|汪/.test(text)) keywords.push('狗');
+  if (petInfo.species) keywords.push(petInfo.species);
+  if (petInfo.name) keywords.push(petInfo.name);
+
+  // 偏好提取
+  if (/安静|胆小|怕生|内向/.test(text)) { preferences.push('安静'); keywords.push('安静'); }
+  if (/监控|摄像头|24小时/.test(text)) { preferences.push('监控'); keywords.push('监控'); }
+  if (/干净|卫生|消毒/.test(text)) { preferences.push('干净'); keywords.push('干净'); }
+  if (/便宜|实惠|省钱|性价比/.test(text)) { preferences.push('实惠'); keywords.push('实惠'); }
+  if (/近|附近|旁边|就近/.test(text)) { keywords.push('附近'); }
+  if (/好|优质|专业|靠谱/.test(text)) { preferences.push('优质'); }
+
+  // 预算提取
+  const budgetMatch = text.match(/(\d+)\s*元/);
+  if (budgetMatch) {
+    const maxBudget = parseInt(budgetMatch[1]);
+    budget = { min: null, max: maxBudget };
+    keywords.push(maxBudget + '元');
+  }
+
+  // 地点提取
+  const provinces = ['北京','天津','上海','重庆','河北','山西','辽宁','吉林','黑龙江','江苏','浙江','安徽','福建','江西','山东','河南','湖北','湖南','广东','海南','四川','贵州','云南','陕西','甘肃','青海','台湾','内蒙古','广西','西藏','宁夏','新疆'];
+  const cities = ['北京','天津','上海','重庆','石家庄','唐山','保定','邯郸','太原','大同','临汾','沈阳','大连','鞍山','长春','吉林','哈尔滨','齐齐哈尔','大庆','牡丹江','南京','苏州','无锡','常州','杭州','宁波','温州','合肥','芜湖','马鞍山','福州','厦门','泉州','南昌','赣州','九江','济南','青岛','烟台','郑州','洛阳','开封','武汉','宜昌','襄阳','长沙','株洲','湘潭','广州','深圳','东莞','佛山','海口','三亚','成都','绵阳','德阳','贵阳','遵义','昆明','大理','丽江','西安','咸阳','宝鸡','兰州','天水','西宁','台北','高雄','呼和浩特','包头','南宁','柳州','桂林','拉萨','银川','乌鲁木齐','伊宁'];
+  for (const city of [...cities, ...provinces]) {
+    if (text.includes(city)) {
+      location = city;
+      keywords.push(city);
+      break;
+    }
+  }
+
+  // 紧急度
+  if (/急|马上|今天|立刻|尽快|赶紧/.test(text)) {
+    urgency = 'urgent';
+    keywords.push('紧急');
+  }
+
+  // 确保有基础关键词
+  if (keywords.length === 0) {
+    keywords.push(petInfo.species || '宠物', '服务');
+  }
+  if (!serviceCategory) {
+    keywords.push('服务');
+  }
+
+  return {
+    success: true,
+    parsed: {
+      serviceCategory,
+      keywords: [...new Set(keywords)].slice(0, 8),
+      budget,
+      duration: null,
+      preferences: [...new Set(preferences)],
+      petType: (petInfo.species || '').includes('猫') ? 'cat' : (petInfo.species || '').includes('狗') ? 'dog' : 'other',
+      urgency,
+      location,
+    },
+  };
 }
 
 /**
@@ -1496,18 +1671,9 @@ location：用户提到的城市/省份名，没有则为null`;
  */
 async function healthRiskAnalysis(event) {
   const { pet_info = {}, health_records = [] } = event;
-  const db = cloud.database();
+  console.log('[healthRiskAnalysis] 开始分析, pet:', pet_info.name, 'records:', health_records.length);
 
   try {
-    // 获取 MiMo API 配置
-    const configRes = await db.collection('api_configs')
-      .where({ model: 'mimo-v2.5-pro', enabled: true })
-      .get();
-    const apiKey = configRes.data[0]?.apiKey;
-    if (!apiKey) {
-      return fallbackRiskAnalysis(pet_info, health_records);
-    }
-
     // 整理健康数据摘要
     const now = new Date();
     const records = health_records.slice(0, 30);
@@ -1540,25 +1706,19 @@ async function healthRiskAnalysis(event) {
 level只能是high、warning或info
 最多5条风险，没有风险时risks为空数组`;
 
-    const res = await axios.post('https://token-plan-cn.xiaomimimo.com/v1/chat/completions', {
-      model: 'mimo-v2.5-pro',
-      messages: [
-        { role: 'system', content: systemPrompt },
-        { role: 'user', content: '请分析这只宠物的健康风险' },
-      ],
-      temperature: 0.3,
-      max_tokens: 1500,
-    }, {
-      headers: { Authorization: `Bearer ${apiKey}` },
-      timeout: 60000,
-    });
+    const apiResult = await callAnalysisAPI([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: '请分析这只宠物的健康风险' },
+    ], { temperature: 0.3, max_tokens: 1500, timeout: 30000 });
 
-    const choice = res.data.choices[0];
-    const raw = (choice.message && (choice.message.content || choice.message.reasoning_content)) || '';
+    console.log('[healthRiskAnalysis] API 结果:', apiResult.success, apiResult.msg || 'ok');
 
-    if (!raw) {
+    if (!apiResult.success || !apiResult.content) {
+      console.warn('[healthRiskAnalysis] API 失败，使用规则降级:', apiResult.msg);
       return fallbackRiskAnalysis(pet_info, health_records);
     }
+
+    const raw = apiResult.content;
 
     // 提取 JSON
     function extractJson(text) {
@@ -1588,7 +1748,7 @@ level只能是high、warning或info
 
     return fallbackRiskAnalysis(pet_info, health_records);
   } catch (e) {
-    console.error('[healthRiskAnalysis]', e.message);
+    console.error('[healthRiskAnalysis] 异常:', e.message, e.stack);
     return fallbackRiskAnalysis(pet_info, health_records);
   }
 }
@@ -1644,4 +1804,244 @@ function fallbackRiskAnalysis(petInfo, records) {
     '有需要关注的事项，建议留意观察';
 
   return { success: true, risks, summary };
+}
+
+/**
+ * 宠物服务个性化定制
+ * 根据宠物信息和健康记录，生成个性化寄养方案
+ * 输入: { pet_info: { name, species, age, character, special_needs }, health_records: [] }
+ * 输出: { success, plan: { diet, services, careTips, summary } }
+ */
+async function petServiceCustomize(event) {
+  const { pet_info = {}, health_records = [] } = event;
+
+  try {
+    // 整理健康记录摘要
+    const records = health_records.slice(0, 20);
+    const weightRecords = records.filter(r => r.type === 'weight').slice(0, 5);
+    const vaccineRecords = records.filter(r => r.type === 'vaccine').slice(0, 3);
+    const checkupRecords = records.filter(r => r.type === 'checkup').slice(0, 2);
+    const foodRecords = records.filter(r => r.type === 'food').slice(0, 3);
+
+    const healthSummary = [
+      weightRecords.length > 0 ? `体重记录：${weightRecords.map(r => `${r.value}kg(${r.createTime ? r.createTime.slice(0, 10) : '未知'})`).join(', ')}` : '',
+      vaccineRecords.length > 0 ? `疫苗记录：${vaccineRecords.map(r => `${r.value || r.vaccine_name}(${r.createTime ? r.createTime.slice(0, 10) : '未知'})`).join(', ')}` : '',
+      checkupRecords.length > 0 ? `体检记录：${checkupRecords.map(r => `${r.result || r.value}(${r.createTime ? r.createTime.slice(0, 10) : '未知'})`).join(', ')}` : '',
+      foodRecords.length > 0 ? `饮食记录：${foodRecords.map(r => `${r.food_intake || r.value}(${r.createTime ? r.createTime.slice(0, 10) : '未知'})`).join(', ')}` : '',
+    ].filter(Boolean).join('\n') || '暂无健康记录';
+
+    const systemPrompt = `你是一位专业的宠物寄养顾问。请根据宠物信息和健康记录，为这只宠物定制个性化的寄养服务方案。只返回JSON，不要返回其他文字。
+
+宠物信息：
+- 名字：${pet_info.name || '未知'}
+- 品种：${pet_info.species || '未知'}
+- 年龄：${pet_info.age || '未知'}岁
+- 性格：${pet_info.character || '未知'}
+- 特殊需求：${pet_info.special_needs || '无'}
+
+健康记录摘要：
+${healthSummary}
+
+请返回JSON对象，字段如下：
+- diet: 特殊饮食建议（字符串，50字以内）
+- services: 推荐的额外服务数组（如"安静单间"、"额外陪伴"、"定时喂药"、"24小时监控"等，3-5项）
+- careTips: 护理注意事项数组（2-4项）
+- summary: 方案总体描述（字符串，60字以内）
+
+示例输出：
+{"diet":"建议选择低敏配方粮，每日定量喂食","services":["安静单间","额外陪伴","24小时监控"],"careTips":["避免与其他大型犬接触","每日早晚遛弯"],"summary":"该宠物性格较胆小，建议安排安静单间并增加陪伴时间"}`;
+
+    const apiResult = await callAnalysisAPI([
+      { role: 'system', content: systemPrompt },
+      { role: 'user', content: '请为这只宠物定制个性化寄养方案' },
+    ], { temperature: 0.4, max_tokens: 1500 });
+
+    if (!apiResult.success || !apiResult.content) {
+      return fallbackServicePlan(pet_info, health_records);
+    }
+
+    const raw = apiResult.content;
+
+    // 提取 JSON
+    function extractJson(text) {
+      if (!text) return null;
+      for (let i = 0; i < text.length; i++) {
+        if (text[i] !== '{') continue;
+        let depth = 0;
+        for (let j = i; j < text.length; j++) {
+          if (text[j] === '{') depth++;
+          if (text[j] === '}') depth--;
+          if (depth === 0) {
+            try {
+              const obj = JSON.parse(text.slice(i, j + 1));
+              if (obj && obj.diet !== undefined) return obj;
+            } catch (e) { /* 跳过 */ }
+            break;
+          }
+        }
+      }
+      return null;
+    }
+
+    const parsed = extractJson(raw);
+    if (parsed) {
+      return {
+        success: true,
+        plan: {
+          diet: parsed.diet || '',
+          services: Array.isArray(parsed.services) ? parsed.services : [],
+          careTips: Array.isArray(parsed.careTips) ? parsed.careTips : [],
+          summary: parsed.summary || '',
+        },
+      };
+    }
+
+    return fallbackServicePlan(pet_info, health_records);
+  } catch (e) {
+    console.error('[petServiceCustomize]', e.message);
+    return fallbackServicePlan(pet_info, health_records);
+  }
+}
+
+/**
+ * 规则降级：AI 失败时基于规则生成个性化寄养方案
+ */
+function fallbackServicePlan(petInfo, records) {
+  const services = [];
+  const careTips = [];
+  let diet = '保持日常饮食习惯即可';
+
+  const special = (petInfo.special_needs || '').toLowerCase();
+  const character = (petInfo.character || '').toLowerCase();
+
+  if (special.includes('胆小') || special.includes('怕生') || character.includes('胆小') || character.includes('内向')) {
+    services.push('安静单间');
+    services.push('额外陪伴');
+    careTips.push('避免与其他活泼宠物同笼');
+  }
+  if (special.includes('吃药') || special.includes('喂药') || special.includes('疾病') || special.includes('慢病')) {
+    services.push('定时喂药');
+    services.push('24小时监控');
+    careTips.push('按时记录用药情况');
+  }
+  if (special.includes('挑食') || special.includes('过敏') || special.includes('肠胃')) {
+    diet = '建议自带专用粮，避免换粮引起肠胃不适';
+    services.push('单独喂食');
+    careTips.push('严格按照主人要求喂食');
+  }
+  if (special.includes('老年') || (petInfo.age && petInfo.age > 8)) {
+    services.push('软垫休息区');
+    services.push('减少剧烈运动');
+    careTips.push('注意保暖，避免受凉');
+  }
+  if (services.length === 0) {
+    services.push('标准寄养服务');
+    services.push('每日活动');
+    careTips.push('保持日常作息规律');
+  }
+
+  const summary = `根据${petInfo.name || '该宠物'}的特点，推荐${services.slice(0, 2).join('、')}等定制服务。`;
+
+  return {
+    success: true,
+    plan: { diet, services, careTips, summary },
+  };
+}
+
+/**
+ * 批量更新模型价格和免费额度
+ * 调用方式: wx.cloud.callFunction({ name: 'ai_handler', data: { action: 'update_model_prices' } })
+ */
+async function updateModelPrices() {
+  const db = cloud.database();
+
+  try {
+    const res = await db.collection('api_configs').get();
+    const configs = res.data || [];
+
+    const updates = configs.map(item => {
+      let newPrice = item.pricePerUse;
+      let newQuota = item.dailyFreeQuota;
+
+      // SDXL 改为 1 元/次
+      if (item.model && item.model.toLowerCase().includes('sdxl')) {
+        newPrice = 1;
+      }
+
+      // 所有模型：免费额度用完后必须付费（保持现有免费额度不变，确保 pricePerUse > 0）
+      if (!newPrice || newPrice <= 0) {
+        newPrice = 0.1; // 默认最低付费价格
+      }
+
+      // 仅当价格或额度有变化时才更新
+      if (newPrice !== item.pricePerUse || newQuota !== item.dailyFreeQuota) {
+        return db.collection('api_configs').doc(item._id).update({
+          data: {
+            pricePerUse: newPrice,
+            dailyFreeQuota: newQuota,
+          },
+        });
+      }
+      return null;
+    }).filter(Boolean);
+
+    if (updates.length > 0) {
+      await Promise.all(updates);
+    }
+
+    return {
+      success: true,
+      msg: `已更新 ${updates.length} 个模型配置`,
+      details: configs.map(c => ({
+        model: c.model,
+        modelName: c.modelName,
+        pricePerUse: c.model && c.model.toLowerCase().includes('sdxl') ? 1 : c.pricePerUse,
+        dailyFreeQuota: c.dailyFreeQuota,
+      })),
+    };
+  } catch (err) {
+    console.error('[updateModelPrices]', err.message);
+    return { success: false, msg: err.message || '更新失败' };
+  }
+}
+
+/**
+ * 清理 api_configs 中的重复条目（同一 model 只保留最早的一条）
+ */
+async function cleanupDuplicateConfigs() {
+  const db = cloud.database();
+
+  try {
+    const all = await db.collection('api_configs').get();
+    const configs = all.data || [];
+
+    // 按 model 分组
+    const groups = {};
+    for (const item of configs) {
+      const key = item.model;
+      if (!groups[key]) groups[key] = [];
+      groups[key].push(item);
+    }
+
+    let removed = 0;
+    for (const key in groups) {
+      if (groups[key].length > 1) {
+        // 按创建时间排序，保留第一条，删除其余
+        const sorted = groups[key].sort((a, b) => {
+          const ta = a.createdAt ? new Date(a.createdAt).getTime() : 0;
+          const tb = b.createdAt ? new Date(b.createdAt).getTime() : 0;
+          return ta - tb;
+        });
+        for (let i = 1; i < sorted.length; i++) {
+          await db.collection('api_configs').doc(sorted[i]._id).remove();
+          removed++;
+        }
+      }
+    }
+
+    return { success: true, msg: `清理完成，删除 ${removed} 条重复配置` };
+  } catch (err) {
+    console.error('[cleanupDuplicateConfigs]', err.message);
+    return { success: false, msg: err.message || '清理失败' };
+  }
 }

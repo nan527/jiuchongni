@@ -1,0 +1,91 @@
+<!-- 自定义导航栏 -->
+<view class="nav-bar" style="padding-top: {{statusBarHeight}}px; height: {{navBarHeight}}px;">
+  <view class="nav-bar__back" bindtap="goBack">
+    <van-icon name="arrow-left" size="36rpx" color="#fff" />
+  </view>
+  <text class="nav-bar__title">全部记录</text>
+</view>
+
+<view class="page-wrap" style="padding-top: {{statusBarHeight + navBarHeight}}px;">
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#FF9800" size="48rpx" />
+  </view>
+
+  <block wx:if="{{!loading}}">
+    <!-- 宠物信息 -->
+    <view class="pet-bar">
+      <image wx:if="{{petPhoto}}" class="pet-bar__avatar" src="{{petPhoto}}" mode="aspectFill" />
+      <van-icon wx:else name="friends-o" size="40rpx" color="#FF9800" />
+      <text class="pet-bar__name">{{petName}}</text>
+    </view>
+
+    <!-- 筛选栏 -->
+    <view class="filter-bar">
+      <!-- 类型筛选 -->
+      <scroll-view class="filter-type" scroll-x enhanced show-scrollbar="{{false}}">
+        <view class="filter-type__list">
+          <view class="type-pill {{typeFilter === 'all' ? 'type-pill--active' : ''}}" data-type="all" bindtap="onTypeFilterChange">
+            全部
+          </view>
+          <view class="type-pill {{typeFilter === 'weight' ? 'type-pill--active' : ''}}" data-type="weight" bindtap="onTypeFilterChange">
+            体重
+          </view>
+          <view class="type-pill {{typeFilter === 'vaccine' ? 'type-pill--active' : ''}}" data-type="vaccine" bindtap="onTypeFilterChange">
+            疫苗
+          </view>
+          <view class="type-pill {{typeFilter === 'deworming' ? 'type-pill--active' : ''}}" data-type="deworming" bindtap="onTypeFilterChange">
+            驱虫
+          </view>
+          <view class="type-pill {{typeFilter === 'checkup' ? 'type-pill--active' : ''}}" data-type="checkup" bindtap="onTypeFilterChange">
+            体检
+          </view>
+        </view>
+      </scroll-view>
+
+      <!-- 时间筛选 -->
+      <view class="filter-time">
+        <view class="time-pill {{timeFilter === 'all' ? 'time-pill--active' : ''}}" data-time="all" bindtap="onTimeFilterChange">
+          全部
+        </view>
+        <view class="time-pill {{timeFilter === 'week' ? 'time-pill--active' : ''}}" data-time="week" bindtap="onTimeFilterChange">
+          本周
+        </view>
+        <view class="time-pill {{timeFilter === 'month' ? 'time-pill--active' : ''}}" data-time="month" bindtap="onTimeFilterChange">
+          本月
+        </view>
+      </view>
+    </view>
+
+    <!-- 记录统计 -->
+    <view class="record-stats" wx:if="{{filteredRecords.length > 0}}">
+      共 <text class="record-stats__num">{{filteredRecords.length}}</text> 条记录
+    </view>
+
+    <!-- 记录列表 -->
+    <view class="record-list" wx:if="{{filteredRecords.length > 0}}">
+      <view class="record-item" wx:for="{{filteredRecords}}" wx:key="_id">
+        <view class="record-item__left">
+          <view class="record-item__type record-item__type--{{item.type}}">{{item.typeLabel}}</view>
+          <view class="record-item__info">
+            <text class="record-item__name">{{item.name}}</text>
+            <text class="record-item__value">{{item.displayValue}}</text>
+            <text class="record-item__note" wx:if="{{item.note}}">{{item.note}}</text>
+          </view>
+        </view>
+        <view class="record-item__right">
+          <text class="record-item__date">{{item.dateStr}}</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 空状态 -->
+    <view class="empty-wrap" wx:if="{{filteredRecords.length === 0}}">
+      <van-icon name="description" size="80rpx" color="#F0E6D8" />
+      <text class="empty-wrap__text">暂无符合条件的记录</text>
+      <text class="empty-wrap__hint">尝试切换筛选条件</text>
+    </view>
+  </block>
+
+</view>

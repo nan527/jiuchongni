@@ -4,7 +4,16 @@
   "usingComponents": {
     "van-icon": "/miniprogram_npm/@vant/weapp/icon/index",
     "van-tag": "/miniprogram_npm/@vant/weapp/tag/index",
-    "van-search": "/miniprogram_npm/@vant/weapp/search/index",
-    "van-loading": "/miniprogram_npm/@vant/weapp/loading/index"
+    "van-loading": "/miniprogram_npm/@vant/weapp/loading/index",
+    "van-popup": "/miniprogram_npm/@vant/weapp/popup/index",
+    "van-slider": "/miniprogram_npm/@vant/weapp/slider/index",
+    "van-rate": "/miniprogram_npm/@vant/weapp/rate/index",
+    "van-cell": "/miniprogram_npm/@vant/weapp/cell/index",
+    "van-cell-group": "/miniprogram_npm/@vant/weapp/cell-group/index",
+    "van-button": "/miniprogram_npm/@vant/weapp/button/index",
+    "van-switch": "/miniprogram_npm/@vant/weapp/switch/index",
+    "van-divider": "/miniprogram_npm/@vant/weapp/divider/index",
+    "van-picker": "/miniprogram_npm/@vant/weapp/picker/index",
+    "van-empty": "/miniprogram_npm/@vant/weapp/empty/index"
   }
 }

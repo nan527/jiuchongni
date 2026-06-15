@@ -1,0 +1,575 @@
+/* pages/orders/orders.less */
+/* 新拟态（Neumorphism）+ 温暖治愈风 */
+
+// 变量
+@bg-page: #FFF8F0;
+@bg-card: #FFFAF5;
+@bg-card-end: #FFF3E0;
+@primary: #FF9800;
+@secondary: #FFB74D;
+@accent: #FF7043;
+@text: #3D2C1E;
+@text-sub: #8C7A6B;
+@text-muted: #C4B8AC;
+@shadow-dark: rgba(166, 141, 121, 0.15);
+@shadow-light: rgba(255, 255, 255, 0.8);
+@shadow-dark-inset: rgba(166, 141, 121, 0.1);
+@radius-sm: 16rpx;
+@radius-md: 24rpx;
+@radius-lg: 32rpx;
+@radius-xl: 40rpx;
+
+// Mixins
+.neu-raised() {
+  background: linear-gradient(145deg, @bg-card, @bg-card-end);
+  box-shadow: 6rpx 6rpx 16rpx @shadow-dark, -6rpx -6rpx 16rpx @shadow-light;
+}
+
+.neu-raised-hover() {
+  transform: scale(0.97);
+  box-shadow: 4rpx 4rpx 10rpx rgba(166, 141, 121, 0.12), -4rpx -4rpx 10rpx rgba(255, 255, 255, 0.7);
+}
+
+.neu-pressed() {
+  background: @bg-page;
+  box-shadow: inset 4rpx 4rpx 12rpx @shadow-dark-inset, inset -4rpx -4rpx 12rpx @shadow-light;
+}
+
+// 动画
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(40rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// 页面根
+.orders-page {
+  min-height: 100vh;
+  background: @bg-page;
+}
+
+.neu-page {
+  background: @bg-page;
+}
+
+// 头部
+.fixed-header {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 100;
+  background: transparent;
+}
+
+.neu-header {
+  .header-bg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, @primary, @secondary);
+    z-index: -2;
+  }
+
+  .header-bottom-arc {
+    position: absolute;
+    top: 100%;
+    left: -10%;
+    width: 120%;
+    height: 80rpx;
+    margin-top: -40rpx;
+    background: linear-gradient(135deg, @primary, @secondary);
+    border-radius: 50%;
+    z-index: -1;
+  }
+
+  .nav-bar__inner {
+    display: flex;
+    align-items: center;
+    height: 88rpx;
+    padding: 0 16rpx;
+  }
+
+  .nav-bar__back {
+    width: 72rpx;
+    height: 72rpx;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+    &:active {
+      transform: scale(0.92);
+      background: rgba(255, 255, 255, 0.2);
+      box-shadow: inset 2rpx 2rpx 6rpx rgba(0, 0, 0, 0.1), inset -2rpx -2rpx 6rpx rgba(255, 255, 255, 0.3);
+    }
+  }
+
+  .nav-bar__title {
+    flex: 1;
+    text-align: center;
+    font-size: 34rpx;
+    font-weight: 700;
+    color: #fff;
+  }
+
+  .nav-bar__right {
+    width: 72rpx;
+  }
+}
+
+// 状态筛选
+.status-scroll {
+  white-space: nowrap;
+  padding: 20rpx 32rpx;
+  background: transparent;
+}
+
+.neu-pill {
+  display: inline-block;
+  padding: 12rpx 32rpx;
+  margin-right: 16rpx;
+  border-radius: @radius-xl;
+  font-size: 24rpx;
+  color: @text-sub;
+  background: @bg-page;
+  .neu-raised();
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.95);
+    box-shadow: inset 3rpx 3rpx 8rpx @shadow-dark-inset, inset -3rpx -3rpx 8rpx @shadow-light;
+  }
+}
+
+.neu-pill--active {
+  background: linear-gradient(135deg, @primary, @secondary);
+  color: #fff;
+  box-shadow: inset 3rpx 3rpx 8rpx rgba(180, 100, 0, 0.2), inset -3rpx -3rpx 8rpx rgba(255, 200, 150, 0.3);
+  font-weight: 600;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+// 自定义标签栏
+.custom-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 32rpx 20rpx;
+  gap: 20rpx;
+}
+
+.custom-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14rpx 0;
+  border-radius: @radius-xl;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8rpx);
+  transition: all 0.2s ease;
+
+  &:active {
+    transform: scale(0.96);
+  }
+}
+
+.custom-tab--active {
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+
+.custom-tab__text {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  transition: color 0.2s ease;
+}
+
+.custom-tab--active .custom-tab__text {
+  color: #fff;
+  font-weight: 700;
+}
+
+// 加载
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 80rpx 0;
+}
+
+.neu-loading {
+  // 占位，可后续扩展
+}
+
+// 订单列表
+.order-list {
+  padding: 32rpx 32rpx 20rpx;
+  display: flex;
+  flex-direction: column;
+  gap: 24rpx;
+}
+
+// 订单卡片
+.o-card {
+  .neu-raised();
+  border-radius: @radius-lg;
+  overflow: hidden;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    .neu-raised-hover();
+  }
+}
+
+.neu-card {
+  // 与 o-card 共用样式
+}
+
+.fade-in-up {
+  animation: fadeInUp 0.6s ease-out both;
+}
+
+.o-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 20rpx 28rpx;
+  border-bottom: 1rpx solid rgba(240, 230, 216, 0.6);
+}
+
+.neu-card__header {
+  // 同上
+}
+
+.o-card__type-badge {
+  font-size: 22rpx;
+  font-weight: 600;
+  padding: 6rpx 18rpx;
+  border-radius: @radius-sm;
+  .neu-pressed();
+}
+
+.neu-badge {
+  // 同上
+}
+
+.badge-agency {
+  background: linear-gradient(145deg, #FFF3E0, #FFE8CC);
+  color: #E65100;
+}
+
+.badge-express {
+  background: linear-gradient(145deg, #E0F7FA, #C8EEF3);
+  color: #0277BD;
+}
+
+.o-card__status {
+  font-size: 22rpx;
+  font-weight: 500;
+  padding: 6rpx 18rpx;
+  border-radius: @radius-sm;
+}
+
+.neu-status {
+  .neu-pressed();
+}
+
+.o-card__body {
+  display: flex;
+  padding: 24rpx 28rpx;
+}
+
+.neu-card__body {
+  // 同上
+}
+
+.o-card__img {
+  width: 160rpx;
+  height: 160rpx;
+  border-radius: @radius-md;
+  flex-shrink: 0;
+  background: #F0E6D8;
+  .neu-pressed();
+}
+
+.o-card__info {
+  flex: 1;
+  margin-left: 24rpx;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  min-width: 0;
+}
+
+.o-card__name {
+  font-size: 30rpx;
+  font-weight: 600;
+  color: @text;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.o-card__sub {
+  font-size: 24rpx;
+  color: @text-sub;
+  margin-top: 6rpx;
+}
+
+.o-card__remain {
+  font-size: 24rpx;
+  color: #2E7D32;
+  margin-top: 6rpx;
+}
+
+.o-card__remain--left {
+  color: #c62828;
+  font-weight: 600;
+}
+
+.o-card__price-row {
+  display: flex;
+  align-items: baseline;
+  margin-top: 8rpx;
+}
+
+.o-card__price {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: @primary;
+}
+
+.o-card__unit {
+  font-size: 22rpx;
+  color: @text-sub;
+  margin-left: 4rpx;
+}
+
+.o-card__time {
+  font-size: 22rpx;
+  color: @text-muted;
+  margin-top: 6rpx;
+}
+
+// 付款倒计时
+.o-card__countdown {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 14rpx 28rpx;
+  background: linear-gradient(145deg, #FFF8E1, #FFF1C4);
+  border-top: 1rpx solid rgba(240, 230, 216, 0.6);
+}
+
+.neu-countdown {
+  // 同上
+}
+
+.o-card__countdown-text {
+  font-size: 24rpx;
+  color: #EF6C00;
+  font-weight: 500;
+}
+
+.o-card__countdown-text--expired {
+  color: #E53935;
+}
+
+// 操作按钮
+.o-card__actions {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 16rpx;
+  padding: 16rpx 28rpx 24rpx;
+  border-top: 1rpx solid rgba(240, 230, 216, 0.6);
+}
+
+.neu-actions {
+  // 同上
+}
+
+.neu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 10rpx 28rpx;
+  border-radius: @radius-xl;
+  font-size: 24rpx;
+  font-weight: 500;
+  transition: transform 0.15s ease, box-shadow 0.15s ease;
+
+  &:active {
+    transform: scale(0.95);
+  }
+}
+
+.neu-btn--primary {
+  background: linear-gradient(135deg, @primary, @secondary);
+  color: #fff;
+  box-shadow: 4rpx 4rpx 10rpx rgba(166, 141, 121, 0.2), -2rpx -2rpx 6rpx rgba(255, 255, 255, 0.6);
+
+  &:active {
+    box-shadow: inset 3rpx 3rpx 8rpx rgba(180, 100, 0, 0.2), inset -3rpx -3rpx 8rpx rgba(255, 200, 150, 0.3);
+  }
+}
+
+.neu-btn--secondary {
+  background: @bg-page;
+  color: @text-sub;
+  .neu-pressed();
+
+  &:active {
+    box-shadow: inset 2rpx 2rpx 6rpx @shadow-dark-inset, inset -2rpx -2rpx 6rpx @shadow-light;
+  }
+}
+
+.neu-btn--warm {
+  background: linear-gradient(135deg, #FFF3E0, #FFE8CC);
+  color: #E65100;
+  box-shadow: 4rpx 4rpx 10rpx rgba(166, 141, 121, 0.15), -2rpx -2rpx 6rpx rgba(255, 255, 255, 0.8);
+
+  &:active {
+    box-shadow: inset 3rpx 3rpx 8rpx rgba(180, 100, 0, 0.15), inset -3rpx -3rpx 8rpx rgba(255, 255, 255, 0.8);
+  }
+}
+
+.neu-btn--danger {
+  background: linear-gradient(135deg, #FFEBEE, #FFCDD2);
+  color: #E53935;
+  box-shadow: 4rpx 4rpx 10rpx rgba(166, 141, 121, 0.15), -2rpx -2rpx 6rpx rgba(255, 255, 255, 0.8);
+
+  &:active {
+    box-shadow: inset 3rpx 3rpx 8rpx rgba(180, 0, 0, 0.15), inset -3rpx -3rpx 8rpx rgba(255, 255, 255, 0.8);
+  }
+}
+
+// 空状态
+.neu-empty-card {
+  margin: 60rpx 32rpx;
+  padding: 80rpx 40rpx;
+  .neu-raised();
+  border-radius: @radius-lg;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.neu-empty-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.neu-empty-text {
+  margin-top: 32rpx;
+  font-size: 28rpx;
+  color: @text-sub;
+  font-weight: 500;
+}
+
+// 旧空状态保留
+.empty-wrap {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 120rpx 0;
+}
+
+.empty-wrap__text {
+  font-size: 28rpx;
+  color: @text-sub;
+  margin-top: 20rpx;
+}
+
+// 评价展示
+.o-card__review {
+  padding: 16rpx 24rpx 20rpx;
+  border-top: 1rpx solid rgba(240, 230, 216, 0.6);
+  background: #FFF3E0;
+}
+
+.review-header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.review-title {
+  font-size: 24rpx;
+  font-weight: 600;
+  color: @text;
+}
+
+.review-stars {
+  display: flex;
+  align-items: center;
+  margin-left: auto;
+}
+
+.review-content {
+  font-size: 24rpx;
+  color: @text-sub;
+  line-height: 1.6;
+}
+
+// 评价弹窗
+.review-popup {
+  padding: 32rpx;
+}
+
+.review-popup__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 28rpx;
+}
+
+.review-popup__title {
+  font-size: 34rpx;
+  font-weight: 700;
+  color: @text;
+}
+
+.review-popup__rating {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24rpx;
+}
+
+.review-popup__label {
+  font-size: 28rpx;
+  color: @text;
+}
+
+.review-popup__field {
+  margin-bottom: 28rpx;
+}
+
+.review-popup__textarea {
+  width: 100%;
+  height: 200rpx;
+  background: @bg-page;
+  border: 2rpx solid #F0E6D8;
+  border-radius: @radius-md;
+  padding: 20rpx 24rpx;
+  font-size: 28rpx;
+  color: @text;
+  box-sizing: border-box;
+}
