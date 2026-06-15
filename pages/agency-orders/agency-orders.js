@@ -1,6 +1,6 @@
 // pages/agency-orders/agency-orders.js
 const authService = require('../../services/authService');
-const { formatDate, buildLeaveRemainText, isLeaveExpired } = require('../../utils/helpers');
+const { formatDate, buildLeaveRemainText, isLeaveExpired, getStatusBarHeight } = require('../../utils/helpers');
 
 const STATUS_LABEL = {
   confirmed: '接单',
@@ -18,6 +18,8 @@ const FOSTER_STATUS_LABEL = {
 
 Page({
   data: {
+    statusBarHeight: 0,
+    navBarHeight: 0,
     activeTab: 0,
     loading: true,
     allOrders: [],
@@ -79,7 +81,20 @@ Page({
   _agencyProfileId: '',
   _leaveTickTimer: null,
 
+  _getStatusBarHeight() {
+    return getStatusBarHeight();
+  },
+
+  onGoBack() {
+    wx.navigateBack();
+  },
+
   async onShow() {
+    const statusBarHeight = this._getStatusBarHeight();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+
     const userInfo = await authService.checkLogin();
     if (!userInfo) {
       wx.showToast({ title: '请先登录', icon: 'none' });
@@ -116,6 +131,12 @@ Page({
     const filter = e.currentTarget.dataset.filter;
     if (!filter) return;
     this.setData({ petFilter: filter }, () => this._applyOccupiedFilter());
+  },
+
+  onViewOrderDetail(e) {
+    const id = e.currentTarget.dataset.id;
+    if (!id) return;
+    wx.navigateTo({ url: `/pages/order-detail/order-detail?id=${id}` });
   },
 
   async loadOrders() {
@@ -289,7 +310,7 @@ Page({
 
           wx.hideLoading();
           wx.showToast({ title: '操作成功', icon: 'success' });
-          this.loadOrders();
+          await this.loadOrders();
         } catch (e) {
           wx.hideLoading();
           console.error('[AgencyOrders] updateStatus', e);

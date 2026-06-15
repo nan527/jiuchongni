@@ -1,8 +1,19 @@
 <!-- pages/agency-revenue/agency-revenue.wxml -->
 <view class="revenue-page">
 
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">运营营收</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
   <!-- 顶部汇总卡 -->
-  <view class="summary-header">
+  <view class="summary-header" style="padding-top: {{ navBarHeight + 20 }}px;">
     <view class="summary-main">
       <text class="summary-main__label">总营收(元)</text>
       <text class="summary-main__num">{{ totalRevenue }}</text>

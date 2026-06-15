@@ -79,8 +79,8 @@
       </view>
     </view>
 
-    <!-- 个性化寄养方案 -->
-    <view class="plan-section">
+    <!-- 个性化寄养方案（仅宠主可见） -->
+    <view class="plan-section" wx:if="{{!isAgencyViewer}}">
       <view class="plan-header" bindtap="togglePlan">
         <view class="plan-header__left">
           <view class="plan-header__icon">

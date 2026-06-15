@@ -54,7 +54,8 @@
     "compileWorklet": false,
     "localPlugins": false,
     "swc": false,
-    "disableSWC": true
+    "disableSWC": true,
+    "lazyCodeLoading": "requiredComponents"
   },
   "cloudfunctionRoot": "cloudfunctions/",
   "compileType": "miniprogram",

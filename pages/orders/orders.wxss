@@ -25,25 +25,6 @@
   z-index: 100;
   background: transparent;
 }
-.transparent-tabs {
-  background: transparent !important;
-}
-page .transparent-tabs .van-tabs__wrap {
-  background: transparent !important;
-}
-page .transparent-tabs .van-tabs__nav {
-  background: transparent !important;
-}
-page .transparent-tabs .van-tab {
-  color: rgba(255, 255, 255, 0.85) !important;
-}
-page .transparent-tabs .van-tab--active {
-  color: #fff !important;
-  font-weight: 600 !important;
-}
-page .transparent-tabs .van-tabs__line {
-  background-color: #fff !important;
-}
 .neu-header .header-bg {
   position: absolute;
   top: 0;
@@ -51,7 +32,7 @@ page .transparent-tabs .van-tabs__line {
   right: 0;
   bottom: 0;
   background: linear-gradient(135deg, #FF9800, #FFB74D);
-  z-index: 0;
+  z-index: -2;
 }
 .neu-header .header-bottom-arc {
   position: absolute;
@@ -62,11 +43,9 @@ page .transparent-tabs .van-tabs__line {
   margin-top: -40rpx;
   background: linear-gradient(135deg, #FF9800, #FFB74D);
   border-radius: 50%;
-  z-index: 0;
+  z-index: -1;
 }
 .neu-header .nav-bar__inner {
-  position: relative;
-  z-index: 1;
   display: flex;
   align-items: center;
   height: 88rpx;
@@ -125,6 +104,41 @@ page .transparent-tabs .van-tabs__line {
 }
 .neu-pill--active:active {
   transform: scale(0.95);
+}
+.custom-tabs {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16rpx 32rpx 20rpx;
+  gap: 20rpx;
+}
+.custom-tab {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 14rpx 0;
+  border-radius: 40rpx;
+  background: rgba(255, 255, 255, 0.15);
+  backdrop-filter: blur(8rpx);
+  transition: all 0.2s ease;
+}
+.custom-tab:active {
+  transform: scale(0.96);
+}
+.custom-tab--active {
+  background: rgba(255, 255, 255, 0.35);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+}
+.custom-tab__text {
+  font-size: 26rpx;
+  font-weight: 500;
+  color: rgba(255, 255, 255, 0.85);
+  transition: color 0.2s ease;
+}
+.custom-tab--active .custom-tab__text {
+  color: #fff;
+  font-weight: 700;
 }
 .loading-wrap {
   display: flex;
@@ -262,6 +276,17 @@ page .transparent-tabs .van-tabs__line {
 }
 .o-card__countdown-text--expired {
   color: #E53935;
+}
+.o-card__reply-hint {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  padding: 12rpx 28rpx 0;
+}
+.o-card__reply-hint-text {
+  font-size: 22rpx;
+  color: #FF9800;
+  font-weight: 500;
 }
 .o-card__actions {
   display: flex;

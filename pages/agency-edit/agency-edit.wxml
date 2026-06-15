@@ -1,59 +1,348 @@
 <!-- pages/agency-edit/agency-edit.wxml -->
-<view class="edit-page">
+<view class="edit-page" style="padding-top: {{ navBarHeight }}px;">
 
-  <van-cell-group inset title="基础信息">
-    <van-field label="机构名称" required placeholder="请输入机构名称" value="{{ form.orgName }}" bind:change="onInput" data-field="orgName"></van-field>
-    <van-field label="统一信用代码" required placeholder="18位统一社会信用代码" value="{{ form.creditCode }}" bind:change="onInput" data-field="creditCode"></van-field>
-    <van-field label="法人姓名" required placeholder="请输入法人姓名" value="{{ form.legalName }}" bind:change="onInput" data-field="legalName"></van-field>
-    <van-field label="法人联系电话" required type="number" placeholder="请输入法人电话" value="{{ form.legalPhone }}" bind:change="onInput" data-field="legalPhone"></van-field>
-    <van-field label="经营区域" required placeholder="省市区" value="{{ form.region }}" bind:change="onInput" data-field="region"></van-field>
-    <van-field label="详细地址" required placeholder="详细门牌号" value="{{ form.detailAddress }}" bind:change="onInput" data-field="detailAddress"></van-field>
-  </van-cell-group>
-
-  <van-cell-group inset title="资质信息" style="margin-top: 24rpx;">
-    <view class="upload-item">
-      <text class="upload-label required">营业执照</text>
-      <van-uploader file-list="{{ licenseFileList }}" max-count="1" bind:after-read="afterReadLicense" bind:delete="onDeleteLicense"></van-uploader>
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">修改机构信息</text>
+      <view class="nav-bar__right"></view>
     </view>
-    <view class="upload-item">
-      <text class="upload-label">经营许可证（可选）</text>
-      <van-uploader file-list="{{ permitFileList }}" max-count="1" bind:after-read="afterReadPermit" bind:delete="onDeletePermit"></van-uploader>
+  </view>
+
+  <!-- 头像编辑 -->
+  <view class="avatar-section">
+    <view class="avatar-wrap" bindtap="onChooseCustomAvatar">
+      <view class="avatar-card">
+        <image class="avatar-preview" src="{{ avatar }}" mode="aspectFill" />
+      </view>
+      <view class="avatar-badge">
+        <van-icon name="photograph" size="28rpx" color="#fff" />
+      </view>
     </view>
-    <view class="upload-item">
-      <text class="upload-label required">门头实景照片</text>
-      <van-uploader file-list="{{ storefrontFileList }}" max-count="1" bind:after-read="afterReadStorefront" bind:delete="onDeleteStorefront"></van-uploader>
+    <text class="avatar-hint">点击头像可自定义上传</text>
+  </view>
+
+  <!-- 预设头像选择 -->
+  <view class="card avatar-card-section">
+    <view class="card-title">选择头像</view>
+    <view class="avatar-list">
+      <view
+        wx:for="{{ avatarList }}"
+        wx:key="*this"
+        class="avatar-item {{ avatar === item ? 'avatar-item--active' : '' }}"
+        data-src="{{ item }}"
+        bindtap="onSelectAvatar"
+      >
+        <image class="avatar-item__img" src="{{ item }}" mode="aspectFill" />
+        <view class="avatar-item__check" wx:if="{{ avatar === item }}">
+          <van-icon name="success" size="24rpx" color="#fff" />
+        </view>
+      </view>
     </view>
-  </van-cell-group>
+  </view>
 
-  <van-cell-group inset title="业务属性" style="margin-top: 24rpx;">
-    <picker mode="selector" range="{{ businessTypeOptions }}" value="{{ businessTypeIndex }}" bindchange="onBusinessTypeChange">
-      <van-cell title="经营类型" value="{{ form.businessType || '请选择' }}" is-link></van-cell>
-    </picker>
-    <van-field label="笼位总数" required type="number" placeholder="请输入机构可用笼位总数" value="{{ form.totalCages }}" bind:change="onInput" data-field="totalCages"></van-field>
-    <van-field label="笼位说明" placeholder="如：犬笼20个，猫笼12个，含隔离笼2个" value="{{ form.cageDesc }}" bind:change="onInput" data-field="cageDesc"></van-field>
-    <van-field label="可服务范围" placeholder="可寄养猫狗、24小时看护" value="{{ form.serviceScope }}" bind:change="onInput" data-field="serviceScope"></van-field>
-    <van-field label="营业时间" placeholder="09:00-21:00" value="{{ form.businessHours }}" bind:change="onInput" data-field="businessHours"></van-field>
-    <van-field label="预约方式" placeholder="电话/微信/小程序" value="{{ form.appointmentMethod }}" bind:change="onInput" data-field="appointmentMethod"></van-field>
-  </van-cell-group>
-
-  <van-cell-group inset title="环境展示" style="margin-top: 24rpx;">
-    <view class="upload-item">
-      <text class="upload-label">机构环境照片（最多6张）</text>
-      <van-uploader file-list="{{ envFileList }}" max-count="6" bind:after-read="afterReadEnv" bind:delete="onDeleteEnv" image-fit="aspectFill"></van-uploader>
+  <!-- 可点选的标签栏 -->
+  <view class="tabs-bar">
+    <view
+      class="tab-item {{ currentTab === 1 ? 'tab-item--active' : '' }}"
+      bindtap="onSwitchTab"
+      data-tab="1"
+    >
+      <text class="tab-text">基础信息</text>
     </view>
-  </van-cell-group>
+    <view
+      class="tab-item {{ currentTab === 2 ? 'tab-item--active' : '' }}"
+      bindtap="onSwitchTab"
+      data-tab="2"
+    >
+      <text class="tab-text">经营信息</text>
+    </view>
+    <view
+      class="tab-item {{ currentTab === 3 ? 'tab-item--active' : '' }}"
+      bindtap="onSwitchTab"
+      data-tab="3"
+    >
+      <text class="tab-text">业务配置</text>
+    </view>
+    <view
+      class="tab-item {{ currentTab === 4 ? 'tab-item--active' : '' }}"
+      bindtap="onSwitchTab"
+      data-tab="4"
+    >
+      <text class="tab-text">资质上传</text>
+    </view>
+    <view
+      class="tab-item {{ currentTab === 5 ? 'tab-item--active' : '' }}"
+      bindtap="onSwitchTab"
+      data-tab="5"
+    >
+      <text class="tab-text">补充信息</text>
+    </view>
+  </view>
 
-  <van-cell-group inset title="补充信息" style="margin-top: 24rpx;">
-    <van-field label="紧急联系人" placeholder="请输入紧急联系人" value="{{ form.emergencyContact }}" bind:change="onInput" data-field="emergencyContact"></van-field>
-    <van-field label="备用电话" type="number" placeholder="请输入备用电话" value="{{ form.backupPhone }}" bind:change="onInput" data-field="backupPhone"></van-field>
-    <van-field label="机构简介" type="textarea" autosize="{{ { minHeight: 80 } }}" placeholder="机构介绍、服务优势" value="{{ form.orgIntro }}" bind:change="onInput" data-field="orgIntro"></van-field>
-    <van-field label="招牌项目" type="textarea" autosize="{{ { minHeight: 80 } }}" placeholder="24h托管、术后护理等" value="{{ form.signatureService }}" bind:change="onInput" data-field="signatureService"></van-field>
-  </van-cell-group>
+  <!-- Tab 1: 基础信息 -->
+  <view class="card form-card" wx:if="{{ currentTab === 1 }}">
+    <view class="card-title">基础信息</view>
 
-  <view class="submit-area">
-    <van-button type="primary" block round loading="{{ saving }}" loading-text="保存中..." color="linear-gradient(135deg, #FF9800, #FFB74D)" bindtap="save">
-      保存修改
-    </van-button>
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>机构名称</text>
+        <text class="field-required">*</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="请输入机构名称" value="{{ form.orgName }}" bindinput="onInput" data-field="orgName" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>统一信用代码</text>
+        <text class="field-required">*</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="18位统一社会信用代码" value="{{ form.creditCode }}" bindinput="onInput" data-field="creditCode" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>法人姓名</text>
+        <text class="field-required">*</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="请输入法人姓名" value="{{ form.legalName }}" bindinput="onInput" data-field="legalName" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>法人联系电话</text>
+        <text class="field-required">*</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="请输入法人电话" type="number" maxlength="11" value="{{ form.legalPhone }}" bindinput="onInput" data-field="legalPhone" />
+      </view>
+    </view>
+  </view>
+
+  <!-- Tab 2: 经营信息 -->
+  <view class="card form-card" wx:if="{{ currentTab === 2 }}">
+    <view class="card-title">经营信息</view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>经营类型</text>
+      </view>
+      <picker mode="selector" range="{{ businessTypeOptions }}" value="{{ businessTypeIndex }}" bindchange="onBusinessTypeChange">
+        <view class="field-input-wrap picker-wrap">
+          <text class="picker-text {{ form.businessType ? '' : 'picker-placeholder' }}">{{ form.businessType || '请选择经营类型' }}</text>
+          <van-icon name="arrow-down" size="28rpx" color="#8C7A6B" />
+        </view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>经营区域</text>
+        <text class="field-required">*</text>
+      </view>
+      <picker mode="region" value="{{ regionArray }}" bindchange="onRegionChange">
+        <view class="field-input-wrap picker-wrap">
+          <text class="picker-text {{ form.region ? '' : 'picker-placeholder' }}">{{ form.region || '请选择省 / 市 / 区' }}</text>
+          <van-icon name="arrow-down" size="28rpx" color="#8C7A6B" />
+        </view>
+      </picker>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>详细地址</text>
+        <text class="field-required">*</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="详细门牌号" value="{{ form.detailAddress }}" bindinput="onInput" data-field="detailAddress" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>营业时间</text>
+      </view>
+      <view class="time-range-wrap">
+        <picker mode="time" value="{{ startTime }}" bindchange="onStartTimeChange">
+          <view class="field-input-wrap picker-wrap time-picker">
+            <text class="picker-text {{ startTime ? '' : 'picker-placeholder' }}">{{ startTime || '开始时间' }}</text>
+          </view>
+        </picker>
+        <text class="time-separator">至</text>
+        <picker mode="time" value="{{ endTime }}" bindchange="onEndTimeChange">
+          <view class="field-input-wrap picker-wrap time-picker">
+            <text class="picker-text {{ endTime ? '' : 'picker-placeholder' }}">{{ endTime || '结束时间' }}</text>
+          </view>
+        </picker>
+      </view>
+    </view>
+  </view>
+
+  <!-- Tab 3: 业务配置 -->
+  <view class="card form-card" wx:if="{{ currentTab === 3 }}">
+    <view class="card-title">业务配置</view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>笼位总数</text>
+        <text class="field-required">*</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="请输入笼位数量" type="digit" value="{{ form.totalCages }}" bindinput="onInput" data-field="totalCages" />
+      </view>
+      <view class="field-hint">用于笼位管理和订单分配</view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>笼位说明</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="如：犬笼20个，猫笼12个" value="{{ form.cageDesc }}" bindinput="onInput" data-field="cageDesc" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>可服务范围</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="可寄养猫狗、24小时看护" value="{{ form.serviceScope }}" bindinput="onInput" data-field="serviceScope" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>预约方式</text>
+      </view>
+      <view class="chips-wrap">
+        <view
+          wx:for="{{ appointmentOptions }}"
+          wx:key="*this"
+          class="chip {{ appointmentMap[item] ? 'chip--active' : '' }}"
+          data-value="{{ item }}"
+          bindtap="onToggleAppointment"
+        >{{ item }}</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Tab 4: 资质上传 -->
+  <view class="card form-card" wx:if="{{ currentTab === 4 }}">
+    <view class="card-title">资质上传</view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>营业执照</text>
+        <text class="field-required">*</text>
+      </view>
+      <van-uploader file-list="{{ licenseFileList }}" max-count="1" bind:after-read="afterReadLicense" bind:delete="onDeleteLicense" />
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>经营许可证（可选）</text>
+      </view>
+      <van-uploader file-list="{{ permitFileList }}" max-count="1" bind:after-read="afterReadPermit" bind:delete="onDeletePermit" />
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>门头实景照片</text>
+        <text class="field-required">*</text>
+      </view>
+      <van-uploader file-list="{{ storefrontFileList }}" max-count="1" bind:after-read="afterReadStorefront" bind:delete="onDeleteStorefront" />
+    </view>
+  </view>
+
+  <!-- Tab 5: 补充信息 -->
+  <view class="card form-card" wx:if="{{ currentTab === 5 }}">
+    <view class="card-title">补充信息</view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>机构环境照片（最多6张）</text>
+      </view>
+      <van-uploader file-list="{{ envFileList }}" max-count="6" bind:after-read="afterReadEnv" bind:delete="onDeleteEnv" image-fit="aspectFill" />
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>紧急联系人</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="请输入紧急联系人" value="{{ form.emergencyContact }}" bindinput="onInput" data-field="emergencyContact" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>备用电话</text>
+      </view>
+      <view class="field-input-wrap">
+        <input class="field-input" placeholder="请输入备用电话" type="number" maxlength="11" value="{{ form.backupPhone }}" bindinput="onInput" data-field="backupPhone" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>机构简介</text>
+      </view>
+      <view class="textarea-wrap">
+        <textarea class="field-textarea" placeholder="机构介绍、服务优势" value="{{ form.orgIntro }}" bindinput="onInput" data-field="orgIntro" auto-height maxlength="500" />
+      </view>
+    </view>
+
+    <view class="field">
+      <view class="field-label">
+        <view class="field-dot"></view>
+        <text>招牌项目</text>
+      </view>
+      <view class="textarea-wrap">
+        <textarea class="field-textarea" placeholder="24h托管、术后护理等" value="{{ form.signatureService }}" bindinput="onInput" data-field="signatureService" auto-height maxlength="300" />
+      </view>
+    </view>
+  </view>
+
+  <!-- 保存按钮 -->
+  <view class="save-area">
+    <van-button
+      type="primary"
+      block
+      round
+      loading="{{ saving }}"
+      loading-text="保存中..."
+      custom-class="btn-submit"
+      bindtap="save"
+    >保存修改</van-button>
   </view>
 
 </view>

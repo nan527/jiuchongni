@@ -1,8 +1,11 @@
 {
   "navigationBarTitleText": "机构管理中心",
   "navigationStyle": "custom",
+  "styleIsolation": "apply-shared",
   "usingComponents": {
     "van-button": "@vant/weapp/button/index",
-    "van-icon": "@vant/weapp/icon/index"
+    "van-icon": "@vant/weapp/icon/index",
+    "van-tabbar": "@vant/weapp/tabbar/index",
+    "van-tabbar-item": "@vant/weapp/tabbar-item/index"
   }
 }

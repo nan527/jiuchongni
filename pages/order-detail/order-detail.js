@@ -35,6 +35,7 @@ Page({
   data: {
     order: null,
     loading: true,
+    _userId: '',
     statusBarHeight: 0,
     navBarHeight: 0,
     // 评价弹窗
@@ -68,6 +69,9 @@ Page({
       return;
     }
     this._userId = userInfo._id;
+    this._userRole = userInfo.role || 'pet_owner';
+    this._agencyProfileId = userInfo.agencyProfileId || '';
+    this.setData({ _userId: this._userId });
     this.loadOrder(id);
   },
 
@@ -78,13 +82,24 @@ Page({
     }
   },
 
+  onViewPetDetail(e) {
+    const petId = e.currentTarget.dataset.petid;
+    if (!petId) return;
+    wx.navigateTo({ url: `/pages/pet-detail/pet-detail?id=${petId}` });
+  },
+
   async loadOrder(id) {
     this.setData({ loading: true });
     const db = wx.cloud.database();
     try {
       const res = await db.collection('user_orders').doc(id).get();
       const raw = res.data;
-      if (raw.ownerId !== this._userId) {
+
+      // 权限检查：宠主只能看自己的订单，机构可以看分配给自己的订单
+      const isOwner = raw.ownerId === this._userId;
+      const isAgency = this._userRole === 'agency' && raw.agencyProfileId === this._agencyProfileId;
+      const isAdmin = this._userRole === 'admin';
+      if (!isOwner && !isAgency && !isAdmin) {
         wx.showToast({ title: '无权查看该订单', icon: 'none' });
         setTimeout(() => wx.navigateBack(), 800);
         return;
@@ -100,6 +115,14 @@ Page({
         try {
           const agencyRes = await db.collection('agency_profiles').doc(raw.agencyProfileId).get();
           raw.agencyName = (agencyRes.data || {}).orgName || '';
+        } catch (e) { /* ignore */ }
+      }
+
+      // 加载用户信息（机构/管理员查看时）
+      if (!isOwner && raw.ownerId) {
+        try {
+          const userRes = await db.collection('users').doc(raw.ownerId).get();
+          raw.ownerInfo = userRes.data || {};
         } catch (e) { /* ignore */ }
       }
 

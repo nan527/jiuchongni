@@ -70,7 +70,7 @@
         <text class="ops-desc">数据统计</text>
       </view>
       <view class="ops-item" bindtap="toApiConfig">
-        <view class="ops-icon-wrap" style="background:#F3E5F5;">
+        <view class="ops-icon-wrap ops-bg-purple">
           <van-icon name="setting-o" size="40rpx" color="#9C27B0" />
         </view>
         <text class="ops-label">API 接入</text>

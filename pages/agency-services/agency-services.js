@@ -1,5 +1,6 @@
 // pages/agency-services/agency-services.js
 const authService = require('../../services/authService');
+const { getStatusBarHeight } = require('../../utils/helpers');
 
 const CATEGORY_META = [
   { key: 'foster',   title: '宠物寄养',     icon: 'home-o' },
@@ -11,13 +12,24 @@ const CATEGORY_META = [
 
 Page({
   data: {
+    statusBarHeight: 0,
+    navBarHeight: 0,
     services: [],
     groupedServices: [],
     loading: true,
     profileId: '',
   },
 
+  onGoBack() {
+    wx.navigateBack();
+  },
+
   async onShow() {
+    const statusBarHeight = getStatusBarHeight();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+
     await this.loadServices();
   },
 

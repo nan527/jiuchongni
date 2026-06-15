@@ -220,6 +220,39 @@
   margin-top: 8rpx;
 }
 
+/* ===== 用户信息行 ===== */
+.user-row {
+  display: flex;
+  align-items: center;
+}
+
+.user-row__avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: @color-divider;
+  flex-shrink: 0;
+  box-shadow: @shadow-raised;
+}
+
+.user-row__info {
+  flex: 1;
+  margin-left: 24rpx;
+}
+
+.user-row__name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: @color-text;
+  display: block;
+}
+
+.user-row__meta {
+  font-size: 26rpx;
+  color: @color-text-sub;
+  margin-top: 8rpx;
+}
+
 /* ===== 信息行 ===== */
 .info-rows {
   display: flex;
@@ -302,6 +335,34 @@
   font-size: 26rpx;
   color: @color-text;
   line-height: 1.7;
+}
+
+/* 机构回复 */
+.review-reply {
+  margin-top: 20rpx;
+  padding: 16rpx 20rpx;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+  border-radius: 16rpx;
+  border-left: 6rpx solid @color-primary;
+}
+
+.review-reply__header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+}
+
+.review-reply__label {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: @color-primary;
+}
+
+.review-reply__content {
+  font-size: 26rpx;
+  color: @color-text;
+  line-height: 1.6;
 }
 
 .review-actions {

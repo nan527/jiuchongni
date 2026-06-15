@@ -1,4 +1,5 @@
 {
+  "navigationStyle": "custom",
   "navigationBarTitleText": "订单管理",
   "usingComponents": {
     "van-tabs": "/miniprogram_npm/@vant/weapp/tabs/index",

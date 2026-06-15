@@ -20,7 +20,7 @@
     <!-- 分析 API -->
     <view class="section-title">分析 API</view>
     <view class="model-list">
-      <view class="model-card" wx:for="{{analysisConfigs}}" wx:key="_id">
+      <view class="model-card" wx:for="{{analysisConfigs}}" wx:key="_id" style="animation-delay: {{index * 60}}ms;">
         <view class="model-card__header">
           <view class="model-card__name-row">
             <text class="model-card__name">{{item.modelName}}</text>
@@ -54,7 +54,7 @@
               <text wx:elif="{{item.pricePerUse > 0}}">{{item.pricePerUse}} 元/次</text>
               <text wx:else>免费</text>
             </view>
-            <van-button round size="small" color="#FF9800" bindtap="onSaveConfig" data-idx="{{index}}" data-category="analysis" loading="{{item.saving}}">
+            <van-button round size="small" custom-class="save-btn" bindtap="onSaveConfig" data-idx="{{index}}" data-category="analysis" loading="{{item.saving}}">
               保存
             </van-button>
           </view>
@@ -65,7 +65,7 @@
     <!-- 图片 API -->
     <view class="section-title">图片 API</view>
     <view class="model-list">
-      <view class="model-card" wx:for="{{imageConfigs}}" wx:key="_id">
+      <view class="model-card" wx:for="{{imageConfigs}}" wx:key="_id" style="animation-delay: {{index * 60}}ms;">
         <view class="model-card__header">
           <view class="model-card__name-row">
             <text class="model-card__name">{{item.modelName}}</text>
@@ -74,7 +74,7 @@
             </view>
           </view>
           <text class="model-card__model">{{item.model}}</text>
-       </view>
+        </view>
 
         <view class="model-card__body">
           <view class="api-key-row">
@@ -98,7 +98,7 @@
               <text wx:if="{{item.dailyFreeQuota > 0}}">每日免费 {{item.dailyFreeQuota}} 次，超出 {{item.pricePerUse}} 元/次</text>
               <text wx:else>{{item.pricePerUse}} 元/次</text>
             </view>
-            <van-button round size="small" color="#FF9800" bindtap="onSaveConfig" data-idx="{{index}}" data-category="image" loading="{{item.saving}}">
+            <van-button round size="small" custom-class="save-btn" bindtap="onSaveConfig" data-idx="{{index}}" data-category="image" loading="{{item.saving}}">
               保存
             </van-button>
           </view>

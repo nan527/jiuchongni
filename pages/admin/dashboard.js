@@ -6,6 +6,13 @@ Page({
   data: {
     loading: true,
     activeTab: 0,
+    tabList: [
+      { key: 'overview', label: '总览' },
+      { key: 'audit', label: '审核状态' },
+      { key: 'type', label: '类型分布' },
+      { key: 'revenue', label: '收入统计' },
+    ],
+    headerHeight: 0,
     totalAgencies: 0,
     approvedAgencies: 0,
     pendingAgencies: 0,
@@ -31,7 +38,9 @@ Page({
     const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
-    this.setData({ statusBarHeight, navBarHeight });
+    // 导航栏 88rpx + 自定义 tab 约 80rpx + 底部弧 40rpx
+    const headerHeight = navBarHeight + 80 + 40;
+    this.setData({ statusBarHeight, navBarHeight, headerHeight });
   },
 
   onGoBack() {
@@ -53,7 +62,7 @@ Page({
   },
 
   onTabChange(e) {
-    const idx = e.detail.index;
+    const idx = e.currentTarget.dataset.index;
     this.setData({ activeTab: idx });
     if (idx === 3 && !this.data.revenueLoading && this.data.totalRevenue === 0) {
       this.loadRevenueData();

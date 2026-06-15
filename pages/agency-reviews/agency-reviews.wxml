@@ -1,8 +1,19 @@
 <!-- pages/agency-reviews/agency-reviews.wxml -->
 <view class="reviews-page">
 
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">用户口碑</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
   <!-- 顶部评分概览 -->
-  <view class="score-header">
+  <view class="score-header" style="padding-top: {{ navBarHeight + 20 }}px;">
     <view class="score-main">
       <text class="score-main__num">{{ avgRating }}</text>
       <van-rate value="{{ avgRatingRound }}" size="36rpx" color="#fff" void-color="rgba(255,255,255,0.35)" readonly allow-half />
@@ -107,7 +118,7 @@
           <text class="review-card__name">{{ item.serviceName }}</text>
         </view>
         <view class="review-card__stars">
-          <van-rate value="{{ item.review.rating }}" size="28rpx" color="#FF9800" void-color="#ddd" readonly />
+          <van-rate value="{{ item.review.rating }}" size="32rpx" color="#FF9800" void-color="#ddd" readonly />
         </view>
       </view>
       <view class="review-card__body">
@@ -121,17 +132,17 @@
       <!-- 机构回复 -->
       <view class="review-card__reply" wx:if="{{ item.review.reply }}">
         <view class="reply-header">
-          <van-icon name="chat-o" size="24rpx" color="#FF9800"></van-icon>
+          <van-icon name="chat-o" size="28rpx" color="#FF9800"></van-icon>
           <text class="reply-label">机构回复</text>
         </view>
         <text class="reply-content">{{ item.review.reply }}</text>
       </view>
       <!-- 回复按钮 -->
       <view class="review-card__action" wx:if="{{ !item.review.reply }}">
-        <van-button size="mini" round plain color="#FF9800" data-id="{{ item._id }}" bindtap="openReplyPopup">回复</van-button>
+        <van-button size="small" round plain color="#FF9800" custom-style="padding:0 40rpx;height:64rpx;font-size:26rpx;" data-id="{{ item._id }}" bindtap="openReplyPopup">回复</van-button>
       </view>
       <view class="review-card__action" wx:else>
-        <van-button size="mini" round plain color="#999" data-id="{{ item._id }}" bindtap="openReplyPopup">修改回复</van-button>
+        <van-button size="small" round plain color="#999" custom-style="padding:0 40rpx;height:64rpx;font-size:26rpx;" data-id="{{ item._id }}" bindtap="openReplyPopup">修改回复</van-button>
       </view>
     </view>
   </view>

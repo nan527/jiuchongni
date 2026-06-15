@@ -12,74 +12,176 @@
     </view>
   </view>
 
-  <van-tabs active="{{ activeTab }}" color="#FF9800" line-width="60rpx" bind:change="onTabChange">
-    <van-tab title="待审核">
-      <van-loading wx:if="{{ loading }}" vertical style="padding: 80rpx 0; text-align: center;">加载中...</van-loading>
+  <!-- 筛选栏 -->
+  <view class="filter-bar">
+    <view class="filter-chip {{ timeFilter ? 'filter-chip--active' : '' }}" bindtap="onTimeFilterTap">
+      <text class="filter-chip__label">{{ timeFilter || '全部时间' }}</text>
+      <van-icon name="arrow-down" size="20rpx" color="{{ timeFilter ? '#fff' : '#8C7A6B' }}" class="filter-chip__arrow" />
+    </view>
+    <view class="filter-chip {{ regionText !== '全部地区' ? 'filter-chip--active' : '' }}" bindtap="openRegionPicker">
+      <van-icon name="location-o" size="20rpx" />
+      <text class="filter-chip__label">{{ regionText }}</text>
+      <van-icon name="arrow-down" size="20rpx" color="{{ regionText !== '全部地区' ? '#fff' : '#8C7A6B' }}" class="filter-chip__arrow" />
+    </view>
+    <view class="filter-chip {{ statusFilter ? 'filter-chip--active' : '' }}" bindtap="onStatusFilterTap">
+      <text class="filter-chip__label">{{ statusFilter || '全部状态' }}</text>
+      <van-icon name="arrow-down" size="20rpx" color="{{ statusFilter ? '#fff' : '#8C7A6B' }}" class="filter-chip__arrow" />
+    </view>
+  </view>
 
-      <view wx:if="{{ !loading && pendingList.length === 0 }}" class="empty-wrap">
-        <van-icon name="passed" size="80rpx" color="#ddd" />
-        <text class="empty-text">暂无待审核机构</text>
+  <!-- 时间筛选下拉面板 -->
+  <view class="filter-dropdown" wx:if="{{ showTimeDropdown }}" catchtap="onCloseDropdown">
+    <view class="filter-dropdown__mask"></view>
+    <view class="filter-dropdown__panel" catchtap="stopPropagation">
+      <text class="filter-dropdown__title">时间筛选</text>
+      <view class="filter-dropdown__list">
+        <view class="filter-dropdown__item {{ !timeFilter ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectTimeFilter" data-value="">全部时间</view>
+        <view class="filter-dropdown__item {{ timeFilter === '今日' ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectTimeFilter" data-value="今日">今日</view>
+        <view class="filter-dropdown__item {{ timeFilter === '本周' ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectTimeFilter" data-value="本周">本周</view>
+        <view class="filter-dropdown__item {{ timeFilter === '本月' ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectTimeFilter" data-value="本月">本月</view>
+        <view class="filter-dropdown__item {{ timeFilter === '近三月' ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectTimeFilter" data-value="近三月">近三月</view>
+        <view class="filter-dropdown__item {{ timeFilter === '近半年' ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectTimeFilter" data-value="近半年">近半年</view>
+        <view class="filter-dropdown__item {{ timeFilter === '近一年' ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectTimeFilter" data-value="近一年">近一年</view>
       </view>
+    </view>
+  </view>
 
-      <view wx:for="{{ pendingList }}" wx:key="userId" class="audit-card" bindtap="goDetail" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}">
-        <view class="audit-card__header">
-          <text class="audit-card__name">{{ item.profile.orgName || '未命名机构' }}</text>
-          <van-tag wx:if="{{ item.auditStatus === 'pending' }}" type="warning" round size="medium">待审核</van-tag>
-          <van-tag wx:if="{{ item.auditStatus === 'rejected' }}" type="danger" round size="medium">已驳回</van-tag>
-        </view>
-
-        <view class="audit-card__body">
-          <view class="info-row"><text class="info-key">信用代码</text><text class="info-val">{{ item.profile.creditCode || '-' }}</text></view>
-          <view class="info-row"><text class="info-key">法人</text><text class="info-val">{{ item.profile.legalName || '-' }} {{ item.profile.legalPhone || '' }}</text></view>
-          <view class="info-row"><text class="info-key">地址</text><text class="info-val">{{ item.profile.region || '' }} {{ item.profile.detailAddress || '' }}</text></view>
-          <view class="info-row"><text class="info-key">经营类型</text><text class="info-val">{{ item.profile.businessType || '-' }}</text></view>
-        </view>
-
-        <view class="audit-card__images" wx:if="{{ item.profile.licenseImage || item.profile.storefrontImage }}">
-          <image wx:if="{{ item.profile.licenseImage }}" class="thumb" src="{{ item.profile.licenseImage }}" mode="aspectFill" />
-          <image wx:if="{{ item.profile.storefrontImage }}" class="thumb" src="{{ item.profile.storefrontImage }}" mode="aspectFill" />
-          <image wx:if="{{ item.profile.permitImage }}" class="thumb" src="{{ item.profile.permitImage }}" mode="aspectFill" />
-        </view>
-
-        <view class="audit-card__actions">
-          <view class="action-btn action-btn--reject" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="reject">
-            <van-icon name="close" size="28rpx" />驳回
-          </view>
-          <view class="action-btn action-btn--approve" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="approve">
-            <van-icon name="passed" size="28rpx" />通过
-          </view>
-          <view class="action-btn action-btn--delete" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="deleteAgency">
-            <van-icon name="delete" size="28rpx" />删除
-          </view>
-        </view>
+  <!-- 地区三级联动选择器 -->
+  <view class="picker-mask" wx:if="{{showRegionPicker}}" bindtap="closeRegionPicker"></view>
+  <view class="picker-popup {{showRegionPicker ? 'picker-popup--show' : ''}}">
+    <view class="picker-header">
+      <text class="picker-header__cancel" bindtap="closeRegionPicker">取消</text>
+      <text class="picker-header__title">选择地区</text>
+      <text class="picker-header__reset" bindtap="resetRegion">重置</text>
+    </view>
+    <view class="picker-selected" wx:if="{{selectedProvince}}">
+      <text class="picker-selected__tag">{{selectedProvince}}</text>
+      <text class="picker-selected__tag" wx:if="{{selectedCity}}">{{selectedCity}}</text>
+      <text class="picker-selected__tag picker-selected__tag--active" wx:if="{{selectedDistrict}}">{{selectedDistrict}}</text>
+    </view>
+    <view class="picker-tabs">
+      <view class="picker-tab {{pickerTab === 'province' ? 'picker-tab--active' : ''}}" data-tab="province" bindtap="onPickerTab">
+        <text>{{selectedProvince || '省份'}}</text>
       </view>
-    </van-tab>
-
-    <van-tab title="审核记录">
-      <view wx:if="{{ historyList.length === 0 }}" class="empty-wrap">
-        <van-icon name="orders-o" size="80rpx" color="#ddd" />
-        <text class="empty-text">暂无审核记录</text>
+      <view class="picker-tab {{pickerTab === 'city' ? 'picker-tab--active' : ''}} {{!selectedProvince ? 'picker-tab--disabled' : ''}}" data-tab="city" bindtap="onPickerTab">
+        <text>{{selectedCity || '城市'}}</text>
       </view>
+      <view class="picker-tab {{pickerTab === 'district' ? 'picker-tab--active' : ''}} {{!selectedCity ? 'picker-tab--disabled' : ''}}" data-tab="district" bindtap="onPickerTab">
+        <text>{{selectedDistrict || '区县'}}</text>
+      </view>
+    </view>
+    <scroll-view class="picker-list" scroll-y>
+      <block wx:if="{{pickerTab === 'province'}}">
+        <view class="picker-item {{provinceIdx === index ? 'picker-item--active' : ''}}" wx:for="{{provinces}}" wx:key="*this" data-idx="{{index}}" bindtap="onPickProvince">
+          <text>{{item}}</text>
+          <van-icon wx:if="{{provinceIdx === index && selectedProvince}}" name="success" size="28rpx" color="#FF9800" />
+        </view>
+      </block>
+      <block wx:if="{{pickerTab === 'city'}}">
+        <view class="picker-item {{cityIdx === index ? 'picker-item--active' : ''}}" wx:for="{{cities}}" wx:key="*this" data-idx="{{index}}" bindtap="onPickCity">
+          <text>{{item}}</text>
+          <van-icon wx:if="{{cityIdx === index && selectedCity}}" name="success" size="28rpx" color="#FF9800" />
+        </view>
+      </block>
+      <block wx:if="{{pickerTab === 'district'}}">
+        <view class="picker-item {{districtIdx === index ? 'picker-item--active' : ''}}" wx:for="{{districts}}" wx:key="*this" data-idx="{{index}}" bindtap="onPickDistrict">
+          <text>{{item}}</text>
+          <van-icon wx:if="{{districtIdx === index}}" name="success" size="28rpx" color="#FF9800" />
+        </view>
+        <view class="picker-empty" wx:if="{{districts.length === 0}}">
+          <text>该城市暂无区县数据</text>
+        </view>
+      </block>
+    </scroll-view>
+  </view>
 
-      <view wx:for="{{ historyList }}" wx:key="userId" class="history-card" bindtap="goDetail" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}">
-        <view class="history-card__header">
-          <text class="history-card__name">{{ item.profile.orgName || '未命名机构' }}</text>
-          <van-tag wx:if="{{ item.auditStatus === 'approved' }}" type="success" round size="medium">已通过</van-tag>
-          <van-tag wx:elif="{{ item.auditStatus === 'pending' }}" type="warning" round size="medium">待审核</van-tag>
-          <van-tag wx:else type="danger" round size="medium">已驳回</van-tag>
+  <!-- 状态筛选下拉面板 -->
+  <view class="filter-dropdown" wx:if="{{ showStatusDropdown }}" catchtap="onCloseDropdown">
+    <view class="filter-dropdown__mask"></view>
+    <view class="filter-dropdown__panel" catchtap="stopPropagation">
+      <text class="filter-dropdown__title">状态筛选</text>
+      <view class="filter-dropdown__list">
+        <view class="filter-dropdown__item {{ !statusFilter ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectStatusFilter" data-value="">全部状态</view>
+        <view class="filter-dropdown__item {{ statusFilter === '待审核' ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectStatusFilter" data-value="待审核">待审核</view>
+        <view class="filter-dropdown__item {{ statusFilter === '已通过' ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectStatusFilter" data-value="已通过">已通过</view>
+        <view class="filter-dropdown__item {{ statusFilter === '已驳回' ? 'filter-dropdown__item--active' : '' }}" bindtap="onSelectStatusFilter" data-value="已驳回">已驳回</view>
+      </view>
+    </view>
+  </view>
+
+  <!-- Tab 容器 -->
+  <view class="tab-container">
+    <van-tabs active="{{ activeTab }}" color="#FF9800" line-width="60rpx" bind:change="onTabChange">
+      <van-tab title="待审核">
+        <van-loading wx:if="{{ loading }}" vertical style="padding: 80rpx 0; text-align: center;">加载中...</van-loading>
+
+        <view wx:if="{{ !loading && filteredPendingList.length === 0 }}" class="empty-wrap">
+          <van-icon name="passed" size="80rpx" color="#ddd" />
+          <text class="empty-text">暂无待审核机构</text>
         </view>
-        <view class="history-card__info">
-          <text class="info-row"><text class="info-key">账号</text><text class="info-val">{{ item.account || '-' }}</text></text>
-          <text class="info-row"><text class="info-key">信用代码</text><text class="info-val">{{ item.profile.creditCode || '-' }}</text></text>
-          <text class="info-row"><text class="info-key">法人</text><text class="info-val">{{ item.profile.legalName || '-' }}</text></text>
-          <text class="info-row"><text class="info-key">地址</text><text class="info-val">{{ item.profile.region || '' }} {{ item.profile.detailAddress || '' }}</text></text>
-        </view>
-        <view class="history-card__actions">
-          <view class="action-btn action-btn--delete" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="deleteAgency">
-            <van-icon name="delete" size="28rpx" />删除
+
+        <view wx:for="{{ filteredPendingList }}" wx:key="userId" class="audit-card" bindtap="goDetail" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}">
+          <view class="audit-card__header">
+            <text class="audit-card__name">{{ item.profile.orgName || '未命名机构' }}</text>
+            <van-tag wx:if="{{ item.auditStatus === 'pending' }}" type="warning" round size="medium">待审核</van-tag>
+            <van-tag wx:if="{{ item.auditStatus === 'rejected' }}" type="danger" round size="medium">已驳回</van-tag>
+          </view>
+
+          <view class="audit-card__body">
+            <view class="info-row"><text class="info-key">信用代码</text><text class="info-val">{{ item.profile.creditCode || '-' }}</text></view>
+            <view class="info-row"><text class="info-key">法人</text><text class="info-val">{{ item.profile.legalName || '-' }} {{ item.profile.legalPhone || '' }}</text></view>
+            <view class="info-row"><text class="info-key">地址</text><text class="info-val">{{ item.profile.region || '' }} {{ item.profile.detailAddress || '' }}</text></view>
+            <view class="info-row"><text class="info-key">经营类型</text><text class="info-val">{{ item.profile.businessType || '-' }}</text></view>
+            <view class="info-row"><text class="info-key">申请时间</text><text class="info-val">{{ item.createTime || '-' }}</text></view>
+          </view>
+
+          <view class="audit-card__images" wx:if="{{ item.profile.licenseImage || item.profile.storefrontImage }}">
+            <image wx:if="{{ item.profile.licenseImage }}" class="thumb" src="{{ item.profile.licenseImage }}" mode="aspectFill" />
+            <image wx:if="{{ item.profile.storefrontImage }}" class="thumb" src="{{ item.profile.storefrontImage }}" mode="aspectFill" />
+            <image wx:if="{{ item.profile.permitImage }}" class="thumb" src="{{ item.profile.permitImage }}" mode="aspectFill" />
+          </view>
+
+          <view class="audit-card__actions">
+            <view class="action-btn action-btn--reject" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="reject">
+              <van-icon name="close" size="28rpx" />驳回
+            </view>
+            <view class="action-btn action-btn--approve" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="approve">
+              <van-icon name="passed" size="28rpx" />通过
+            </view>
+            <view class="action-btn action-btn--delete" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="deleteAgency">
+              <van-icon name="delete" size="28rpx" />删除
+            </view>
           </view>
         </view>
-      </view>
-    </van-tab>
-  </van-tabs>
+      </van-tab>
+
+      <van-tab title="审核记录">
+        <view wx:if="{{ filteredHistoryList.length === 0 }}" class="empty-wrap">
+          <van-icon name="orders-o" size="80rpx" color="#ddd" />
+          <text class="empty-text">暂无审核记录</text>
+        </view>
+
+        <view wx:for="{{ filteredHistoryList }}" wx:key="userId" class="history-card" bindtap="goDetail" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}">
+          <view class="history-card__header">
+            <text class="history-card__name">{{ item.profile.orgName || '未命名机构' }}</text>
+            <van-tag wx:if="{{ item.auditStatus === 'approved' }}" type="success" round size="medium">已通过</van-tag>
+            <van-tag wx:elif="{{ item.auditStatus === 'pending' }}" type="warning" round size="medium">待审核</van-tag>
+            <van-tag wx:else type="danger" round size="medium">已驳回</van-tag>
+          </view>
+          <view class="history-card__info">
+            <text class="info-row"><text class="info-key">账号</text><text class="info-val">{{ item.account || '-' }}</text></text>
+            <text class="info-row"><text class="info-key">信用代码</text><text class="info-val">{{ item.profile.creditCode || '-' }}</text></text>
+            <text class="info-row"><text class="info-key">法人</text><text class="info-val">{{ item.profile.legalName || '-' }}</text></text>
+            <text class="info-row"><text class="info-key">地址</text><text class="info-val">{{ item.profile.region || '' }} {{ item.profile.detailAddress || '' }}</text></text>
+            <text class="info-row"><text class="info-key">申请时间</text><text class="info-val">{{ item.createTime || '-' }}</text></text>
+          </view>
+          <view class="history-card__actions">
+            <view class="action-btn action-btn--delete" data-user-id="{{ item.userId }}" data-profile-id="{{ item.profile._id }}" catchtap="deleteAgency">
+              <van-icon name="delete" size="28rpx" />删除
+            </view>
+          </view>
+        </view>
+      </van-tab>
+    </van-tabs>
+  </view>
 </view>

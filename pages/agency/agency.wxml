@@ -3,17 +3,22 @@
   <!-- 顶部机构卡片 -->
   <view class="agency-header">
     <image class="agency-header__bg" src="/static/user-bg.png" mode="aspectFill" />
-    <view class="agency-header__content">
+    <view class="agency-header__content" bindtap="toEditInfo">
       <view class="avatar-wrap">
         <image class="agency-avatar" src="{{ agencyInfo.avatar || '/static/pet/logo.png' }}" mode="aspectFill" />
       </view>
       <view class="agency-meta">
         <text class="agency-name">{{ agencyInfo.nickname || '机构名称' }}</text>
+        <view class="agency-edit-hint" wx:if="{{ !isLocked }}">
+          <van-icon name="edit" size="24rpx" color="rgba(255,255,255,0.7)" />
+          <text class="agency-edit-hint__text">点击编辑资料</text>
+        </view>
         <view class="agency-status-badge {{ auditStatus === 'approved' ? 'badge-ok' : 'badge-pending' }}">
           <image class="badge-icon" src="/static/tab-my-orange.png" mode="aspectFit" />
           <text class="badge-text">{{ auditStatus === 'approved' ? '已认证机构' : auditStatus === 'pending' ? '审核中' : auditStatus === 'rejected' ? '审核未通过' : '未提交注册' }}</text>
         </view>
       </view>
+      <van-icon class="header-arrow" wx:if="{{ !isLocked }}" name="arrow" size="32rpx" color="rgba(255,255,255,0.5)" />
     </view>
   </view>
 
@@ -25,7 +30,7 @@
 
   <!-- 未注册/已驳回时显示注册按钮 -->
   <view class="register-cta" wx:if="{{ !isRegistered || auditStatus === 'rejected' }}">
-    <van-button round type="primary" color="#FF9800" block bindtap="toRegister">
+    <van-button round class="register-btn" block bindtap="toRegister">
       {{ auditStatus === 'rejected' ? '重新注册机构' : '注册机构' }}
     </van-button>
     <view class="logout-link" bindtap="handleLogout">
@@ -55,7 +60,7 @@
           </view>
         </view>
         <view class="status-card__grid">
-          <view class="status-card__item" bindtap="toOpsOrders">
+          <view class="status-card__item" bindtap="toOpsOrders" data-status="pending">
             <view class="status-card__icon-wrap">
               <view class="status-card__icon status-card__icon--orange">
                 <van-icon name="clock-o" size="40rpx" color="#EF6C00" />
@@ -64,7 +69,7 @@
             </view>
             <text class="status-card__label">待接单</text>
           </view>
-          <view class="status-card__item" bindtap="toOpsOrders">
+          <view class="status-card__item" bindtap="toOpsOrders" data-status="active">
             <view class="status-card__icon-wrap">
               <view class="status-card__icon status-card__icon--blue">
                 <van-icon name="logistics" size="40rpx" color="#1565C0" />
@@ -73,7 +78,7 @@
             </view>
             <text class="status-card__label">进行中</text>
           </view>
-          <view class="status-card__item" bindtap="toOpsOrders">
+          <view class="status-card__item" bindtap="toOpsOrders" data-status="to_confirm">
             <view class="status-card__icon-wrap">
               <view class="status-card__icon status-card__icon--red">
                 <van-icon name="passed" size="40rpx" color="#E65100" />
@@ -82,7 +87,7 @@
             </view>
             <text class="status-card__label">待确认</text>
           </view>
-          <view class="status-card__item" bindtap="toOpsOrders">
+          <view class="status-card__item" bindtap="toOpsOrders" data-status="completed">
             <view class="status-card__icon-wrap">
               <view class="status-card__icon status-card__icon--green">
                 <van-icon name="star-o" size="40rpx" color="#2E7D32" />
@@ -97,7 +102,7 @@
       <!-- 待接单预览 -->
       <view class="pending-card" wx:if="{{ pendingPreview.length > 0 }}" catchtap="toOpsOrders">
         <view class="pending-card__header">
-          <text class="pending-card__title">待接单 <text style="font-size:22rpx;color:#999;font-weight:400;">（最新 {{ pendingPreview.length }} 单）</text></text>
+          <text class="pending-card__title">待接单 <text style="font-size:24rpx;color:#A89888;font-weight:500;">（最新 {{ pendingPreview.length }} 单）</text></text>
           <view class="pending-card__more">
             <text class="pending-card__more-text">查看全部</text>
             <van-icon name="arrow" size="22rpx" color="#FF9800" />
@@ -120,7 +125,7 @@
       <view class="pending-card pending-card--empty" wx:else catchtap="toOpsOrders" style="margin-top:16rpx;">
         <view class="pending-card__empty-inner">
           <text class="pending-card__empty-text">暂无待接订单</text>
-          <van-icon name="arrow" size="24rpx" color="#ccc" />
+          <van-icon name="arrow" size="24rpx" color="#A89888" />
         </view>
       </view>
     </view>
@@ -130,7 +135,7 @@
       <!-- 宠物预览网格 -->
       <view class="pet-grid-card">
         <view class="pet-grid-card__header">
-          <text class="pet-grid-card__title">在养宠物 <text style="font-size:24rpx;color:#999;font-weight:400;">（{{ petCount }}只）</text></text>
+          <text class="pet-grid-card__title">在养宠物 <text style="font-size:26rpx;color:#A89888;font-weight:500;">（{{ petCount }}只）</text></text>
         </view>
         <view class="pet-grid" wx:if="{{ previewPets.length > 0 }}">
           <view
@@ -170,7 +175,7 @@
               <text class="func-card__name">运营资质</text>
               <text class="func-card__desc">资质与资料管理</text>
             </view>
-            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+            <van-icon name="arrow" size="28rpx" color="#A89888" />
           </view>
           <view class="func-card__divider"></view>
           <view class="func-card__item" bindtap="toServiceManage">
@@ -181,7 +186,7 @@
               <text class="func-card__name">服务项目</text>
               <text class="func-card__desc">寄养/美容等服务管理</text>
             </view>
-            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+            <van-icon name="arrow" size="28rpx" color="#A89888" />
           </view>
           <view class="func-card__divider"></view>
           <view class="func-card__item" bindtap="toOpsReview">
@@ -192,7 +197,7 @@
               <text class="func-card__name">用户口碑</text>
               <text class="func-card__desc">查看评价</text>
             </view>
-            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+            <van-icon name="arrow" size="28rpx" color="#A89888" />
           </view>
           <view class="func-card__divider"></view>
           <view class="func-card__item" bindtap="toOpsRevenue">
@@ -203,7 +208,7 @@
               <text class="func-card__name">运营营收</text>
               <text class="func-card__desc">收入统计</text>
             </view>
-            <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
+            <van-icon name="arrow" size="28rpx" color="#A89888" />
           </view>
         </view>
       </view>
@@ -223,9 +228,10 @@
     wx:if="{{ !isLocked }}"
     active="{{ activeTab }}"
     bind:change="onTabChange"
-    color="#999"
     active-color="#FF9800"
+    inactive-color="#A89888"
     safe-area-inset-bottom
+    custom-style="background: linear-gradient(180deg, #FFFAF5, #FFF8F0); box-shadow: 0 -4rpx 16rpx rgba(174, 144, 116, 0.1);"
   >
     <van-tabbar-item icon="todo-list-o">订单状态</van-tabbar-item>
     <van-tabbar-item icon="friends-o">宠物管理</van-tabbar-item>

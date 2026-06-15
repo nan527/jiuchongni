@@ -27,7 +27,7 @@ Page({
 
       const isRegistered = !!userInfo.agencyProfileId;
 
-      // 直接从数据库获取最新审核状态，避免缓存过期
+      // 从数据库获取最新数据，避免缓存过期
       let auditStatus = userInfo.auditStatus || '';
       if (isRegistered && userInfo._id) {
         try {
@@ -35,13 +35,16 @@ Page({
           const fresh = await db.collection('users').doc(userInfo._id).get();
           if (fresh.data) {
             auditStatus = fresh.data.auditStatus || auditStatus;
-            // 同步更新缓存
+            // 同步更新头像和其他信息
             userInfo.auditStatus = auditStatus;
+            if (fresh.data.avatar) userInfo.avatar = fresh.data.avatar;
+            if (fresh.data.nickname) userInfo.nickname = fresh.data.nickname;
+            // 更新缓存
             const STORAGE_KEYS = require('../../constants/index').STORAGE_KEYS;
             wx.setStorageSync(STORAGE_KEYS.USER_INFO, userInfo);
           }
         } catch (e) {
-          console.warn('[Agency] 查询审核状态失败，使用缓存值', e);
+          console.warn('[Agency] 查询用户信息失败，使用缓存值', e);
         }
       }
 
@@ -140,8 +143,9 @@ Page({
   },
 
   // ====== 运营管理 ======
-  toOpsOrders() {
-    wx.navigateTo({ url: '/pages/agency-orders/agency-orders' });
+  toOpsOrders(e) {
+    const status = e.currentTarget.dataset.status || '';
+    wx.navigateTo({ url: `/pages/agency-orders/agency-orders?status=${status}` });
   },
 
   toOpsReview() {

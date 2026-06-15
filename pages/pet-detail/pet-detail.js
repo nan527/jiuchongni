@@ -69,6 +69,7 @@ Page({
       return;
     }
     this._userId = userInfo._id;
+    this._userRole = userInfo.role || 'pet_owner';
     if (id) {
       await this.loadPet(id);
       await this.loadHealthRecords(id);
@@ -82,17 +83,22 @@ Page({
     try {
       const res = await db.collection('pets').doc(id).get();
       const pet = res.data;
-      // 校验所有权：宠物必须属于当前用户
-      if (pet.ownerId !== this._userId) {
+      // 权限检查：宠主只能看自己的宠物，机构/管理员可以看所有宠物
+      const isOwner = pet.ownerId === this._userId;
+      const isAgency = this._userRole === 'agency';
+      const isAdmin = this._userRole === 'admin';
+      if (!isOwner && !isAgency && !isAdmin) {
         wx.showToast({ title: '无权访问该宠物', icon: 'none' });
         setTimeout(() => wx.navigateBack(), 800);
         return;
       }
       const photos = pet.photos || (pet.photo ? [pet.photo] : []);
+      const isAgencyViewer = !isOwner && (isAgency || isAdmin);
       this.setData({
         pet,
         photos,
         statusConfig: STATUS_CONFIG[pet.petStatus] || null,
+        isAgencyViewer,
         loading: false,
       });
     } catch (e) {
@@ -102,8 +108,13 @@ Page({
   },
 
   async loadHealthRecords(petId) {
-    // 所有权校验：宠物不属于当前用户则不加载健康记录
-    if (this.data.pet && this.data.pet.ownerId !== this._userId) return;
+    // 权限校验：非宠主且非机构/管理员则不加载健康记录
+    if (this.data.pet) {
+      const isOwner = this.data.pet.ownerId === this._userId;
+      const isAgency = this._userRole === 'agency';
+      const isAdmin = this._userRole === 'admin';
+      if (!isOwner && !isAgency && !isAdmin) return;
+    }
     this.setData({ healthLoading: true });
     const db = wx.cloud.database();
     try {

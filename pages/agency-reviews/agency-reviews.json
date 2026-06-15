@@ -1,8 +1,12 @@
 {
   "navigationBarTitleText": "用户口碑",
+  "navigationStyle": "custom",
+  "styleIsolation": "apply-shared",
   "usingComponents": {
     "van-icon": "/miniprogram_npm/@vant/weapp/icon/index",
     "van-tag": "/miniprogram_npm/@vant/weapp/tag/index",
-    "van-rate": "/miniprogram_npm/@vant/weapp/rate/index"
+    "van-rate": "/miniprogram_npm/@vant/weapp/rate/index",
+    "van-popup": "/miniprogram_npm/@vant/weapp/popup/index",
+    "van-button": "/miniprogram_npm/@vant/weapp/button/index"
   }
 }

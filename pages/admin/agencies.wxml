@@ -5,7 +5,7 @@
   <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
     <view class="nav-bar__inner">
       <view class="nav-bar__left" bindtap="onGoBack">
-        <van-icon name="arrow-left" size="36rpx" color="#fff" />
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
       </view>
       <text class="nav-bar__title">机构管理</text>
       <view class="nav-bar__right"></view>
@@ -14,45 +14,185 @@
 
   <!-- 搜索栏 -->
   <view class="search-bar">
-    <van-search value="{{ searchVal }}" placeholder="搜索机构名称或地址" shape="round" background="#f5f5f5"
-      bind:change="onSearchChange" bind:search="onSearch" bind:clear="onSearchClear" />
+    <view class="search-bar__inner">
+      <van-icon name="search" size="32rpx" color="#8C7A6B" />
+      <input
+        class="search-bar__input"
+        value="{{searchVal}}"
+        placeholder="搜索机构名称、地址、联系人"
+        confirm-type="search"
+        bindinput="onSearchChange"
+        bindconfirm="onSearch"
+      />
+      <van-icon
+        wx:if="{{searchVal}}"
+        name="clear"
+        size="32rpx"
+        color="#C4B8AC"
+        bindtap="onSearchClear"
+      />
+    </view>
   </view>
 
-  <van-loading wx:if="{{ loading }}" vertical style="padding: 80rpx 0; text-align: center;">加载中...</van-loading>
+  <!-- 筛选栏 -->
+  <view class="filter-bar">
+    <scroll-view class="filter-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="filter-pills">
+        <view
+          class="filter-pill {{timeFilter === item.key ? 'filter-pill--active' : ''}}"
+          wx:for="{{timeOptions}}"
+          wx:key="key"
+          data-key="{{item.key}}"
+          bindtap="onTimeFilter"
+        >{{item.label}}</view>
+      </view>
+    </scroll-view>
 
-  <view wx:if="{{ !loading && agencyList.length === 0 }}" class="empty-wrap">
-    <van-icon name="shop-o" size="80rpx" color="#ddd" />
-    <text class="empty-text">暂无机构数据</text>
+    <view class="filter-region {{regionText !== '全部地区' ? 'filter-region--active' : ''}}" bindtap="openRegionPicker">
+      <van-icon name="location-o" size="24rpx" />
+      <text class="filter-region__text">{{regionText}}</text>
+      <van-icon name="arrow-down" size="20rpx" color="#8C7A6B" />
+    </view>
   </view>
 
-  <view wx:for="{{ agencyList }}" wx:key="_id" class="agency-card">
+  <!-- 地区选择器弹窗 -->
+  <view class="picker-mask" wx:if="{{showRegionPicker}}" bindtap="closeRegionPicker"></view>
+  <view class="picker-popup {{showRegionPicker ? 'picker-popup--show' : ''}}">
+    <view class="picker-header">
+      <text class="picker-header__cancel" bindtap="closeRegionPicker">取消</text>
+      <text class="picker-header__title">选择地区</text>
+      <text class="picker-header__reset" bindtap="resetRegion">重置</text>
+    </view>
+
+    <!-- 已选标签 -->
+    <view class="picker-selected" wx:if="{{selectedProvince}}">
+      <text class="picker-selected__tag" wx:if="{{selectedProvince}}">{{selectedProvince}}</text>
+      <text class="picker-selected__tag" wx:if="{{selectedCity}}">{{selectedCity}}</text>
+      <text class="picker-selected__tag picker-selected__tag--active" wx:if="{{selectedDistrict}}">{{selectedDistrict}}</text>
+    </view>
+
+    <!-- Tab 栏 -->
+    <view class="picker-tabs">
+      <view class="picker-tab {{pickerTab === 'province' ? 'picker-tab--active' : ''}}" data-tab="province" bindtap="onPickerTab">
+        <text>{{selectedProvince || '省份'}}</text>
+      </view>
+      <view class="picker-tab {{pickerTab === 'city' ? 'picker-tab--active' : ''}} {{!selectedProvince ? 'picker-tab--disabled' : ''}}" data-tab="city" bindtap="onPickerTab">
+        <text>{{selectedCity || '城市'}}</text>
+      </view>
+      <view class="picker-tab {{pickerTab === 'district' ? 'picker-tab--active' : ''}} {{!selectedCity ? 'picker-tab--disabled' : ''}}" data-tab="district" bindtap="onPickerTab">
+        <text>{{selectedDistrict || '区县'}}</text>
+      </view>
+    </view>
+
+    <!-- 列表 -->
+    <scroll-view class="picker-list" scroll-y>
+      <!-- 省份列表 -->
+      <block wx:if="{{pickerTab === 'province'}}">
+        <view
+          class="picker-item {{provinceIdx === index ? 'picker-item--active' : ''}}"
+          wx:for="{{provinces}}"
+          wx:key="*this"
+          data-idx="{{index}}"
+          bindtap="onPickProvince"
+        >
+          <text>{{item}}</text>
+          <van-icon wx:if="{{provinceIdx === index && selectedProvince}}" name="success" size="28rpx" color="#FF9800" />
+        </view>
+      </block>
+
+      <!-- 城市列表 -->
+      <block wx:if="{{pickerTab === 'city'}}">
+        <view
+          class="picker-item {{cityIdx === index ? 'picker-item--active' : ''}}"
+          wx:for="{{cities}}"
+          wx:key="*this"
+          data-idx="{{index}}"
+          bindtap="onPickCity"
+        >
+          <text>{{item}}</text>
+          <van-icon wx:if="{{cityIdx === index && selectedCity}}" name="success" size="28rpx" color="#FF9800" />
+        </view>
+      </block>
+
+      <!-- 区县列表 -->
+      <block wx:if="{{pickerTab === 'district'}}">
+        <view
+          class="picker-item {{districtIdx === index ? 'picker-item--active' : ''}}"
+          wx:for="{{districts}}"
+          wx:key="*this"
+          data-idx="{{index}}"
+          bindtap="onPickDistrict"
+        >
+          <text>{{item}}</text>
+          <van-icon wx:if="{{districtIdx === index}}" name="success" size="28rpx" color="#FF9800" />
+        </view>
+        <view class="picker-empty" wx:if="{{districts.length === 0}}">
+          <text>该城市暂无区县数据</text>
+        </view>
+      </block>
+    </scroll-view>
+  </view>
+
+  <!-- 统计条 -->
+  <view class="stats-row" wx:if="{{!loading}}">
+    <text class="stats-row__text">共 <text class="stats-row__num">{{filteredCount}}</text> 家机构</text>
+    <text class="stats-row__hint" wx:if="{{filteredCount !== totalCount}}">（筛选自 {{totalCount}} 家）</text>
+  </view>
+
+  <!-- 加载中 -->
+  <view class="loading-wrap" wx:if="{{loading}}">
+    <van-loading type="spinner" color="#FF9800" size="48rpx" />
+  </view>
+
+  <!-- 空状态 -->
+  <view class="empty-wrap" wx:if="{{!loading && filteredList.length === 0}}">
+    <van-icon name="shop-o" size="80rpx" color="#F0E6D8" />
+    <text class="empty-text">暂无符合条件的机构</text>
+    <text class="empty-hint" wx:if="{{searchVal || timeFilter !== 'all' || regionText !== '全部地区'}}">试试调整筛选条件</text>
+  </view>
+
+  <!-- 机构列表 -->
+  <view
+    class="agency-card"
+    wx:for="{{filteredList}}"
+    wx:key="_id"
+    style="animation-delay: {{index * 60}}ms"
+  >
     <view class="agency-card__header">
-      <text class="agency-card__name">{{ item.orgName || '未命名机构' }}</text>
-      <van-tag wx:if="{{ item.businessType }}" plain round size="medium" color="#FF9800">{{ item.businessType }}</van-tag>
+      <text class="agency-card__name">{{item.orgName || '未命名机构'}}</text>
+      <van-tag wx:if="{{item.businessType}}" plain round size="medium" color="#FFF3E0" text-color="#FF9800">{{item.businessType}}</van-tag>
     </view>
 
     <view class="agency-card__body">
       <view class="info-row">
-        <van-icon name="location-o" size="26rpx" color="#999" style="margin-right:8rpx;" />
-        <text class="info-text">{{ item.region || '' }} {{ item.detailAddress || '-' }}</text>
+        <van-icon name="location-o" size="26rpx" color="#C4B8AC" />
+        <text class="info-text">{{item.region || ''}} {{item.detailAddress || '暂无地址'}}</text>
       </view>
-      <view class="info-row" wx:if="{{ item.legalName }}">
-        <van-icon name="contact" size="26rpx" color="#999" style="margin-right:8rpx;" />
-        <text class="info-text">{{ item.legalName }} {{ item.legalPhone || '' }}</text>
+      <view class="info-row" wx:if="{{item.legalName}}">
+        <van-icon name="contact" size="26rpx" color="#C4B8AC" />
+        <text class="info-text">{{item.legalName}} {{item.legalPhone || ''}}</text>
       </view>
-      <view class="info-row" wx:if="{{ item.businessHours }}">
-        <van-icon name="clock-o" size="26rpx" color="#999" style="margin-right:8rpx;" />
-        <text class="info-text">{{ item.businessHours }}</text>
+      <view class="info-row" wx:if="{{item.businessHours}}">
+        <van-icon name="clock-o" size="26rpx" color="#C4B8AC" />
+        <text class="info-text">{{item.businessHours}}</text>
+      </view>
+      <view class="info-row">
+        <van-icon name="underway-o" size="26rpx" color="#C4B8AC" />
+        <text class="info-text">入驻时间：{{item.createTimeStr || '未知'}}</text>
       </view>
     </view>
 
     <view class="agency-card__footer">
-      <view class="footer-btn footer-btn--detail" data-id="{{ item._id }}" bindtap="viewDetail">
-        <van-icon name="eye-o" size="28rpx" />查看
+      <view class="footer-btn footer-btn--detail" data-id="{{item._id}}" bindtap="viewDetail">
+        <van-icon name="eye-o" size="28rpx" />
+        <text>查看</text>
       </view>
-      <view class="footer-btn footer-btn--delete" data-profile-id="{{ item._id }}" bindtap="deleteAgency">
-        <van-icon name="delete" size="28rpx" />删除
+      <view class="footer-btn footer-btn--delete" data-profile-id="{{item._id}}" data-name="{{item.orgName}}" bindtap="deleteAgency">
+        <van-icon name="delete-o" size="28rpx" />
+        <text>删除</text>
       </view>
     </view>
   </view>
+
+  <view style="height: 40rpx;"></view>
 </view>

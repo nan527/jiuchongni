@@ -1,5 +1,6 @@
 // pages/agency-services-add/agency-services-add.js
 const authService = require('../../services/authService');
+const { getStatusBarHeight } = require('../../utils/helpers');
 
 const UNIT_OPTIONS = ['/次', '/天', '/针', '/月', '/只'];
 
@@ -51,13 +52,11 @@ const TEMPLATES = {
 
 Page({
   data: {
+    statusBarHeight: 0,
+    navBarHeight: 0,
     categories: CATEGORIES,
     unitOptions: UNIT_OPTIONS,
     selectedCat: '',
-    selectedMap: {},
-    selectedCount: 0,
-    tplPrices: {},
-    tplAnims: {},
     isCustomMode: false,
     currentTemplates: [],
     form: { name: '', desc: '', price: '' },
@@ -68,9 +67,15 @@ Page({
     profileId: '',
     isEdit: false,
     editId: '',
+    editingTpl: null,
   },
 
   async onLoad(opts) {
+    const statusBarHeight = getStatusBarHeight();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+
     if (opts.profileId) {
       this.setData({ profileId: opts.profileId });
     }
@@ -78,9 +83,12 @@ Page({
     // 编辑模式
     if (opts.editId) {
       this.setData({ isEdit: true, editId: opts.editId });
-      wx.setNavigationBarTitle({ title: '编辑服务' });
       await this.loadEditData(opts.editId);
     }
+  },
+
+  onGoBack() {
+    wx.navigateBack();
   },
 
   async loadEditData(id) {
@@ -93,7 +101,6 @@ Page({
       this.setData({
         selectedCat: svc.category,
         isCustomMode: true,
-        selectedMap: {},
         currentTemplates: TEMPLATES[svc.category] || [],
         form: { name: svc.name, desc: svc.desc || '', price: String(svc.price) },
         unitIdx: unitIdx >= 0 ? unitIdx : 0,
@@ -111,58 +118,33 @@ Page({
     const tpls = TEMPLATES[key] || [];
     this.setData({
       selectedCat: key,
-      selectedMap: {},
-      selectedCount: 0,
-      tplPrices: {},
       isCustomMode: false,
       currentTemplates: tpls,
       form: { name: '', desc: '', price: '' },
       unitIdx: 0,
       imageList: [],
       imageUrls: [],
+      editingTpl: null,
     });
   },
 
-  onSelectTpl(e) {
+  /** 点击模板项 → 进入详情编辑 */
+  onEditTpl(e) {
     const idx = e.currentTarget.dataset.idx;
-    const key = String(idx);
-    const map = { ...this.data.selectedMap };
-    if (map[key]) {
-      delete map[key];
-      const prices = { ...this.data.tplPrices };
-      delete prices[key];
-      this.setData({ selectedMap: map, tplPrices: prices, selectedCount: Object.keys(map).length });
-    } else {
-      map[key] = true;
-      this.setData({ selectedMap: map, selectedCount: Object.keys(map).length });
-      // 选中动画
-      this.setData({ [`tplAnims[${idx}]`]: null }, () => {
-        const anim = wx.createAnimation({ duration: 200 });
-        anim.scale(1.05, 1.05).step();
-        anim.scale(1, 1).step();
-        this.setData({ [`tplAnims[${idx}]`]: anim.export() });
-      });
-    }
-  },
-
-  onSelectAll() {
-    const map = { ...this.data.selectedMap };
-    const allSelected = Object.keys(map).length === this.data.currentTemplates.length;
-    if (allSelected) {
-      this.setData({ selectedMap: {}, selectedCount: 0, tplPrices: {} });
-    } else {
-      const newMap = {};
-      this.data.currentTemplates.forEach((_, i) => { newMap[i] = true; });
-      this.setData({ selectedMap: newMap, selectedCount: Object.keys(newMap).length });
-    }
+    const tpl = this.data.currentTemplates[idx];
+    const unitIdx = UNIT_OPTIONS.indexOf(tpl.unit);
+    this.setData({
+      editingTpl: idx,
+      form: { name: tpl.name, desc: '', price: '' },
+      unitIdx: unitIdx >= 0 ? unitIdx : 0,
+      imageList: [],
+      imageUrls: [],
+    });
   },
 
   onCustomMode() {
     this.setData({
       isCustomMode: true,
-      selectedMap: {},
-      selectedCount: 0,
-      tplPrices: {},
       form: { name: '', desc: '', price: '' },
       unitIdx: 0,
       imageList: [],
@@ -171,16 +153,11 @@ Page({
   },
 
   onBackToTpls() {
-    this.setData({ isCustomMode: false });
+    this.setData({
+      isCustomMode: false,
+      editingTpl: null,
+    });
   },
-
-  onTplPriceInput(e) {
-    const idx = e.currentTarget.dataset.idx;
-    this.setData({ [`tplPrices[${idx}]`]: e.detail.value });
-  },
-
-  /** 阻止价格输入框的点击冒泡（避免触发选中/取消） */
-  onTplPriceTap() {},
 
   onNameInput(e) { this.setData({ 'form.name': e.detail }); },
   onDescInput(e) { this.setData({ 'form.desc': e.detail }); },
@@ -222,9 +199,8 @@ Page({
     return '';
   },
 
+  /** 统一提交（模板编辑 / 自定义 / 编辑模式共用） */
   async onSubmit() {
-    // 仅自定义/编辑模式走此流程
-    if (!this.data.isCustomMode && !this.data.isEdit) return;
     const msg = this.validate();
     if (msg) {
       wx.showToast({ title: msg, icon: 'none', duration: 2000 });
@@ -256,7 +232,20 @@ Page({
       }
 
       wx.showToast({ title: this.data.isEdit ? '修改成功' : '添加成功', icon: 'success' });
-      setTimeout(() => wx.navigateBack(), 1000);
+
+      if (this.data.isEdit) {
+        setTimeout(() => wx.navigateBack(), 1000);
+      } else {
+        // 非编辑模式：保存后返回模板列表，可继续添加
+        this.setData({
+          editingTpl: null,
+          isCustomMode: false,
+          form: { name: '', desc: '', price: '' },
+          unitIdx: 0,
+          imageList: [],
+          imageUrls: [],
+        });
+      }
     } catch (err) {
       console.error('[AddService] 保存失败', err);
       wx.showToast({ title: '保存失败', icon: 'none' });
@@ -265,37 +254,20 @@ Page({
     }
   },
 
-  /** 批量添加选中的模板服务 */
-  async onSubmitBatch() {
-    const map = this.data.selectedMap;
-    const selected = Object.keys(map).map(Number);
-    if (selected.length === 0) {
-      wx.showToast({ title: '请至少选择一项服务', icon: 'none' });
+  /** 批量快速添加全部模板（无描述、无图片，仅填价格） */
+  async onBatchQuickAdd() {
+    const tpls = this.data.currentTemplates;
+    if (tpls.length === 0) {
+      wx.showToast({ title: '该分类暂无模板', icon: 'none' });
       return;
-    }
-
-    // 校验每项价格
-    for (const idx of selected) {
-      const price = this.data.tplPrices[String(idx)];
-      if (!price || isNaN(parseFloat(price))) {
-        const tpl = this.data.currentTemplates[idx];
-        wx.showToast({ title: `请设置「${tpl.name}」的价格`, icon: 'none' });
-        return;
-      }
     }
 
     if (this.data.saving) return;
 
-    // 确认弹窗
-    const summary = selected.map(idx => {
-      const tpl = this.data.currentTemplates[idx];
-      const price = this.data.tplPrices[String(idx)];
-      return `  ${tpl.name} — ¥${price}${tpl.unit}`;
-    }).join('\n');
-
     wx.showModal({
-      title: '确认添加',
-      content: `将添加以下 ${selected.length} 项服务：\n\n${summary}`,
+      title: '批量快速添加',
+      content: `将为该分类下全部 ${tpls.length} 项模板创建服务（无描述和图片，后续可单独编辑）`,
+      confirmText: '确认添加',
       confirmColor: '#FF9800',
       success: async (res) => {
         if (!res.confirm) return;
@@ -305,13 +277,12 @@ Page({
           const db = wx.cloud.database();
           const batch = [];
 
-          for (const idx of selected) {
-            const tpl = this.data.currentTemplates[idx];
+          for (const tpl of tpls) {
             const record = {
               category: this.data.selectedCat,
               name: tpl.name,
               desc: '',
-              price: parseFloat(this.data.tplPrices[String(idx)]),
+              price: 0,
               unit: tpl.unit,
               images: [],
               agencyProfileId: this.data.profileId,
@@ -323,7 +294,6 @@ Page({
 
           await Promise.all(batch);
           wx.showToast({ title: `成功添加 ${batch.length} 项服务`, icon: 'success' });
-          setTimeout(() => wx.navigateBack(), 1000);
         } catch (err) {
           console.error('[AddService] 批量添加失败', err);
           wx.showToast({ title: '添加失败', icon: 'none' });

@@ -1,8 +1,19 @@
 <!-- pages/agency-orders/agency-orders.wxml -->
 <view class="ao-page">
 
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">订单管理</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
+
   <!-- 收入概览 -->
-  <view class="revenue-bar">
+  <view class="revenue-bar" style="margin-top: {{ navBarHeight }}px;">
     <view class="revenue-item">
       <text class="revenue-num">{{ totalRevenue }}</text>
       <text class="revenue-label">总收入(元)</text>
@@ -67,7 +78,7 @@
           <text class="empty-text">暂无待接订单</text>
         </view>
         <view class="order-list" wx:if="{{ pendingList.length > 0 }}">
-          <view class="ao-card" wx:for="{{ pendingList }}" wx:key="_id">
+          <view class="ao-card" wx:for="{{ pendingList }}" wx:key="_id" data-id="{{ item._id }}" bindtap="onViewOrderDetail">
             <view class="ao-card__header">
               <text class="ao-card__svc">{{ item.serviceName }}</text>
               <van-tag type="warning" size="medium">{{ item.category === 'foster' ? '待寄养' : '待接单' }}</van-tag>
@@ -78,14 +89,14 @@
                 <text class="ao-card__pet">宠物: {{ item.petName || '-' }}</text>
                 <text class="ao-card__contact">联系人: {{ item.phone || '-' }}</text>
                 <text class="ao-card__remark" wx:if="{{ item.remark }}">备注: {{ item.remark }}</text>
-                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__price">¥{{ item.price }}{{ item.unit || '/次' }}</text>
                 <text class="ao-card__remain {{ item.isLeaveExpired ? 'ao-card__remain--left' : '' }}" wx:if="{{ item.leaveRemainText }}">{{ item.leaveRemainText }}</text>
                 <text class="ao-card__time">{{ item.createTimeStr }}</text>
               </view>
             </view>
             <view class="ao-card__actions">
-              <van-button size="small" round plain type="danger" data-id="{{ item._id }}" data-status="cancelled" bindtap="onUpdateStatus" custom-style="margin-right:16rpx;">拒绝</van-button>
-              <van-button size="small" round type="primary" color="#FF9800" data-id="{{ item._id }}" data-status="confirmed" bindtap="onUpdateStatus">接单</van-button>
+              <view class="action-btn action-btn--reject" data-id="{{ item._id }}" data-status="cancelled" catchtap="onUpdateStatus">拒绝</view>
+              <view class="action-btn action-btn--accept" data-id="{{ item._id }}" data-status="confirmed" catchtap="onUpdateStatus">接单</view>
             </view>
           </view>
         </view>
@@ -100,7 +111,7 @@
           <text class="empty-text">暂无进行中订单</text>
         </view>
         <view class="order-list" wx:if="{{ activeList.length > 0 }}">
-          <view class="ao-card" wx:for="{{ activeList }}" wx:key="_id">
+          <view class="ao-card" wx:for="{{ activeList }}" wx:key="_id" data-id="{{ item._id }}" bindtap="onViewOrderDetail">
             <view class="ao-card__header">
               <text class="ao-card__svc">{{ item.serviceName }}</text>
               <van-tag wx:if="{{ item.orderStatus === 'confirmed' }}" type="primary" size="medium">{{ item.category === 'foster' ? '已接单' : '已接单' }}</van-tag>
@@ -111,15 +122,15 @@
               <view class="ao-card__info">
                 <text class="ao-card__pet">宠物: {{ item.petName || '-' }}</text>
                 <text class="ao-card__contact">联系人: {{ item.phone || '-' }}</text>
-                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__price">¥{{ item.price }}{{ item.unit || '/次' }}</text>
                 <text class="ao-card__remain {{ item.isLeaveExpired ? 'ao-card__remain--left' : '' }}" wx:if="{{ item.leaveRemainText }}">{{ item.leaveRemainText }}</text>
                 <text class="ao-card__time">{{ item.createTimeStr }}</text>
               </view>
             </view>
             <view class="ao-card__actions">
-              <van-button wx:if="{{ item.orderStatus === 'confirmed' }}" size="small" round type="primary" color="#FF9800" data-id="{{ item._id }}" data-status="in_progress" bindtap="onUpdateStatus">开始服务</van-button>
-              <van-button wx:if="{{ item.orderStatus === 'in_progress' }}" size="small" round plain type="primary" color="#FF9800" data-id="{{ item._id }}" data-petid="{{ item.petId }}" data-petname="{{ item.petName }}" bindtap="openHealthRecord">录入健康</van-button>
-              <van-button wx:if="{{ item.orderStatus === 'in_progress' }}" size="small" round plain type="primary" color="#07c160" data-id="{{ item._id }}" data-status="to_confirm" bindtap="onUpdateStatus">完成服务</van-button>
+              <view wx:if="{{ item.orderStatus === 'confirmed' }}" class="action-btn action-btn--accept" data-id="{{ item._id }}" data-status="in_progress" catchtap="onUpdateStatus">开始服务</view>
+              <view wx:if="{{ item.orderStatus === 'in_progress' }}" class="action-btn action-btn--primary" data-id="{{ item._id }}" data-petid="{{ item.petId }}" data-petname="{{ item.petName }}" catchtap="openHealthRecord">录入健康</view>
+              <view wx:if="{{ item.orderStatus === 'in_progress' }}" class="action-btn action-btn--success" data-id="{{ item._id }}" data-status="to_confirm" catchtap="onUpdateStatus">完成服务</view>
             </view>
           </view>
         </view>
@@ -134,7 +145,7 @@
           <text class="empty-text">暂无待确认订单</text>
         </view>
         <view class="order-list" wx:if="{{ toConfirmList.length > 0 }}">
-          <view class="ao-card" wx:for="{{ toConfirmList }}" wx:key="_id">
+          <view class="ao-card" wx:for="{{ toConfirmList }}" wx:key="_id" data-id="{{ item._id }}" bindtap="onViewOrderDetail">
             <view class="ao-card__header">
               <text class="ao-card__svc">{{ item.serviceName }}</text>
               <van-tag color="#FFF3E0" text-color="#E65100" size="medium">{{ item.category === 'foster' ? '待取回' : '待用户确认' }}</van-tag>
@@ -143,7 +154,7 @@
               <image class="ao-card__img" src="{{ item.images[0] || '/static/pet/logo.png' }}" mode="aspectFill" />
               <view class="ao-card__info">
                 <text class="ao-card__pet">宠物: {{ item.petName || '-' }}</text>
-                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__price">¥{{ item.price }}{{ item.unit || '/次' }}</text>
                 <text class="ao-card__remain {{ item.isLeaveExpired ? 'ao-card__remain--left' : '' }}" wx:if="{{ item.leaveRemainText }}">{{ item.leaveRemainText }}</text>
                 <text class="ao-card__time">{{ item.createTimeStr }}</text>
               </view>
@@ -161,7 +172,7 @@
           <text class="empty-text">暂无已完成订单</text>
         </view>
         <view class="order-list" wx:if="{{ completedList.length > 0 }}">
-          <view class="ao-card" wx:for="{{ completedList }}" wx:key="_id">
+          <view class="ao-card" wx:for="{{ completedList }}" wx:key="_id" data-id="{{ item._id }}" bindtap="onViewOrderDetail">
             <view class="ao-card__header">
               <text class="ao-card__svc">{{ item.serviceName }}</text>
               <van-tag type="success" size="medium">{{ item.category === 'foster' ? '已取回' : '已完成' }}</van-tag>
@@ -170,7 +181,7 @@
               <image class="ao-card__img" src="{{ item.images[0] || '/static/pet/logo.png' }}" mode="aspectFill" />
               <view class="ao-card__info">
                 <text class="ao-card__pet">宠物: {{ item.petName || '-' }}</text>
-                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__price">¥{{ item.price }}{{ item.unit || '/次' }}</text>
                 <text class="ao-card__remain {{ item.isLeaveExpired ? 'ao-card__remain--left' : '' }}" wx:if="{{ item.leaveRemainText }}">{{ item.leaveRemainText }}</text>
                 <text class="ao-card__time">{{ item.createTimeStr }}</text>
               </view>
@@ -204,7 +215,7 @@
           <text class="empty-text">暂无待发货订单</text>
         </view>
         <view class="order-list" wx:if="{{ expressPendingList.length > 0 }}">
-          <view class="ao-card" wx:for="{{ expressPendingList }}" wx:key="_id">
+          <view class="ao-card" wx:for="{{ expressPendingList }}" wx:key="_id" data-id="{{ item._id }}" bindtap="onViewOrderDetail">
             <view class="ao-card__header">
               <text class="ao-card__svc">{{ item.serviceName }}</text>
               <van-tag type="warning" size="medium">待发货</van-tag>
@@ -216,12 +227,12 @@
                 <text class="ao-card__contact">电话: {{ item.receiverPhone || item.phone || '-' }}</text>
                 <text class="ao-card__contact">地址: {{ item.receiverAddress || '-' }}</text>
                 <text class="ao-card__remark" wx:if="{{ item.remark }}">备注: {{ item.remark }}</text>
-                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__price">¥{{ item.price }}{{ item.unit || '/次' }}</text>
                 <text class="ao-card__time">{{ item.createTimeStr }}</text>
               </view>
             </view>
             <view class="ao-card__actions">
-              <van-button size="small" round type="primary" color="#FF9800" data-id="{{ item._id }}" data-status="shipped" bindtap="onUpdateStatus">发货</van-button>
+              <view class="action-btn action-btn--accept" data-id="{{ item._id }}" data-status="shipped" catchtap="onUpdateStatus">发货</view>
             </view>
           </view>
         </view>
@@ -236,7 +247,7 @@
           <text class="empty-text">暂无已发货订单</text>
         </view>
         <view class="order-list" wx:if="{{ expressShippedList.length > 0 }}">
-          <view class="ao-card" wx:for="{{ expressShippedList }}" wx:key="_id">
+          <view class="ao-card" wx:for="{{ expressShippedList }}" wx:key="_id" data-id="{{ item._id }}" bindtap="onViewOrderDetail">
             <view class="ao-card__header">
               <text class="ao-card__svc">{{ item.serviceName }}</text>
               <van-tag color="#E0F7FA" text-color="#0277BD" size="medium">已发货</van-tag>
@@ -247,7 +258,7 @@
                 <text class="ao-card__pet">收货人: {{ item.receiverName || '-' }}</text>
                 <text class="ao-card__contact">电话: {{ item.receiverPhone || item.phone || '-' }}</text>
                 <text class="ao-card__contact">地址: {{ item.receiverAddress || '-' }}</text>
-                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__price">¥{{ item.price }}{{ item.unit || '/次' }}</text>
                 <text class="ao-card__time">{{ item.createTimeStr }}</text>
               </view>
             </view>
@@ -264,7 +275,7 @@
           <text class="empty-text">暂无待取件订单</text>
         </view>
         <view class="order-list" wx:if="{{ expressToPickupList.length > 0 }}">
-          <view class="ao-card" wx:for="{{ expressToPickupList }}" wx:key="_id">
+          <view class="ao-card" wx:for="{{ expressToPickupList }}" wx:key="_id" data-id="{{ item._id }}" bindtap="onViewOrderDetail">
             <view class="ao-card__header">
               <text class="ao-card__svc">{{ item.serviceName }}</text>
               <van-tag color="#FFF3E0" text-color="#E65100" size="medium">待取件</van-tag>
@@ -274,12 +285,12 @@
               <view class="ao-card__info">
                 <text class="ao-card__pet">收货人: {{ item.receiverName || '-' }}</text>
                 <text class="ao-card__contact">电话: {{ item.receiverPhone || item.phone || '-' }}</text>
-                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__price">¥{{ item.price }}{{ item.unit || '/次' }}</text>
                 <text class="ao-card__time">{{ item.createTimeStr }}</text>
               </view>
             </view>
             <view class="ao-card__actions">
-              <van-button size="small" round type="primary" color="#FF9800" data-id="{{ item._id }}" data-status="completed" bindtap="onUpdateStatus">确认取件</van-button>
+              <van-button size="small" round type="primary" color="#FF9800" data-id="{{ item._id }}" data-status="completed" catchtap="onUpdateStatus">确认取件</van-button>
             </view>
           </view>
         </view>
@@ -294,7 +305,7 @@
           <text class="empty-text">暂无已完成订单</text>
         </view>
         <view class="order-list" wx:if="{{ expressCompletedList.length > 0 }}">
-          <view class="ao-card" wx:for="{{ expressCompletedList }}" wx:key="_id">
+          <view class="ao-card" wx:for="{{ expressCompletedList }}" wx:key="_id" data-id="{{ item._id }}" bindtap="onViewOrderDetail">
             <view class="ao-card__header">
               <text class="ao-card__svc">{{ item.serviceName }}</text>
               <van-tag type="success" size="medium">已完成</van-tag>
@@ -303,7 +314,7 @@
               <image class="ao-card__img" src="{{ item.images[0] || '/static/pet/logo.png' }}" mode="aspectFill" />
               <view class="ao-card__info">
                 <text class="ao-card__pet">收货人: {{ item.receiverName || '-' }}</text>
-                <text class="ao-card__price">¥{{ item.price }} /{{ item.unit }}</text>
+                <text class="ao-card__price">¥{{ item.price }}{{ item.unit || '/次' }}</text>
                 <text class="ao-card__time">{{ item.createTimeStr }}</text>
               </view>
             </view>

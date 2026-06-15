@@ -1,17 +1,34 @@
-/* pages/agency-services/agency-services.wxss */
+// pages/agency-services/agency-services.less
+@color-primary: #FF9800;
+@color-primary-light: #FFB74D;
+@color-text: #3D2C1E;
+@color-text-sub: #8C7A6B;
+@color-text-muted: #C4B8AC;
+@bg-page: #FFF8F0;
+@bg-card: #FFFAF5;
+
+@shadow-raised: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15),
+                -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+
+@shadow-pressed: 3rpx 3rpx 8rpx rgba(174, 144, 116, 0.12),
+                 -3rpx -3rpx 8rpx rgba(255, 255, 255, 0.95);
+
+@shadow-inset: inset 4rpx 4rpx 8rpx rgba(174, 144, 116, 0.1),
+               inset -4rpx -4rpx 8rpx rgba(255, 255, 255, 0.8);
+
 @keyframes fadeInUp {
   from { opacity: 0; transform: translateY(30rpx); }
   to   { opacity: 1; transform: translateY(0); }
 }
 
-/* ===== 页面 ===== */
+// ===== 页面 =====
 .services-page {
   min-height: 100vh;
-  background: #FFF8F0;
+  background: @bg-page;
   padding-bottom: 180rpx;
 }
 
-/* ===== 自定义导航栏 ===== */
+// ===== 自定义导航栏 =====
 .nav-bar {
   position: fixed;
   top: 0;
@@ -36,11 +53,11 @@
   justify-content: center;
   border-radius: 50%;
   transition: transform 0.15s ease;
-}
 
-.nav-bar__back:active {
-  transform: scale(0.92);
-  background: rgba(255, 255, 255, 0.2);
+  &:active {
+    transform: scale(0.92);
+    background: rgba(255, 255, 255, 0.2);
+  }
 }
 
 .nav-bar__right {
@@ -56,7 +73,7 @@
   letter-spacing: 2rpx;
 }
 
-/* ===== 空状态 ===== */
+// ===== 空状态 =====
 .empty-state {
   display: flex;
   flex-direction: column;
@@ -72,11 +89,11 @@
 
 .empty-text {
   font-size: 28rpx;
-  color: #C4B8AC;
+  color: @color-text-muted;
   margin-top: 24rpx;
 }
 
-/* ===== 分组 ===== */
+// ===== 分组 =====
 .group-section {
   margin: 24rpx 24rpx 0;
 }
@@ -86,43 +103,41 @@
   align-items: center;
   padding: 16rpx 0;
   margin-bottom: 8rpx;
-}
 
-.group-header::before {
-  content: '';
-  width: 8rpx;
-  height: 32rpx;
-  border-radius: 4rpx;
-  background: linear-gradient(180deg, #FF9800, #FFB74D);
-  margin-right: 12rpx;
+  &::before {
+    content: '';
+    width: 8rpx;
+    height: 32rpx;
+    border-radius: 4rpx;
+    background: linear-gradient(180deg, #FF9800, #FFB74D);
+    margin-right: 12rpx;
+  }
 }
 
 .group-title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #3D2C1E;
+  color: @color-text;
   margin-left: 8rpx;
 }
 
 .group-count {
   font-size: 22rpx;
-  color: #C4B8AC;
+  color: @color-text-muted;
   margin-left: 12rpx;
-  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
   padding: 4rpx 16rpx;
   border-radius: 20rpx;
-  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15),
-              -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+  box-shadow: @shadow-raised;
 }
 
-/* ===== 服务卡片 ===== */
+// ===== 服务卡片 =====
 .svc-card {
-  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
   border-radius: 24rpx;
   padding: 28rpx 28rpx 20rpx;
   margin-bottom: 16rpx;
-  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15),
-              -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+  box-shadow: @shadow-raised;
   animation: fadeInUp 0.4s ease forwards;
 }
 
@@ -135,7 +150,7 @@
 .svc-card-name {
   font-size: 30rpx;
   font-weight: 600;
-  color: #3D2C1E;
+  color: @color-text;
   flex: 1;
   margin-right: 16rpx;
   overflow: hidden;
@@ -151,30 +166,30 @@
 
 .price-symbol {
   font-size: 24rpx;
-  color: #FF9800;
+  color: @color-primary;
   font-weight: 700;
 }
 
 .price-value {
   font-size: 36rpx;
   font-weight: 800;
-  color: #FF9800;
+  color: @color-primary;
   margin: 0 2rpx;
 }
 
 .price-unit {
   font-size: 22rpx;
-  color: #8C7A6B;
+  color: @color-text-sub;
 }
 
 .svc-card-desc {
   font-size: 24rpx;
-  color: #8C7A6B;
+  color: @color-text-sub;
   margin-top: 12rpx;
   line-height: 1.5;
 }
 
-/* ===== 服务图片缩略图 ===== */
+// ===== 服务图片缩略图 =====
 .svc-card-images {
   display: flex;
   gap: 12rpx;
@@ -185,12 +200,11 @@
   width: 140rpx;
   height: 140rpx;
   border-radius: 16rpx;
-  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
-  box-shadow: inset 4rpx 4rpx 8rpx rgba(174, 144, 116, 0.1),
-              inset -4rpx -4rpx 8rpx rgba(255, 255, 255, 0.8);
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
+  box-shadow: @shadow-inset;
 }
 
-/* ===== 卡片底部 ===== */
+// ===== 卡片底部 =====
 .svc-card-bottom {
   display: flex;
   align-items: center;
@@ -202,12 +216,11 @@
 
 .svc-card-category {
   font-size: 22rpx;
-  color: #8C7A6B;
-  background: linear-gradient(180deg, #FFFAF5, #FFF6EE);
+  color: @color-text-sub;
+  background: linear-gradient(180deg, @bg-card, #FFF6EE);
   padding: 6rpx 20rpx;
   border-radius: 20rpx;
-  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15),
-              -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+  box-shadow: @shadow-raised;
 }
 
 .svc-card-actions {
@@ -215,7 +228,7 @@
   align-items: center;
 }
 
-/* ===== 底部添加按钮 ===== */
+// ===== 底部添加按钮 =====
 .fab-area {
   position: fixed;
   bottom: 0;
@@ -236,14 +249,14 @@
   max-width: 500rpx;
   height: 88rpx;
   border-radius: 44rpx;
-  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  background: linear-gradient(135deg, @color-primary, @color-primary-light);
   box-shadow: 0 8rpx 24rpx rgba(255, 152, 0, 0.3);
   transition: transform 0.15s ease, box-shadow 0.15s ease;
-}
 
-.fab-btn:active {
-  transform: scale(0.96);
-  box-shadow: 0 4rpx 12rpx rgba(255, 152, 0, 0.2);
+  &:active {
+    transform: scale(0.96);
+    box-shadow: 0 4rpx 12rpx rgba(255, 152, 0, 0.2);
+  }
 }
 
 .fab-btn__text {

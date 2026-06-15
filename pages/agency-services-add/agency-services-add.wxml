@@ -1,4 +1,15 @@
-<view class="add-page">
+<view class="add-page" style="padding-top: {{ navBarHeight }}px;">
+
+  <!-- 自定义导航栏 -->
+  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+    <view class="nav-bar__inner">
+      <view class="nav-bar__back" bindtap="onGoBack">
+        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+      </view>
+      <text class="nav-bar__title">{{ isEdit ? '编辑服务' : '添加服务' }}</text>
+      <view class="nav-bar__right"></view>
+    </view>
+  </view>
 
   <!-- 步骤指示器 -->
   <view class="steps" wx:if="{{ !isEdit }}">
@@ -7,76 +18,61 @@
       <text class="step__label">选择分类</text>
     </view>
     <view class="step__line {{ selectedCat ? 'step__line--done' : '' }}"></view>
-    <view class="step {{ selectedCat && !isCustomMode ? 'step--active' : (selectedCat ? 'step--done' : '') }}">
+    <view class="step {{ (selectedCat && !isCustomMode && editingTpl === null) ? 'step--active' : (selectedCat ? 'step--done' : '') }}">
       <view class="step__circle">2</view>
       <text class="step__label">选择服务</text>
     </view>
-    <view class="step__line {{ isCustomMode ? 'step__line--done' : '' }}"></view>
-    <view class="step {{ isCustomMode ? 'step--active' : '' }}">
+    <view class="step__line {{ (isCustomMode || editingTpl !== null) ? 'step__line--done' : '' }}"></view>
+    <view class="step {{ (isCustomMode || editingTpl !== null) ? 'step--active' : '' }}">
       <view class="step__circle">3</view>
       <text class="step__label">填写详情</text>
     </view>
   </view>
 
-  <!-- 步骤1：选择服务分类 -->
-  <view class="section">
-    <view class="section-title">服务分类</view>
-    <view class="cat-grid">
-      <view
-        class="cat-item {{ selectedCat === item.key ? 'cat-active' : '' }}"
-        wx:for="{{ categories }}"
-        wx:key="key"
-        bindtap="onSelectCat"
-        data-key="{{ item.key }}"
-      >
-        <view class="cat-icon cat-icon--{{ item.key }}">
-          <van-icon name="{{ item.icon }}" size="40rpx" color="{{ selectedCat === item.key ? '#fff' : '#666' }}"></van-icon>
+  <!-- 步骤1：选择服务分类（标签页） -->
+  <view class="section" wx:if="{{ !isCustomMode && !isEdit && editingTpl === null }}">
+    <view class="section-title">选择服务分类</view>
+    <scroll-view class="cat-scroll" scroll-x enhanced show-scrollbar="{{ false }}">
+      <view class="cat-scroll__inner">
+        <view
+          class="cat-tag {{ selectedCat === item.key ? 'cat-tag--active' : '' }}"
+          wx:for="{{ categories }}"
+          wx:key="key"
+          bindtap="onSelectCat"
+          data-key="{{ item.key }}"
+        >
+          <text class="cat-tag__label">{{ item.title }}</text>
         </view>
-        <text class="cat-label">{{ item.title }}</text>
       </view>
-    </view>
+    </scroll-view>
   </view>
 
-  <!-- 步骤2（模板多选模式）：选择服务模板 -->
-  <view class="section" wx:if="{{ selectedCat && !isCustomMode && !isEdit }}">
+  <!-- 步骤2：服务模板列表 -->
+  <view class="section" wx:if="{{ selectedCat && !isCustomMode && !isEdit && editingTpl === null }}">
     <view class="section-title">
-      选择服务类型（可多选）
-      <view class="tpl-header-right">
-        <text class="tpl-select-all" bindtap="onSelectAll">全选</text>
-        <text class="tpl-count" wx:if="{{ selectedCount > 0 }}">已选 {{ selectedCount }}</text>
-      </view>
+      <text>服务模板</text>
+      <text class="tpl-count">{{ currentTemplates.length }} 项</text>
     </view>
     <view class="tpl-list">
       <view
-        class="tpl-item {{ selectedMap[tIdx] ? 'tpl-active' : '' }}"
+        class="tpl-item"
         wx:for="{{ currentTemplates }}"
         wx:for-index="tIdx"
         wx:key="name"
         data-idx="{{ tIdx }}"
         hover-class="tpl-hover"
         hover-stay-time="100"
-        animation="{{ tplAnims[tIdx] }}"
-        bindtap="onSelectTpl"
+        bindtap="onEditTpl"
       >
         <view class="tpl-left">
-          <view wx:if="{{ selectedMap[tIdx] }}" class="tpl-checked">
-            <text class="tpl-checked-text">✓</text>
-          </view>
-          <view wx:else class="tpl-unchecked"></view>
           <view class="tpl-info">
             <text class="tpl-name">{{ item.name }}</text>
             <text class="tpl-unit">{{ item.unit }}</text>
           </view>
         </view>
-        <input
-          wx:if="{{ selectedMap[tIdx] }}"
-          class="tpl-price-input"
-          placeholder="定价"
-          type="digit"
-          data-idx="{{ tIdx }}"
-          bindinput="onTplPriceInput"
-          catchtap="onTplPriceTap"
-        />
+        <view class="tpl-edit-hint">
+          <van-icon name="edit" size="28rpx" color="#FF9800" />
+        </view>
       </view>
 
       <!-- 自定义服务入口 -->
@@ -92,26 +88,18 @@
     </view>
   </view>
 
-  <!-- 批量添加按钮（模板多选模式） -->
-  <view class="submit-area" wx:if="{{ selectedCat && selectedCount > 0 && !isCustomMode && !isEdit }}">
-    <van-button
-      type="primary"
-      block
-      round
-      loading="{{ saving }}"
-      loading-text="添加中..."
-      color="linear-gradient(135deg, #FF9800, #FFB74D)"
-      bindtap="onSubmitBatch"
-    >
-      批量添加 {{ selectedCount }} 项服务
-    </van-button>
+  <!-- 批量快速添加按钮 -->
+  <view class="submit-area" wx:if="{{ selectedCat && !isCustomMode && !isEdit && editingTpl === null }}">
+    <view class="submit-btn submit-btn--batch" bindtap="onBatchQuickAdd">
+      <text class="submit-btn__text">批量快速添加全部模板</text>
+    </view>
   </view>
 
-  <!-- 步骤3（自定义模式）：填写服务详情 -->
-  <view class="section" wx:if="{{ isCustomMode || isEdit }}">
+  <!-- 步骤3：服务详情编辑（模板编辑 / 自定义 / 编辑模式） -->
+  <view class="section" wx:if="{{ editingTpl !== null || isCustomMode || isEdit }}">
     <view class="section-title">
       <van-icon name="arrow-left" size="32rpx" color="#FF9800" bindtap="onBackToTpls" wx:if="{{ !isEdit }}" />
-      {{ isEdit ? '编辑服务' : '自定义服务详情' }}
+      {{ isEdit ? '编辑服务' : '服务详情' }}
     </view>
     <van-cell-group inset>
       <van-field
@@ -159,19 +147,11 @@
     </view>
   </view>
 
-  <!-- 提交按钮（自定义/编辑模式） -->
-  <view class="submit-area" wx:if="{{ (isCustomMode || isEdit) && selectedCat }}">
-    <van-button
-      type="primary"
-      block
-      round
-      loading="{{ saving }}"
-      loading-text="保存中..."
-      color="linear-gradient(135deg, #FF9800, #FFB74D)"
-      bindtap="onSubmit"
-    >
-      {{ isEdit ? '保存修改' : '添加服务' }}
-    </van-button>
+  <!-- 提交按钮（详情编辑模式） -->
+  <view class="submit-area" wx:if="{{ (editingTpl !== null || isCustomMode || isEdit) && selectedCat }}">
+    <view class="submit-btn" bindtap="onSubmit">
+      <text class="submit-btn__text">{{ isEdit ? '保存修改' : '保存服务' }}</text>
+    </view>
   </view>
 
 </view>

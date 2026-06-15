@@ -1,5 +1,6 @@
 // pages/agency-revenue/agency-revenue.js
 const authService = require('../../services/authService');
+const { getStatusBarHeight } = require('../../utils/helpers');
 
 const CAT_LABEL = {
   foster: '宠物寄养',
@@ -31,6 +32,8 @@ const STATUS_LABEL = {
 
 Page({
   data: {
+    statusBarHeight: 0,
+    navBarHeight: 0,
     totalRevenue: '0.00',
     monthRevenue: '0.00',
     totalOrders: 0,
@@ -43,6 +46,17 @@ Page({
   },
 
   _orders: [],
+
+  onGoBack() {
+    wx.navigateBack();
+  },
+
+  onLoad() {
+    const statusBarHeight = getStatusBarHeight();
+    const menuBtn = wx.getMenuButtonBoundingClientRect();
+    const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
+    this.setData({ statusBarHeight, navBarHeight });
+  },
 
   async onShow() {
     const userInfo = await authService.checkLogin();

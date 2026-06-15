@@ -68,6 +68,13 @@
     </view>
   </view>
 
+  <!-- 筛选结果为空（有笼位但当前筛选无匹配） -->
+  <view class="empty-page" wx:elif="{{ !loading && totalCages > 0 && filteredCages.length === 0 }}">
+    <image class="empty-icon" src="/static/pet/logo.png" mode="aspectFit" />
+    <text class="empty-title">当前筛选无结果</text>
+    <text class="empty-desc">{{ activeFilter === 'occupied' ? '暂无占用中的笼位' : '暂无空闲笼位' }}</text>
+  </view>
+
   <!-- 无笼位信息但有在养宠物：直接显示宠物列表 -->
   <view class="pet-list" wx:elif="{{ !loading && totalCages === 0 && activeOrders.length > 0 }}">
     <view class="pet-list__header">
@@ -128,7 +135,7 @@
         </view>
       </block>
       <view class="popup-empty" wx:if="{{ moveTargetList.length === 0 }}">
-        <text class="empty-text">暂无可用的空闲笼位</text>
+        <text class="popup-empty-text">暂无可用的空闲笼位</text>
       </view>
     </view>
   </view>

@@ -37,10 +37,11 @@
   </view>
 
   <!-- 宠物信息卡片（机构服务） -->
-  <view class="section-card" wx:if="{{order.orderType !== 'express'}}">
+  <view class="section-card" wx:if="{{order.orderType !== 'express'}}" data-petid="{{order.petId}}" bindtap="onViewPetDetail">
     <view class="section-card__header">
       <van-icon name="friends-o" size="32rpx" color="#FF9800" />
       <text class="section-card__title">宠物信息</text>
+      <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
     </view>
     <view class="pet-row">
       <image
@@ -54,6 +55,29 @@
           <text wx:if="{{order.petInfo.species}}">{{order.petInfo.species}}</text>
           <text wx:if="{{order.petInfo.age}}"> · {{order.petInfo.age}}岁</text>
           <text wx:if="{{order.genderText}}"> · {{order.genderText}}</text>
+        </view>
+      </view>
+    </view>
+  </view>
+
+  <!-- 用户信息卡片（机构/管理员查看时显示） -->
+  <view class="section-card" wx:if="{{order.ownerInfo && order.ownerId !== _userId}}">
+    <view class="section-card__header">
+      <van-icon name="contact-o" size="32rpx" color="#FF9800" />
+      <text class="section-card__title">用户信息</text>
+    </view>
+    <view class="user-row">
+      <image
+        class="user-row__avatar"
+        src="{{order.ownerInfo.avatar || '/static/pet/logo.png'}}"
+        mode="aspectFill"
+      />
+      <view class="user-row__info">
+        <text class="user-row__name">{{order.ownerInfo.nickname || order.ownerInfo.name || '未命名用户'}}</text>
+        <view class="user-row__meta">
+          <text wx:if="{{order.ownerInfo.phone}}">{{order.ownerInfo.phone}}</text>
+          <text wx:elif="{{order.phone}}">{{order.phone}}</text>
+          <text wx:else>-</text>
         </view>
       </view>
     </view>
@@ -197,6 +221,14 @@
         <van-icon wx:for="{{order.review.ratingArr}}" wx:for-index="si" wx:key="si" name="star" size="32rpx" color="#FF9800" />
       </view>
       <text class="review-area__content">{{order.review.content}}</text>
+    </view>
+    <!-- 机构回复 -->
+    <view class="review-reply" wx:if="{{order.review.reply}}">
+      <view class="review-reply__header">
+        <van-icon name="chat-o" size="24rpx" color="#FF9800" />
+        <text class="review-reply__label">机构回复</text>
+      </view>
+      <text class="review-reply__content">{{order.review.reply}}</text>
     </view>
   </view>
 

@@ -79,6 +79,12 @@
         <text class="o-card__countdown-text {{item.countdownExpired ? 'o-card__countdown-text--expired' : ''}}">{{item.countdownText}}</text>
       </view>
 
+      <!-- 机构回复提示 -->
+      <view class="o-card__reply-hint" wx:if="{{item.orderStatus === 'completed' && item.review && item.review.reply}}">
+        <van-icon name="chat-o" size="24rpx" color="#FF9800" />
+        <text class="o-card__reply-hint-text">机构已回复</text>
+      </view>
+
       <!-- 操作按钮 -->
       <view class="o-card__actions neu-actions" wx:if="{{item.orderStatus === 'unpaid' || item.orderStatus === 'to_confirm' || item.orderStatus === 'to_pickup' || (item.orderStatus === 'completed' && !item.review)}}">
         <view class="neu-btn neu-btn--primary" wx:if="{{item.orderStatus === 'unpaid' && !item.countdownExpired}}" data-id="{{item._id}}" catchtap="onPayOrder">立即付款</view>

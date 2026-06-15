@@ -188,6 +188,34 @@
   color: #8C7A6B;
   margin-top: 8rpx;
 }
+/* ===== 用户信息行 ===== */
+.user-row {
+  display: flex;
+  align-items: center;
+}
+.user-row__avatar {
+  width: 100rpx;
+  height: 100rpx;
+  border-radius: 50%;
+  background: #F0E6D8;
+  flex-shrink: 0;
+  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
+}
+.user-row__info {
+  flex: 1;
+  margin-left: 24rpx;
+}
+.user-row__name {
+  font-size: 32rpx;
+  font-weight: 600;
+  color: #3D2C1E;
+  display: block;
+}
+.user-row__meta {
+  font-size: 26rpx;
+  color: #8C7A6B;
+  margin-top: 8rpx;
+}
 /* ===== 信息行 ===== */
 .info-rows {
   display: flex;
@@ -258,6 +286,30 @@
   font-size: 26rpx;
   color: #3D2C1E;
   line-height: 1.7;
+}
+/* 机构回复 */
+.review-reply {
+  margin-top: 20rpx;
+  padding: 16rpx 20rpx;
+  background: linear-gradient(135deg, #FFF8E1, #FFF3E0);
+  border-radius: 16rpx;
+  border-left: 6rpx solid #FF9800;
+}
+.review-reply__header {
+  display: flex;
+  align-items: center;
+  gap: 8rpx;
+  margin-bottom: 8rpx;
+}
+.review-reply__label {
+  font-size: 22rpx;
+  font-weight: 600;
+  color: #FF9800;
+}
+.review-reply__content {
+  font-size: 26rpx;
+  color: #3D2C1E;
+  line-height: 1.6;
 }
 .review-actions {
   display: flex;
