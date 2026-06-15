@@ -158,15 +158,14 @@
 
 /* 笼位网格 */
 .cage-grid {
-  display: flex;
-  flex-wrap: wrap;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
   gap: 16rpx;
   padding: 0 24rpx 40rpx;
   margin-top: 16rpx;
 }
 
 .cage-card {
-  width: calc(33.33% - 11rpx);
   background: #fff;
   border-radius: 20rpx;
   overflow: hidden;

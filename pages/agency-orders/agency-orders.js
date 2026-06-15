@@ -123,27 +123,34 @@ Page({
     const db = wx.cloud.database();
     let list = [];
     let profile = {};
+    let expressRes = { data: [] };
 
     try {
-      const [res, expressRes, profileRes] = await Promise.all([
-        db.collection('user_orders')
-          .where({
-            orderType: 'agency',
-            agencyProfileId: this._agencyProfileId,
-          })
-          .orderBy('createTime', 'desc')
-          .limit(100)
-          .get(),
-        db.collection('user_orders')
+      const res = await db.collection('user_orders')
+        .where({
+          orderType: 'agency',
+          agencyProfileId: this._agencyProfileId,
+        })
+        .orderBy('createTime', 'desc')
+        .limit(100)
+        .get();
+
+      try {
+        expressRes = await db.collection('user_orders')
           .where({
             orderType: 'express',
             agencyProfileId: this._agencyProfileId,
           })
           .orderBy('createTime', 'desc')
           .limit(100)
-          .get(),
-        db.collection('agency_profiles').doc(this._agencyProfileId).get(),
-      ]);
+          .get();
+      } catch (e) { /* express 查询失败忽略 */ }
+
+      let profileRes = { data: {} };
+      try {
+        profileRes = await db.collection('agency_profiles').doc(this._agencyProfileId).get();
+      } catch (e) { /* profile 查询失败忽略 */ }
+
       profile = profileRes.data || {};
       list = (res.data || []).map(item => ({
         ...item,

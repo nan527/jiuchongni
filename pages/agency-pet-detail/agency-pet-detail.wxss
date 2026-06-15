@@ -1,34 +1,26 @@
 /* pages/agency-pet-detail/agency-pet-detail.wxss */
-.detail-page {
-  min-height: 100vh;
-  background: #f5f5f5;
-}
-
-/* 导航栏 */
+/* 复用 pet-detail 的样式 */
 .nav-bar {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   z-index: 100;
+  background: #FF9800;
 }
-
 .nav-bar__inner {
-  height: 88rpx;
   display: flex;
   align-items: center;
-  padding: 0 24rpx;
-  background: linear-gradient(135deg, #FF9800, #FFB74D);
+  height: 88rpx;
+  padding: 0 16rpx;
 }
-
 .nav-bar__back {
-  width: 60rpx;
-  height: 60rpx;
+  width: 72rpx;
+  height: 72rpx;
   display: flex;
   align-items: center;
   justify-content: center;
 }
-
 .nav-bar__title {
   flex: 1;
   text-align: center;
@@ -36,249 +28,237 @@
   font-weight: 700;
   color: #fff;
 }
-
 .nav-bar__right {
-  width: 60rpx;
+  width: 72rpx;
 }
 
-/* 加载 */
-.loading-wrap {
-  display: flex;
-  justify-content: center;
-  padding-top: 300rpx;
+.detail-page {
+  min-height: 100vh;
+  background: #FFF8F0;
+  padding-bottom: 60rpx;
 }
 
-/* 宠物照片 */
-.hero {
+/* 宠物相册 */
+.pet-gallery {
   position: relative;
+}
+.gallery-scroll {
   width: 100%;
+}
+.gallery-list {
+  display: flex;
+  padding: 0;
+}
+.gallery-item {
+  flex-shrink: 0;
+  width: 100vw;
   height: 480rpx;
 }
-
-.hero__img {
+.gallery-item__img {
   width: 100%;
   height: 100%;
 }
-
-.hero__overlay {
+.gallery-single {
+  width: 100%;
+  height: 480rpx;
+}
+.gallery-single__img {
+  width: 100%;
+  height: 100%;
+}
+.gallery-single--empty {
+  background: #F0E6D8;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.pet-gallery__info {
   position: absolute;
   bottom: 0;
   left: 0;
   right: 0;
-  padding: 40rpx 32rpx 32rpx;
-  background: linear-gradient(transparent, rgba(0,0,0,0.7));
+  padding: 48rpx 32rpx 28rpx;
+  background: linear-gradient(transparent, rgba(61, 44, 30, 0.75));
+  display: flex;
+  flex-direction: column;
+  gap: 10rpx;
 }
-
-.hero__name {
+.pet-gallery__name {
   font-size: 44rpx;
   font-weight: 700;
   color: #fff;
 }
-
-.hero__meta {
+.pet-gallery__meta {
   display: flex;
   align-items: center;
-  gap: 8rpx;
-  margin-top: 8rpx;
+  gap: 16rpx;
 }
-
-.hero__species {
+.pet-gallery__species {
   font-size: 26rpx;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.9);
 }
-
-.hero__age {
+.pet-gallery__age {
   font-size: 26rpx;
-  color: rgba(255,255,255,0.85);
+  color: rgba(255, 255, 255, 0.75);
+  padding-left: 16rpx;
+  border-left: 2rpx solid rgba(255, 255, 255, 0.4);
 }
-
-.hero__badge {
+.pet-gallery__status {
   display: inline-block;
-  padding: 4rpx 16rpx;
+  padding: 6rpx 20rpx;
   border-radius: 20rpx;
+  margin-top: 6rpx;
+  width: fit-content;
+}
+.pet-gallery__status text {
   font-size: 22rpx;
   font-weight: 600;
-  margin-top: 12rpx;
 }
 
 /* 信息卡片 */
 .info-card {
-  margin: 20rpx 24rpx 0;
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
+  background: #FFFAF5;
+  margin: 20rpx 32rpx 0;
+  border-radius: 24rpx;
+  padding: 28rpx;
+  box-shadow: 0 4rpx 16rpx rgba(61, 44, 30, 0.06);
 }
-
-.info-card__header {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
-  margin-bottom: 20rpx;
-}
-
 .info-card__title {
   font-size: 30rpx;
   font-weight: 700;
-  color: #333;
+  color: #3D2C1E;
+  display: block;
+  margin-bottom: 20rpx;
 }
-
 .info-grid {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 20rpx;
-}
-
-.info-grid__item {
   display: flex;
-  flex-direction: column;
+  flex-wrap: wrap;
+  gap: 0;
 }
-
-.info-grid__label {
+.info-item {
+  width: 50%;
+  padding: 12rpx 0;
+}
+.info-item__label {
   font-size: 22rpx;
-  color: #999;
-  margin-bottom: 4rpx;
+  color: #8C7A6B;
+  display: block;
+  margin-bottom: 6rpx;
 }
-
-.info-grid__value {
+.info-item__value {
   font-size: 28rpx;
-  color: #333;
+  color: #3D2C1E;
   font-weight: 500;
 }
 
-/* 健康记录卡片 */
-.health-card {
-  margin: 20rpx 24rpx 40rpx;
-  background: #fff;
-  border-radius: 20rpx;
-  padding: 24rpx;
-  box-shadow: 0 2rpx 12rpx rgba(0,0,0,0.04);
-}
-
-.health-card__header {
-  display: flex;
-  align-items: center;
-  gap: 10rpx;
+/* 通用标题 */
+.section-title {
+  font-size: 32rpx;
+  font-weight: 700;
+  color: #3D2C1E;
+  display: block;
   margin-bottom: 20rpx;
 }
 
-.health-card__title {
-  font-size: 30rpx;
-  font-weight: 700;
-  color: #333;
+/* 健康记录 */
+.health-section {
+  margin: 24rpx 32rpx 0;
 }
-
-.card-loading {
-  display: flex;
-  justify-content: center;
-  padding: 40rpx 0;
-}
-
-.card-empty {
-  text-align: center;
-  padding: 40rpx 0;
-}
-
-.card-empty__text {
-  font-size: 28rpx;
-  color: #bbb;
-  display: block;
-}
-
-.card-empty__hint {
-  font-size: 22rpx;
-  color: #ddd;
-  margin-top: 8rpx;
-  display: block;
-}
-
-/* 时间线 */
-.health-timeline {
+.health-list {
   position: relative;
-  padding-left: 32rpx;
+  padding-left: 28rpx;
 }
-
-.health-timeline::before {
+.health-list::before {
   content: '';
   position: absolute;
   left: 8rpx;
-  top: 12rpx;
-  bottom: 12rpx;
-  width: 3rpx;
-  background: #f0f0f0;
+  top: 16rpx;
+  bottom: 16rpx;
+  width: 2rpx;
+  background: #F0E6D8;
 }
-
-.timeline-item {
+.health-item {
+  display: flex;
   position: relative;
   padding-bottom: 24rpx;
 }
-
-.timeline-item:last-child {
+.health-item:last-child {
   padding-bottom: 0;
 }
-
-.timeline-dot {
+.health-item__dot {
   position: absolute;
   left: -28rpx;
-  top: 10rpx;
+  top: 16rpx;
   width: 16rpx;
   height: 16rpx;
   border-radius: 50%;
   background: #FF9800;
-  border: 3rpx solid #fff;
-  box-shadow: 0 0 0 3rpx #FFE0B2;
+  border: 3rpx solid #FFF3E0;
+  z-index: 1;
 }
-
-.timeline-content {
-  background: #fafafa;
-  border-radius: 12rpx;
-  padding: 16rpx 20rpx;
+.health-item__content {
+  flex: 1;
+  background: #FFFAF5;
+  border-radius: 20rpx;
+  padding: 20rpx;
+  margin-left: 16rpx;
+  box-shadow: 0 2rpx 12rpx rgba(61, 44, 30, 0.04);
 }
-
-.timeline-header {
+.health-item__header {
   display: flex;
   align-items: center;
-  gap: 12rpx;
-  margin-bottom: 8rpx;
+  justify-content: space-between;
+  margin-bottom: 10rpx;
 }
-
-.timeline-date {
+.health-item__date {
   font-size: 22rpx;
-  color: #999;
+  color: #C4B8AC;
 }
-
-.timeline-value {
-  font-size: 28rpx;
-  color: #333;
-  font-weight: 500;
+.health-item__value {
+  font-size: 30rpx;
+  font-weight: 700;
+  color: #3D2C1E;
   display: block;
-  margin-bottom: 4rpx;
+  margin-bottom: 6rpx;
 }
-
-.timeline-note {
+.health-item__note {
   font-size: 24rpx;
-  color: #666;
+  color: #8C7A6B;
   display: block;
   margin-top: 4rpx;
 }
-
-.timeline-recorder {
+.health-item__recorder {
+  margin-top: 8rpx;
+}
+.health-item__recorder-text {
   font-size: 20rpx;
-  color: #999;
-  display: block;
-  margin-top: 6rpx;
+  color: #C4B8AC;
+  background: #FFF8F0;
+  padding: 4rpx 12rpx;
+  border-radius: 8rpx;
 }
 
 /* 空状态 */
-.empty-state {
+.empty-health {
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding-top: 300rpx;
+  padding: 60rpx 0;
+}
+.empty-health__text {
+  font-size: 28rpx;
+  color: #8C7A6B;
+  margin-top: 16rpx;
+}
+.empty-health__hint {
+  font-size: 22rpx;
+  color: #C4B8AC;
+  margin-top: 8rpx;
 }
 
-.empty-state__text {
-  font-size: 28rpx;
-  color: #bbb;
-  margin-top: 16rpx;
+/* 加载状态 */
+.loading-wrap {
+  display: flex;
+  justify-content: center;
+  padding: 60rpx 0;
 }

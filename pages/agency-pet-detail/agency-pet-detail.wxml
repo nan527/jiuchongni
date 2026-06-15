@@ -1,104 +1,121 @@
 <!-- pages/agency-pet-detail/agency-pet-detail.wxml -->
-<view class="detail-page">
 
-  <!-- 自定义导航栏 -->
-  <view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
-    <view class="nav-bar__inner">
-      <view class="nav-bar__back" bindtap="onGoBack">
-        <van-icon name="arrow-left" size="40rpx" color="#fff" />
+<!-- 自定义导航栏 -->
+<view class="nav-bar" style="padding-top: {{ statusBarHeight }}px;">
+  <view class="nav-bar__inner">
+    <view class="nav-bar__back" bindtap="onGoBack">
+      <van-icon name="arrow-left" size="40rpx" color="#fff" />
+    </view>
+    <text class="nav-bar__title">宠物档案</text>
+    <view class="nav-bar__right"></view>
+  </view>
+</view>
+
+<view class="detail-page" wx:if="{{pet}}" style="padding-top: {{ navBarHeight }}px;">
+
+  <!-- 宠物相册 -->
+  <view class="pet-gallery">
+    <scroll-view wx:if="{{photos.length > 1}}" class="gallery-scroll" scroll-x enhanced show-scrollbar="{{false}}">
+      <view class="gallery-list">
+        <view class="gallery-item" wx:for="{{photos}}" wx:key="*this" bindtap="previewPhoto" data-url="{{item}}">
+          <image class="gallery-item__img" src="{{item}}" mode="aspectFill" />
+        </view>
       </view>
-      <text class="nav-bar__title">宠物档案</text>
-      <view class="nav-bar__right"></view>
+    </scroll-view>
+    <view wx:elif="{{photos.length === 1}}" class="gallery-single" bindtap="previewPhoto" data-url="{{photos[0]}}">
+      <image class="gallery-single__img" src="{{photos[0]}}" mode="aspectFill" />
+    </view>
+    <view wx:else class="gallery-single gallery-single--empty">
+      <van-icon name="photo-o" size="80rpx" color="#E8D9C8" />
+    </view>
+
+    <view class="pet-gallery__info">
+      <text class="pet-gallery__name">{{pet.name}}</text>
+      <view class="pet-gallery__meta">
+        <text class="pet-gallery__species">{{pet.species}}</text>
+        <text wx:if="{{pet.age}}" class="pet-gallery__age">{{pet.age}}岁</text>
+      </view>
+      <view wx:if="{{statusConfig}}" class="pet-gallery__status" style="background:{{statusConfig.bg}};">
+        <text style="color:{{statusConfig.color}};">{{statusConfig.label}}</text>
+      </view>
     </view>
   </view>
 
-  <!-- 加载中 -->
-  <view class="loading-wrap" wx:if="{{ loading }}">
-    <van-loading type="spinner" color="#FF9800" size="48rpx" />
+  <!-- 基本信息 -->
+  <view class="info-card">
+    <text class="info-card__title">基本信息</text>
+    <view class="info-grid">
+      <view class="info-item">
+        <text class="info-item__label">品种</text>
+        <text class="info-item__value">{{pet.species || '-'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-item__label">年龄</text>
+        <text class="info-item__value">{{pet.age ? pet.age + '岁' : '-'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-item__label">性别</text>
+        <text class="info-item__value">{{pet.gender === 'male' ? '弟弟' : pet.gender === 'female' ? '妹妹' : '-'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-item__label">体重</text>
+        <text class="info-item__value">{{pet.weight ? pet.weight + ' kg' : '-'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-item__label">性格</text>
+        <text class="info-item__value">{{pet.character || '-'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-item__label">特殊需求</text>
+        <text class="info-item__value">{{pet.special_needs || '无'}}</text>
+      </view>
+      <view class="info-item">
+        <text class="info-item__label">绝育状态</text>
+        <text class="info-item__value">{{pet.neutered ? '已绝育' : '未绝育'}}</text>
+      </view>
+    </view>
   </view>
 
-  <block wx:if="{{ !loading && pet }}">
+  <!-- 健康记录 -->
+  <view class="health-section">
+    <text class="section-title">健康记录</text>
 
-    <!-- 宠物照片 + 基本信息 -->
-    <view class="hero">
-      <image class="hero__img" src="{{ pet.photo || '/static/pet/logo.png' }}" mode="aspectFill" />
-      <view class="hero__overlay">
-        <text class="hero__name">{{ pet.name }}</text>
-        <view class="hero__meta">
-          <text class="hero__species">{{ pet.species || '未知品种' }}</text>
-          <text class="hero__age" wx:if="{{ pet.age }}">· {{ pet.age }}岁</text>
-        </view>
-        <view wx:if="{{ pet.statusLabel }}" class="hero__badge" style="background:{{ pet.statusBg }};color:{{ pet.statusColor }};">
-          {{ pet.statusLabel }}
-        </view>
-      </view>
+    <view class="loading-wrap" wx:if="{{healthLoading}}">
+      <van-loading type="spinner" color="#FF9800" size="40rpx" />
     </view>
 
-    <!-- 基本信息卡片 -->
-    <view class="info-card">
-      <view class="info-card__header">
-        <van-icon name="friends-o" size="32rpx" color="#FF9800" />
-        <text class="info-card__title">基本信息</text>
-      </view>
-      <view class="info-grid">
-        <view class="info-grid__item">
-          <text class="info-grid__label">品种</text>
-          <text class="info-grid__value">{{ pet.species || '-' }}</text>
-        </view>
-        <view class="info-grid__item">
-          <text class="info-grid__label">年龄</text>
-          <text class="info-grid__value">{{ pet.age || '-' }}</text>
-        </view>
-        <view class="info-grid__item">
-          <text class="info-grid__label">性格</text>
-          <text class="info-grid__value">{{ pet.character || '-' }}</text>
-        </view>
-        <view class="info-grid__item">
-          <text class="info-grid__label">特殊需求</text>
-          <text class="info-grid__value">{{ pet.special_needs || '无' }}</text>
-        </view>
-      </view>
-    </view>
-
-    <!-- 健康记录 -->
-    <view class="health-card">
-      <view class="health-card__header">
-        <van-icon name="shield-o" size="32rpx" color="#FF9800" />
-        <text class="health-card__title">健康记录</text>
-      </view>
-
-      <view wx:if="{{ healthLoading }}" class="card-loading">
-        <van-loading type="spinner" color="#FF9800" size="36rpx" />
-      </view>
-
-      <view wx:elif="{{ healthRecords.length === 0 }}" class="card-empty">
-        <text class="card-empty__text">暂无健康记录</text>
-        <text class="card-empty__hint">宠物在机构寄养时，机构会记录健康数据</text>
-      </view>
-
-      <view wx:else class="health-timeline">
-        <view class="timeline-item" wx:for="{{ healthRecords }}" wx:key="_id">
-          <view class="timeline-dot"></view>
-          <view class="timeline-content">
-            <view class="timeline-header">
-              <van-tag type="primary" size="medium" color="#FF9800">{{ item.typeLabel }}</van-tag>
-              <text class="timeline-date">{{ item.dateStr }}</text>
-            </view>
-            <text class="timeline-value" wx:if="{{ item.value }}">{{ item.value }}{{ item.type === 'weight' ? ' kg' : '' }}</text>
-            <text class="timeline-value" wx:if="{{ item.food_intake }}">饮食：{{ item.food_intake }}</text>
-            <text class="timeline-note" wx:if="{{ item.note }}">{{ item.note }}</text>
-            <text class="timeline-recorder" wx:if="{{ item.recorder_role }}">{{ item.recorder_role === 'agency' ? '🏥 机构录入' : '👤 主人录入' }}</text>
+    <view class="health-list" wx:if="{{!healthLoading && healthRecords.length > 0}}">
+      <view class="health-item" wx:for="{{healthRecords}}" wx:key="_id">
+        <view class="health-item__dot"></view>
+        <view class="health-item__content">
+          <view class="health-item__header">
+            <van-tag round plain color="#FFF3E0" text-color="#FF9800" size="medium">{{item.typeLabel}}</van-tag>
+            <text class="health-item__date">{{item.dateStr}}</text>
+          </view>
+          <text class="health-item__value" wx:if="{{item.value}}">{{item.value}}{{item.type === 'weight' ? ' kg' : ''}}</text>
+          <text class="health-item__note" wx:if="{{item.food_intake}}">饮食：{{item.food_intake}}</text>
+          <text class="health-item__note" wx:if="{{item.vaccine_name}}">疫苗：{{item.vaccine_name}}</text>
+          <text class="health-item__note" wx:if="{{item.medicine_name}}">药品：{{item.medicine_name}}</text>
+          <text class="health-item__note" wx:if="{{item.institution}}">机构：{{item.institution}}</text>
+          <text class="health-item__note" wx:if="{{item.result}}">结果：{{item.result}}</text>
+          <text class="health-item__note" wx:if="{{item.note}}">{{item.note}}</text>
+          <view class="health-item__recorder" wx:if="{{item.recorder_role}}">
+            <text class="health-item__recorder-text">{{item.recorder_role === 'agency' ? '🏥 机构录入' : '👤 主人录入'}}</text>
           </view>
         </view>
       </view>
     </view>
 
-  </block>
-
-  <!-- 空状态 -->
-  <view class="empty-state" wx:if="{{ !loading && !pet }}">
-    <van-icon name="warn-o" size="80rpx" color="#F0E6D8" />
-    <text class="empty-state__text">宠物信息不存在</text>
+    <view class="empty-health" wx:if="{{!healthLoading && healthRecords.length === 0}}">
+      <van-icon name="notes-o" size="60rpx" color="#F0E6D8" />
+      <text class="empty-health__text">暂无健康记录</text>
+      <text class="empty-health__hint">宠物在机构寄养时，机构会记录健康数据</text>
+    </view>
   </view>
 
+</view>
+
+<!-- 加载中 -->
+<view class="loading-wrap" wx:if="{{loading}}" style="padding-top:200rpx;">
+  <van-loading type="spinner" color="#FF9800" size="48rpx" />
 </view>

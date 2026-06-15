@@ -1,6 +1,12 @@
 // pages/agency-pet-detail/agency-pet-detail.js
-const authService = require('../../services/authService');
 const { getStatusBarHeight } = require('../../utils/helpers');
+
+const STATUS_CONFIG = {
+  agency_foster:   { label: '寄养中',   color: '#FF9800', bg: '#FFF3E0' },
+  pending_foster:  { label: '待寄养',   color: '#E65100', bg: '#FFF3E0' },
+  waiting_pickup:  { label: '待取回',   color: '#EF6C00', bg: '#FFF8E1' },
+  other_foster:    { label: '他人寄养', color: '#1565C0', bg: '#E3F2FD' },
+};
 
 const HEALTH_TYPE_LABEL = {
   weight: '体重', food: '饮食', temperature: '体温',
@@ -9,10 +15,12 @@ const HEALTH_TYPE_LABEL = {
 
 Page({
   data: {
-    loading: true,
     pet: null,
+    statusConfig: null,
+    photos: [],
     healthRecords: [],
-    healthLoading: false,
+    healthLoading: true,
+    loading: true,
     statusBarHeight: 0,
     navBarHeight: 0,
   },
@@ -25,60 +33,57 @@ Page({
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
     this.setData({ statusBarHeight, navBarHeight });
 
-    this._petId = opts.petId || '';
+    this._petId = opts.petId || opts.id || '';
     if (this._petId) {
-      this.loadPet();
+      this.loadPet(this._petId);
+      this.loadHealthRecords(this._petId);
     }
   },
 
-  async loadPet() {
+  async loadPet(id) {
+    this.setData({ loading: true });
     const db = wx.cloud.database();
     try {
-      const res = await db.collection('pets').doc(this._petId).get();
-      const pet = res.data || {};
-      // 寄养状态
-      const STATUS_MAP = {
-        agency_foster: { label: '寄养中', color: '#FF9800', bg: '#FFF3E0' },
-        pending_foster: { label: '待寄养', color: '#E65100', bg: '#FFF3E0' },
-        waiting_pickup: { label: '待取回', color: '#EF6C00', bg: '#FFF8E1' },
-        other_foster: { label: '他人寄养', color: '#1565C0', bg: '#E3F2FD' },
-      };
-      const sc = STATUS_MAP[pet.petStatus];
-      if (sc) {
-        pet.statusLabel = sc.label;
-        pet.statusColor = sc.color;
-        pet.statusBg = sc.bg;
-      }
-      this.setData({ pet, loading: false });
-      this.loadHealthRecords();
-    } catch (err) {
-      console.error('[AgencyPetDetail] loadPet error', err);
-      this.setData({ loading: false });
+      const res = await db.collection('pets').doc(id).get();
+      const pet = res.data;
+      const photos = pet.photos || (pet.photo ? [pet.photo] : []);
+      this.setData({
+        pet,
+        photos,
+        statusConfig: STATUS_CONFIG[pet.petStatus] || null,
+        loading: false,
+      });
+    } catch (e) {
+      this.setData({ pet: null, loading: false });
       wx.showToast({ title: '加载失败', icon: 'none' });
     }
   },
 
-  loadHealthRecords() {
-    if (!this._petId) return;
+  async loadHealthRecords(petId) {
     this.setData({ healthLoading: true });
     const db = wx.cloud.database();
-    db.collection('health_records')
-      .where({ pet_id: this._petId })
-      .orderBy('record_date', 'desc')
-      .limit(50)
-      .get()
-      .then(res => {
-        const records = (res.data || []).map(r => ({
-          ...r,
-          typeLabel: HEALTH_TYPE_LABEL[r.type] || r.type,
-          dateStr: this._formatDate(r.record_date),
-        }));
-        this.setData({ healthRecords: records, healthLoading: false });
-      })
-      .catch(err => {
-        console.warn('[AgencyPetDetail] loadHealthRecords error', err);
-        this.setData({ healthLoading: false });
-      });
+    try {
+      const res = await db.collection('health_records')
+        .where({ pet_id: petId })
+        .orderBy('record_date', 'desc')
+        .limit(50)
+        .get();
+      const records = (res.data || []).map(r => ({
+        ...r,
+        typeLabel: HEALTH_TYPE_LABEL[r.type] || r.type,
+        dateStr: this._formatDate(r.record_date),
+      }));
+      this.setData({ healthRecords: records, healthLoading: false });
+    } catch (e) {
+      this.setData({ healthLoading: false });
+    }
+  },
+
+  previewPhoto(e) {
+    const url = e.currentTarget.dataset.url;
+    if (url) {
+      wx.previewImage({ urls: this.data.photos, current: url });
+    }
   },
 
   _formatDate(t) {
