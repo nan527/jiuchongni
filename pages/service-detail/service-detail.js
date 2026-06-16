@@ -418,7 +418,7 @@ Page({
               species: selectedPet.species || '',
               age: selectedPet.age || '',
               gender: selectedPet.gender || '',
-              photo: selectedPet.photo || (s.images && s.images[0]) || '',
+              photo: selectedPet.photo || '',
             },
           }),
           phone: phone.trim(),

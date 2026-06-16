@@ -37,7 +37,7 @@
           <text class="order-card__sub" wx:if="{{order.petInfoText}}">{{order.petInfoText}}</text>
           <view class="order-card__price-row">
             <text class="order-card__price">¥{{order.price}}</text>
-            <text class="order-card__unit">/{{order.unit || '次'}}</text>
+            <text class="order-card__unit">{{order.unit || '次'}}</text>
           </view>
         </view>
       </view>

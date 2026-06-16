@@ -67,7 +67,7 @@
           <text class="o-card__remain {{item.isLeaveExpired ? 'o-card__remain--left' : ''}}" wx:if="{{item.leaveRemainText}}">{{item.leaveRemainText}}</text>
           <view class="o-card__price-row" wx:if="{{item.price}}">
             <text class="o-card__price">¥{{item.price}}</text>
-            <text class="o-card__unit">/{{item.unit || '次'}}</text>
+            <text class="o-card__unit">{{item.unit || '次'}}</text>
           </view>
           <text class="o-card__time">{{item.createTimeStr}}</text>
         </view>

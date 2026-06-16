@@ -285,7 +285,7 @@
               </view>
               <view class="service-card__right">
                 <text class="service-card__price">¥{{item.price}}</text>
-                <text class="service-card__unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
+                <text class="service-card__unit" wx:if="{{item.unit}}">{{item.unit}}</text>
               </view>
             </view>
           </view>
@@ -420,7 +420,7 @@
                   </view>
                   <view class="history-detail__service-right">
                     <text class="history-detail__service-price">¥{{item.price}}</text>
-                    <text class="history-detail__service-unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
+                    <text class="history-detail__service-unit" wx:if="{{item.unit}}">{{item.unit}}</text>
                   </view>
                 </view>
               </view>

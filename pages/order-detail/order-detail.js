@@ -36,6 +36,7 @@ Page({
     order: null,
     loading: true,
     _userId: '',
+    _userRole: 'pet_owner',
     statusBarHeight: 0,
     navBarHeight: 0,
     // 评价弹窗
@@ -71,7 +72,10 @@ Page({
     this._userId = userInfo._id;
     this._userRole = userInfo.role || 'pet_owner';
     this._agencyProfileId = userInfo.agencyProfileId || '';
-    this.setData({ _userId: this._userId });
+    this.setData({
+      _userId: this._userId,
+      _userRole: this._userRole,
+    });
     this.loadOrder(id);
   },
 
@@ -258,12 +262,14 @@ Page({
     });
   },
 
-  // 评价
+  // 评价（仅宠物主人可操作）
   openReview() {
+    if (this._userRole !== 'pet_owner') return;
     this.setData({ showReview: true, editReviewId: '', reviewRating: 5, reviewContent: '' });
   },
 
   openEditReview() {
+    if (this._userRole !== 'pet_owner') return;
     const review = this.data.order.review;
     if (!review) return;
     this.setData({
@@ -275,6 +281,7 @@ Page({
   },
 
   deleteReview() {
+    if (this._userRole !== 'pet_owner') return;
     wx.showModal({
       title: '删除评价',
       content: '确定要删除这条评价吗？删除后不可恢复。',
@@ -304,6 +311,7 @@ Page({
   },
 
   async onSubmitReview(e) {
+    if (this._userRole !== 'pet_owner') return;
     const { orderId, rating, content } = e.detail;
     const { editReviewId } = this.data;
     if (!content.trim()) return wx.showToast({ title: '请输入评价内容', icon: 'none' });
@@ -346,6 +354,7 @@ Page({
   },
 
   async submitReview() {
+    if (this._userRole !== 'pet_owner') return;
     const { reviewRating, reviewContent, editReviewId } = this.data;
     if (!reviewContent.trim()) return wx.showToast({ title: '请输入评价内容', icon: 'none' });
     if (this.data.submittingReview) return;

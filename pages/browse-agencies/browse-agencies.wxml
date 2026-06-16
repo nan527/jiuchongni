@@ -204,7 +204,7 @@
           </view>
           <view class="svc-card__bottom">
             <text class="svc-card__price">¥{{item.price}}</text>
-            <text class="svc-card__unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
+            <text class="svc-card__unit" wx:if="{{item.unit}}">{{item.unit}}</text>
           </view>
           <text class="svc-card__desc" wx:if="{{item.desc}}">{{item.desc}}</text>
         </view>

@@ -151,7 +151,7 @@
                   <text class="recommend-item__agency" wx:if="{{item.agencyName}}">{{item.agencyName}}</text>
                   <view class="recommend-item__bottom">
                     <text class="recommend-item__price">¥{{item.price}}</text>
-                    <text class="recommend-item__unit" wx:if="{{item.unit}}">/{{item.unit}}</text>
+                    <text class="recommend-item__unit" wx:if="{{item.unit}}">{{item.unit}}</text>
                   </view>
                 </view>
               </view>

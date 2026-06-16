@@ -1,5 +1,6 @@
 // pages/agency-pets/agency-pets.js
 const authService = require('../../services/authService');
+const { resolveTempUrls } = require('../../utils/fileHelper');
 
 Page({
   data: {
@@ -99,6 +100,25 @@ Page({
       // 过滤已离开的订单
       const activeOrders = (ordersRes.data || []).filter(o => !this._isLeaveExpired(o.leaveTimeMs));
 
+      // 批量解析宠物头像中的 cloud:// 文件 ID
+      const cloudPhotoMap = {};
+      const cloudPhotoIDs = [];
+      activeOrders.forEach(o => {
+        const photo = o.petInfo && o.petInfo.photo;
+        if (photo && photo.startsWith('cloud://') && !cloudPhotoMap[photo]) {
+          cloudPhotoMap[photo] = '';
+          cloudPhotoIDs.push(photo);
+        }
+      });
+      if (cloudPhotoIDs.length > 0) {
+        try {
+          const resolved = await resolveTempUrls(cloudPhotoIDs);
+          cloudPhotoIDs.forEach((id, i) => { cloudPhotoMap[id] = resolved[i] || ''; });
+        } catch (e) {
+          console.warn('[AgencyPets] resolveTempUrls error', e);
+        }
+      }
+
       // 尝试读 profile 获取笼位总数，失败就用订单数
       let totalCages = 0;
       try {
@@ -150,6 +170,7 @@ Page({
           const order = orderMap[i];
           if (order) {
             occupiedCount++;
+            const rawPhoto = (order.petInfo && order.petInfo.photo) || '';
             cages.push({
               cageNumber: i,
               occupied: true,
@@ -162,7 +183,7 @@ Page({
                 petInfo: {
                   species: (order.petInfo && order.petInfo.species) || '',
                   age: (order.petInfo && order.petInfo.age) || '',
-                  photo: (order.petInfo && order.petInfo.photo) || '',
+                  photo: cloudPhotoMap[rawPhoto] !== undefined ? cloudPhotoMap[rawPhoto] : rawPhoto,
                 },
               },
             });
@@ -172,21 +193,24 @@ Page({
         }
       }
 
-      const orderData = activeOrders.map(o => ({
-        _id: o._id,
-        petId: o.petId,
-        petName: o.petName || '未命名宠物',
-        petInfo: {
-          species: (o.petInfo && o.petInfo.species) || '',
-          age: (o.petInfo && o.petInfo.age) || '',
-          photo: (o.petInfo && o.petInfo.photo) || '',
-        },
-        checkinDate: o.checkinDate || '',
-        cageNumber: o.cageNumber,
-        orderStatus: o.orderStatus,
-        serviceName: o.serviceName || '',
-        leaveTimeMs: o.leaveTimeMs,
-      }));
+      const orderData = activeOrders.map(o => {
+        const rawPhoto = (o.petInfo && o.petInfo.photo) || '';
+        return {
+          _id: o._id,
+          petId: o.petId,
+          petName: o.petName || '未命名宠物',
+          petInfo: {
+            species: (o.petInfo && o.petInfo.species) || '',
+            age: (o.petInfo && o.petInfo.age) || '',
+            photo: cloudPhotoMap[rawPhoto] !== undefined ? cloudPhotoMap[rawPhoto] : rawPhoto,
+          },
+          checkinDate: o.checkinDate || '',
+          cageNumber: o.cageNumber,
+          orderStatus: o.orderStatus,
+          serviceName: o.serviceName || '',
+          leaveTimeMs: o.leaveTimeMs,
+        };
+      });
 
       this.setData({
         loading: false,

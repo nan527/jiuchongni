@@ -1,5 +1,6 @@
 // pages/agency-pet-detail/agency-pet-detail.js
 const { getStatusBarHeight } = require('../../utils/helpers');
+const { resolveTempUrls } = require('../../utils/fileHelper');
 
 const STATUS_CONFIG = {
   agency_foster:   { label: '寄养中',   color: '#FF9800', bg: '#FFF3E0' },
@@ -46,7 +47,9 @@ Page({
     try {
       const res = await db.collection('pets').doc(id).get();
       const pet = res.data;
-      const photos = pet.photos || (pet.photo ? [pet.photo] : []);
+      const rawPhotos = pet.photos || (pet.photo ? [pet.photo] : []);
+      // 将 cloud:// 文件 ID 转为临时 HTTP URL
+      const photos = await resolveTempUrls(rawPhotos);
       this.setData({
         pet,
         photos,

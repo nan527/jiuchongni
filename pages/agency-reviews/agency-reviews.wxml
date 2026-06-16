@@ -156,8 +156,8 @@
       </view>
       <textarea class="reply-popup__textarea" placeholder="请输入回复内容..." value="{{ replyContent }}" bindinput="onReplyInput" maxlength="500" auto-height />
       <view class="reply-popup__footer">
-        <van-button round size="small" bindtap="closeReplyPopup" custom-style="margin-right:16rpx;">取消</van-button>
-        <van-button round type="primary" color="#FF9800" loading="{{ replySaving }}" bindtap="submitReply">提交回复</van-button>
+        <van-button round size="small" bindtap="closeReplyPopup" custom-style="flex:1;margin-right:16rpx;">取消</van-button>
+        <van-button round size="small" type="primary" color="#FF9800" loading="{{ replySaving }}" bindtap="submitReply" custom-style="flex:1;">提交回复</van-button>
       </view>
     </view>
   </van-popup>

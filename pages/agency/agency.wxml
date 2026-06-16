@@ -74,7 +74,6 @@
               <view class="status-card__icon status-card__icon--blue">
                 <van-icon name="logistics" size="40rpx" color="#1565C0" />
               </view>
-              <view class="status-card__badge" wx:if="{{ activeCount > 0 }}">{{ activeCount > 99 ? '99+' : activeCount }}</view>
             </view>
             <text class="status-card__label">进行中</text>
           </view>
@@ -92,7 +91,6 @@
               <view class="status-card__icon status-card__icon--green">
                 <van-icon name="star-o" size="40rpx" color="#2E7D32" />
               </view>
-              <view class="status-card__badge" wx:if="{{ completedCount > 0 }}">{{ completedCount > 99 ? '99+' : completedCount }}</view>
             </view>
             <text class="status-card__label">已完成</text>
           </view>
