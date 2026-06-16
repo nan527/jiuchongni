@@ -1507,25 +1507,33 @@ async function smartMatchParse(event) {
   const trimmedText = (userText || '').slice(0, 500);
 
   try {
-    const systemPrompt = `你是宠物服务需求分析助手。请分析用户需求并返回一个JSON对象，不要返回其他任何文字。
+    const systemPrompt = `你是宠物服务需求分析助手。你的唯一任务是输出一个JSON对象，不要输出任何其他内容、分析过程或解释。
 
 宠物信息：${JSON.stringify(petInfo)}
 用户需求：${trimmedText || '请根据宠物信息推荐'}
 
-示例输入："我家小狗有点胆小，在黑龙江，找100元以内的寄养"
-示例输出：{"serviceCategory":"foster","keywords":["寄养","小狗","胆小","黑龙江","100元"],"budget":{"min":null,"max":100},"preferences":["安静","胆小"],"urgency":"normal","location":"黑龙江"}
+输出格式（严格JSON，不要markdown包裹）：
+{"serviceCategory":"...","keywords":[...],"budget":{...},"preferences":[...],"urgency":"...","location":"..."}
 
-示例输入："猫咪洗澡，要干净的店"
-示例输出：{"serviceCategory":"grooming","keywords":["洗澡","猫咪","干净"],"budget":null,"preferences":["干净"],"urgency":"normal","location":null}
+示例1：
+输入：我家小狗有点胆小，在黑龙江，找100元以内的寄养
+输出：{"serviceCategory":"foster","keywords":["寄养","小狗","胆小","黑龙江","100元"],"budget":{"min":null,"max":100},"preferences":["安静","胆小"],"urgency":"normal","location":"黑龙江"}
 
-示例输入："我家小狗有点饿，整点吃的"
-示例输出：{"serviceCategory":"extra","keywords":["狗粮","零食","吃的","小狗"],"budget":null,"preferences":[],"urgency":"normal","location":null}
+示例2：
+输入：猫咪洗澡，要干净的店
+输出：{"serviceCategory":"grooming","keywords":["洗澡","猫咪","干净"],"budget":null,"preferences":["干净"],"urgency":"normal","location":null}
 
-keywords提取5-8个，包括服务类型、宠物特征、地点、价格等关键词
-preferences提取用户隐含偏好（如胆小→安静，有监控→安全）
-serviceCategory：foster寄养 grooming美容 medical医疗 door上门 extra商品增值 null不限
-urgency：normal或urgent
-location：用户提到的城市/省份名，没有则为null`;
+示例3：
+输入：在太原找能洗护的寄养机构
+输出：{"serviceCategory":"foster","keywords":["寄养","洗护","太原"],"budget":null,"preferences":["洗护"],"urgency":"normal","location":"太原"}
+
+规则：
+- 只输出JSON，不要输出任何其他文字
+- keywords：5-8个关键词
+- preferences：隐含偏好（胆小→安静，有监控→安全）
+- serviceCategory：foster/grooming/medical/door/extra/null
+- urgency：normal或urgent
+- location：城市/省份名或null`;
 
     const apiResult = await callAnalysisAPI([
       { role: 'system', content: systemPrompt },
@@ -1566,7 +1574,9 @@ location：用户提到的城市/省份名，没有则为null`;
       return { success: true, parsed };
     }
 
-    return { success: false, msg: 'AI 返回格式异常: ' + content.slice(0, 300) };
+    // AI 返回了内容但解析不出 JSON，使用规则降级
+    console.warn('[smartMatchParse] AI 未返回有效JSON，使用规则降级。AI输出:', content.slice(0, 200));
+    return fallbackSmartMatch(trimmedText, petInfo);
   } catch (e) {
     console.error('[smartMatchParse] 异常，使用规则降级:', e.message);
     return fallbackSmartMatch((event.userText || '').slice(0, 500), event.petInfo || {});
@@ -1589,7 +1599,7 @@ function fallbackSmartMatch(userText, petInfo) {
   if (/寄养|托管|出差|旅行|放家里没人/.test(text)) {
     serviceCategory = 'foster';
     keywords.push('寄养');
-  } else if (/洗澡|美容|剪毛|造型|修剪/.test(text)) {
+  } else if (/洗澡|美容|剪毛|造型|修剪|洗护/.test(text)) {
     serviceCategory = 'grooming';
     keywords.push('美容');
   } else if (/看病|医疗|生病|打针|体检|疫苗|绝育/.test(text)) {
@@ -1602,6 +1612,10 @@ function fallbackSmartMatch(userText, petInfo) {
     serviceCategory = 'extra';
     keywords.push('商品');
   }
+
+  // 额外关键词：洗护、美容等相关词（即使主分类已确定也要提取）
+  if (/洗护|洗澡/.test(text)) { keywords.push('洗护'); preferences.push('洗护'); }
+  if (/美容|造型|修剪|剪毛/.test(text)) { keywords.push('美容'); }
 
   // 宠物类型
   if (/猫|喵/.test(text)) keywords.push('猫');

@@ -26,7 +26,7 @@
     <!-- 日期选择 -->
     <view class="form-field">
       <text class="form-field__label">日期</text>
-      <picker mode="date" value="{{recordDate}}" bindchange="onDateChange">
+      <picker mode="date" value="{{recordDate}}" end="{{today}}" bindchange="onDateChange">
         <view class="form-field__picker">
           <text class="{{recordDate ? 'form-field__value' : 'form-field__placeholder'}}">{{recordDate || '请选择日期'}}</text>
           <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
@@ -52,7 +52,7 @@
       </view>
       <view class="form-field">
         <text class="form-field__label">下次接种日期</text>
-        <picker mode="date" value="{{nextDate}}" bindchange="onNextDateChange">
+        <picker mode="date" value="{{nextDate}}" start="{{today}}" bindchange="onNextDateChange">
           <view class="form-field__picker">
             <text class="{{nextDate ? 'form-field__value' : 'form-field__placeholder'}}">{{nextDate || '请选择日期'}}</text>
             <van-icon name="arrow" size="28rpx" color="#C4B8AC" />
@@ -69,7 +69,7 @@
       </view>
       <view class="form-field">
         <text class="form-field__label">下次驱虫日期</text>
-        <picker mode="date" value="{{nextDate}}" bindchange="onNextDateChange">
+        <picker mode="date" value="{{nextDate}}" start="{{today}}" bindchange="onNextDateChange">
           <view class="form-field__picker">
             <text class="{{nextDate ? 'form-field__value' : 'form-field__placeholder'}}">{{nextDate || '请选择日期'}}</text>
             <van-icon name="arrow" size="28rpx" color="#C4B8AC" />

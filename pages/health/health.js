@@ -205,22 +205,48 @@ Page({
       const reminders = this._buildReminders(vaccineRecords, dewormingRecords);
 
       // 最近记录（取前 5 条）
-      const recentRecords = records.slice(0, 5).map(r => ({
-        ...r,
-        typeLabel: TYPE_LABEL[r.type] || r.type,
-        displayValue: this._getDisplayValue(r),
-        dateStr: this._formatDate(r.record_date),
-        note: r.note || r.food_intake || '',
-      }));
+      const iconMap = {
+        weight: { name: 'chart-trending-o', color: '#FF9800' },
+        vaccine: { name: 'shield-o', color: '#1565C0' },
+        deworming: { name: 'good-job-o', color: '#2E7D32' },
+        checkup: { name: 'notes-o', color: '#7B1FA2' },
+        food: { name: 'food-o', color: '#F57F17' },
+        note: { name: 'edit', color: '#999' },
+      };
+      const recentRecords = records.slice(0, 5).map(r => {
+        const icon = iconMap[r.type] || { name: 'chart-trending-o', color: '#FF9800' };
+        return {
+          ...r,
+          typeLabel: TYPE_LABEL[r.type] || r.type,
+          displayValue: this._getDisplayValue(r),
+          dateStr: this._formatDate(r.record_date),
+          note: r.note || r.food_intake || '',
+          iconName: icon.name,
+          iconColor: icon.color,
+        };
+      });
 
       // 全部记录（用于弹窗筛选）
-      const allRecords = records.map(r => ({
-        ...r,
-        typeLabel: TYPE_LABEL[r.type] || r.type,
-        displayValue: this._getDisplayValue(r),
-        dateStr: this._formatDate(r.record_date),
-        note: r.note || r.food_intake || '',
-      }));
+      const allRecords = records.map(r => {
+        const iconMap = {
+          weight: { name: 'chart-trending-o', color: '#FF9800' },
+          vaccine: { name: 'shield-o', color: '#1565C0' },
+          deworming: { name: 'good-job-o', color: '#2E7D32' },
+          checkup: { name: 'notes-o', color: '#7B1FA2' },
+          food: { name: 'food-o', color: '#F57F17' },
+          note: { name: 'edit', color: '#999' },
+        };
+        const icon = iconMap[r.type] || { name: 'chart-trending-o', color: '#FF9800' };
+        return {
+          ...r,
+          typeLabel: TYPE_LABEL[r.type] || r.type,
+          displayValue: this._getDisplayValue(r),
+          dateStr: this._formatDate(r.record_date),
+          note: r.note || r.food_intake || '',
+          iconName: icon.name,
+          iconColor: icon.color,
+        };
+      });
 
       // 处理体重趋势图数据
       const weightChart = this._buildWeightChart(weightRecords);
@@ -652,6 +678,12 @@ Page({
         const width = res[0].width;
         const height = res[0].height;
 
+        // 如果尺寸为 0，延迟重试
+        if (width === 0 || height === 0) {
+          setTimeout(() => this._drawWeightCurve(points, minWeight, range), 200);
+          return;
+        }
+
         canvas.width = width * dpr;
         canvas.height = height * dpr;
         ctx.scale(dpr, dpr);
@@ -843,6 +875,32 @@ Page({
     }
 
     this.setData({ filteredAllRecords: list });
+  },
+
+  onDeleteRecord(e) {
+    const id = e.currentTarget.dataset.id;
+    wx.showModal({
+      title: '确认删除',
+      content: '删除后无法恢复，确定要删除这条记录吗？',
+      confirmColor: '#E53935',
+      success: async (res) => {
+        if (!res.confirm) return;
+        wx.showLoading({ title: '删除中...' });
+        try {
+          await withTimeout(
+            db.collection('health_records').doc(id).remove(),
+            8000
+          );
+          wx.hideLoading();
+          wx.showToast({ title: '已删除', icon: 'success' });
+          // 重新加载数据
+          this.loadPetHealth(this.data.selectedPetId);
+        } catch (err) {
+          wx.hideLoading();
+          wx.showToast({ title: '删除失败', icon: 'none' });
+        }
+      }
+    });
   },
 
   // 时间轴展开/收起

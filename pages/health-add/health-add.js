@@ -17,6 +17,7 @@ Page({
     activeType: 'weight',
     petId: '',
     selectedPet: null,
+    today: '',
     // 通用
     recordDate: '',
     note: '',
@@ -58,6 +59,7 @@ Page({
     this.setData({
       petId: petId || '',
       recordDate: today,
+      today: today,
       activeType: type && TYPE_LIST.find(t => t.key === type) ? type : 'weight',
     });
 
@@ -236,7 +238,32 @@ Page({
           break;
       }
 
-      await db.collection('health_records').add({ data: recordData });
+      // 体重记录：同一天只能有一条，重复录入会覆盖
+      if (activeType === 'weight') {
+        const dateObj = new Date(recordDate);
+        const startOfDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate());
+        const endOfDay = new Date(dateObj.getFullYear(), dateObj.getMonth(), dateObj.getDate() + 1);
+        const existing = await db.collection('health_records')
+          .where({
+            ownerId: this._userId,
+            pet_id: petId,
+            type: 'weight',
+            record_date: db.command.gte(startOfDay).and(db.command.lt(endOfDay))
+          })
+          .get();
+        
+        if (existing.data && existing.data.length > 0) {
+          // 已有记录，更新它
+          await db.collection('health_records').doc(existing.data[0]._id).update({
+            data: recordData
+          });
+        } else {
+          // 没有记录，新增
+          await db.collection('health_records').add({ data: recordData });
+        }
+      } else {
+        await db.collection('health_records').add({ data: recordData });
+      }
 
       // 体重记录同步更新宠物档案
       if (activeType === 'weight' && this.data.weight) {

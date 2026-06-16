@@ -129,7 +129,7 @@
           wx:key="_id"
         >
           <!-- 匹配度徽章 -->
-          <view class="result-card__badge {{item.matchPercent >= 90 ? 'badge-high' : item.matchPercent >= 70 ? 'badge-med' : 'badge-low'}}">
+          <view class="result-card__badge {{item.matchPercent >= 80 ? 'badge-high' : item.matchPercent >= 50 ? 'badge-med' : item.matchPercent >= 20 ? 'badge-low' : 'badge-very-low'}}">
             <text class="result-card__badge-text">{{item.matchPercent}}%</text>
             <text class="result-card__badge-label">匹配</text>
           </view>
@@ -137,7 +137,7 @@
           <!-- 匹配度进度条 -->
           <view class="result-card__score-bar">
             <view class="result-card__score-track">
-              <view class="result-card__score-fill {{item.matchPercent >= 90 ? 'score-high' : item.matchPercent >= 70 ? 'score-med' : 'score-low'}}" style="width: {{item.matchPercent}}%;"></view>
+              <view class="result-card__score-fill {{item.matchPercent >= 80 ? 'score-high' : item.matchPercent >= 50 ? 'score-med' : item.matchPercent >= 20 ? 'score-low' : 'score-very-low'}}" style="width: {{item.matchPercent}}%;"></view>
             </view>
           </view>
 

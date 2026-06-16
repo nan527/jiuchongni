@@ -5,6 +5,53 @@ const authService = require('../../services/authService');
 
 const db = wx.cloud.database();
 
+// 同义词/近义词映射表
+const SYNONYM_MAP = {
+  '猫': ['猫咪', '喵', '猫猫', '喵咪'],
+  '狗': ['狗狗', '犬', '小狗', '汪'],
+  '寄养': ['托管', '代养', '照看', '看护', '寄放'],
+  '美容': ['洗澡', '洗护', '造型', '修剪', '美容洗护', '清洁'],
+  '医疗': ['看病', '治疗', '诊疗', '就诊', '宠物医院', '诊所'],
+  '便宜': ['实惠', '划算', '性价比', '低价', '省钱', '经济'],
+  '贵': ['高端', '豪华', '精品', '尊享'],
+  '安静': ['不吵', '温和', '温顺', '胆小', '不闹'],
+  '安全': ['监控', '放心', '保障', '靠谱', '可靠'],
+  '干净': ['卫生', '整洁', '清洁', '消毒'],
+  '大': ['宽敞', '大型', '大面积', '宽阔'],
+  '小': ['小型', '精致', '紧凑', '迷你'],
+  '好': ['优质', '好评', '推荐', '不错', '专业'],
+  '近': ['附近', '就近', '方便', '距离近', '近便'],
+  '可爱': ['萌', '好看', '漂亮', '颜值'],
+  '陪伴': ['陪玩', '互动', '玩耍', '遛'],
+};
+
+// 反向索引：词 → 所属同义词组的所有词
+const _reverseMap = {};
+Object.entries(SYNONYM_MAP).forEach(([key, synonyms]) => {
+  const group = [key, ...synonyms];
+  group.forEach(word => {
+    _reverseMap[word] = group;
+  });
+});
+
+/**
+ * 检查关键词是否命中文本池（支持同义词扩展）
+ * @param {string} keyword - 关键词
+ * @param {string} textPool - 小写文本池
+ * @returns {boolean}
+ */
+function _matchWithSynonyms(keyword, textPool) {
+  const kw = keyword.toLowerCase();
+  // 直接匹配
+  if (textPool.includes(kw)) return true;
+  // 同义词扩展匹配
+  const group = _reverseMap[kw];
+  if (group) {
+    return group.some(syn => textPool.includes(syn.toLowerCase()));
+  }
+  return false;
+}
+
 function withTimeout(promise, ms) {
   return Promise.race([
     promise,
@@ -205,10 +252,9 @@ Page({
         .sort((a, b) => b.matchScore - a.matchScore)
         .slice(0, 10);
 
-      // 7. 转换为百分比（满分 85）
-      const MAX_SCORE = 85;
+      // 7. 转换为百分比（满分 100）
       for (const r of results) {
-        r.matchPercent = Math.min(Math.round(r.matchScore / MAX_SCORE * 100), 100);
+        r.matchPercent = Math.min(r.matchScore, 100);
       }
 
       // 8. 补充机构图片、生成匹配理由
@@ -242,39 +288,70 @@ Page({
     }
   },
 
-  // 评分算法（仅软性维度，硬性筛选已在外部完成）
+  // 评分算法（满分 100）
+  // 原则：用户没提的条件不加分也不扣分，只按实际提到的条件打分
   _calcScore({ service, agency }, parsed, userLocation) {
-    let score = 10; // 通过硬性筛选的基础分
+    // 各维度满分：关键词 40 + 偏好 30 + 价格 15 + 环境 10 + 紧急 5 = 100
+    // 只计算用户实际提到了的维度，未提到的维度不计入总分，按比例放大到 100
 
-    // 1. 关键词匹配 (+30)
+    let earned = 25;   // 基础分：通过硬性筛选即得
+    let maxEarned = 25; // 基础分上限
+
+    // 1. 关键词匹配 (满分 40)
+    maxEarned += 40;
     const textPool = [
       service.name, service.desc,
       agency.orgIntro, agency.serviceScope, agency.orgName
-    ].join(' ').toLowerCase();
-    const keywordHits = (parsed.keywords || []).filter(kw => textPool.includes(kw.toLowerCase()));
-    score += Math.min(keywordHits.length * 8, 30);
+    ].filter(Boolean).join(' ').toLowerCase();
+    const keywordHits = (parsed.keywords || []).filter(kw => _matchWithSynonyms(kw, textPool));
+    earned += Math.min(keywordHits.length * 8, 40);
 
-    // 2. 偏好匹配 (+25)
+    // 2. 偏好匹配 (满分 30)
     if (parsed.preferences && parsed.preferences.length > 0) {
-      const prefPool = [agency.orgIntro, agency.serviceScope, agency.cageDesc]
-        .filter(Boolean).join(' ').toLowerCase();
-      const prefHits = parsed.preferences.filter(p => prefPool.includes(p.toLowerCase()));
-      score += Math.min(prefHits.length * 10, 25);
+      maxEarned += 30;
+      const prefPool = [
+        service.name, service.desc,
+        agency.orgIntro, agency.serviceScope, agency.cageDesc
+      ].filter(Boolean).join(' ').toLowerCase();
+      const prefHits = parsed.preferences.filter(p => _matchWithSynonyms(p, prefPool));
+      earned += Math.min(prefHits.length * 10, 30);
     }
 
-    // 3. 环境展示度 (+15)
-    if (agency.envImages && agency.envImages.length > 0) {
-      score += 15;
-    } else {
-      score += 3;
+    // 3. 价格适配度 (满分 15)：仅用户指定了预算时才计入
+    const price = Number(service.price) || 0;
+    if (parsed.budget && parsed.budget.max && price > 0) {
+      maxEarned += 15;
+      const budgetCenter = ((parsed.budget.min || 0) + parsed.budget.max) / 2 || parsed.budget.max;
+      const diff = Math.abs(price - budgetCenter) / budgetCenter;
+      if (diff <= 0.3) {
+        earned += 15;
+      } else if (diff <= 0.6) {
+        earned += 10;
+      } else {
+        earned += 5;
+      }
     }
 
-    // 4. 紧急度加成 (+5)
-    if (parsed.urgency === 'urgent' && service.category === 'foster' && agency.totalCages > 0) {
-      score += 5;
+    // 4. 环境展示度 (满分 10)：始终计入
+    maxEarned += 10;
+    const envCount = (agency.envImages && agency.envImages.length) || 0;
+    if (envCount >= 3) {
+      earned += 10;
+    } else if (envCount >= 1) {
+      earned += 5;
     }
 
-    return score;
+    // 5. 紧急度加成 (满分 5)：仅用户指定了紧急时才计入
+    if (parsed.urgency === 'urgent') {
+      maxEarned += 5;
+      if (service.category === 'foster' && agency.totalCages > 0) {
+        earned += 5;
+      }
+    }
+
+    // 按实际涉及的维度等比放大到 100 分
+    if (maxEarned <= 0) return 50;
+    return Math.min(Math.round(earned / maxEarned * 100), 100);
   },
 
   // 地域匹配（硬性筛选）
@@ -331,17 +408,31 @@ Page({
       reasons.push('位于' + parsed.location);
     }
     if (parsed.budget && parsed.budget.max) {
-      reasons.push('价格在预算范围内');
+      const price = Number(service.price) || 0;
+      if (price <= parsed.budget.max) {
+        reasons.push('价格在预算范围内');
+      }
     }
-    // 软性评分理由
+    // 关键词匹配理由
+    const textPool = [
+      service.name, service.desc,
+      agency.orgIntro, agency.serviceScope, agency.orgName
+    ].filter(Boolean).join(' ').toLowerCase();
+    const keywordHits = (parsed.keywords || []).filter(kw => _matchWithSynonyms(kw, textPool));
+    if (keywordHits.length > 0) {
+      reasons.push('匹配' + keywordHits.slice(0, 3).join('、') + '等需求');
+    }
+    // 偏好匹配理由
     if (parsed.preferences && parsed.preferences.length > 0) {
-      const prefPool = [agency.orgIntro, agency.serviceScope, agency.cageDesc]
-        .filter(Boolean).join(' ').toLowerCase();
-      const hits = parsed.preferences.filter(p => prefPool.includes(p.toLowerCase()));
+      const prefPool = [
+        service.name, service.desc,
+        agency.orgIntro, agency.serviceScope, agency.cageDesc
+      ].filter(Boolean).join(' ').toLowerCase();
+      const hits = parsed.preferences.filter(p => _matchWithSynonyms(p, prefPool));
       if (hits.length > 0) reasons.push('满足' + hits.join('、') + '等偏好');
     }
     if (reasons.length === 0) reasons.push('综合评分较高');
-    return reasons.slice(0, 2).join('，');
+    return reasons.slice(0, 3).join('，');
   },
 
   // 操作跳转

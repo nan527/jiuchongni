@@ -1,6 +1,7 @@
 // pages/pet/pet.js
 const authService = require('../../../services/authService');
 const { getStatusBarHeight } = require('../../../utils/helpers');
+const { resolveTempUrls } = require('../../../utils/fileHelper');
 
 const PRESET_AVATARS = [
   { name: '金毛', src: '/packagePet/static/Avatar/pet/金毛.png' },
@@ -175,7 +176,7 @@ Page({
   },
 
   // 点击编辑图标 → 直接打开编辑表单
-  onEditPet(e) {
+  async onEditPet(e) {
     const id = e.currentTarget.dataset.id;
     const pet = this.data.petList.find(p => p._id === id);
     if (!pet || pet._isAdopted) {
@@ -194,9 +195,19 @@ Page({
       character: pet.character || '',
       special: pet.special_needs || '',
       photoUrl: pet.photo || '',
-      fileList: pet.photo ? [{ url: pet.photo }] : [],
       selectedPresetIdx: -1,
     });
+    // 将 cloud:// 文件 ID 转为临时 URL 供 uploader 预览
+    if (pet.photo && pet.photo.startsWith('cloud://')) {
+      try {
+        const [resolved] = await resolveTempUrls([pet.photo]);
+        this.setData({ fileList: resolved ? [{ url: resolved }] : [] });
+      } catch (err) {
+        this.setData({ fileList: [] });
+      }
+    } else {
+      this.setData({ fileList: pet.photo ? [{ url: pet.photo }] : [] });
+    }
     wx.pageScrollTo({ scrollTop: 0, duration: 300 });
   },
 

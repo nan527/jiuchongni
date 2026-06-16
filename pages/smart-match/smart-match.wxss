@@ -303,79 +303,6 @@
   font-size: 22rpx;
   color: #C4B8AC;
 }
-/* ===== 语音输入 ===== */
-.voice-bar {
-  display: flex;
-  align-items: center;
-  margin-top: 16rpx;
-  gap: 12rpx;
-}
-.voice-btn {
-  width: 64rpx;
-  height: 64rpx;
-  border-radius: 50%;
-  background: linear-gradient(180deg, #FFFAF5, #FFF3E0);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  box-shadow: 6rpx 6rpx 16rpx rgba(174, 144, 116, 0.15), -6rpx -6rpx 16rpx rgba(255, 255, 255, 0.9);
-  transition: transform 0.15s ease, box-shadow 0.15s ease;
-  flex-shrink: 0;
-  position: relative;
-}
-.voice-btn:active {
-  transform: scale(0.92);
-  box-shadow: 3rpx 3rpx 8rpx rgba(174, 144, 116, 0.12), -3rpx -3rpx 8rpx rgba(255, 255, 255, 0.95);
-}
-.voice-btn--recording {
-  background: linear-gradient(135deg, #EF5350, #E53935);
-  box-shadow: 0 4rpx 16rpx rgba(229, 57, 53, 0.35);
-  animation: pulse 1.5s ease-in-out infinite;
-}
-.voice-btn--recording:active {
-  transform: scale(0.92);
-  box-shadow: 0 2rpx 8rpx rgba(229, 57, 53, 0.25);
-}
-.voice-btn--processing {
-  opacity: 0.7;
-}
-.voice-btn__waves {
-  display: flex;
-  align-items: center;
-  gap: 4rpx;
-  height: 32rpx;
-}
-.voice-btn__wave {
-  width: 4rpx;
-  height: 32rpx;
-  border-radius: 2rpx;
-  background: #fff;
-  animation: wave 1.2s ease-in-out infinite;
-}
-.voice-btn__wave:nth-child(2) {
-  animation-delay: 0.15s;
-}
-.voice-btn__wave:nth-child(3) {
-  animation-delay: 0.3s;
-}
-.voice-btn__label {
-  font-size: 24rpx;
-  color: #8C7A6B;
-  flex-shrink: 0;
-}
-.voice-bar__progress {
-  flex: 1;
-  height: 6rpx;
-  background: #F0E6D8;
-  border-radius: 3rpx;
-  overflow: hidden;
-}
-.voice-bar__progress-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #EF5350, #E53935);
-  border-radius: 3rpx;
-  transition: width 0.2s linear;
-}
 .textarea-tips {
   display: flex;
   align-items: center;
@@ -563,6 +490,9 @@
   background: linear-gradient(180deg, #FF9800, #F57C00);
 }
 .badge-low {
+  background: linear-gradient(180deg, #FFB74D, #FFA726);
+}
+.badge-very-low {
   background: linear-gradient(180deg, #BDBDBD, #9E9E9E);
 }
 .result-card__badge-text {
@@ -599,6 +529,9 @@
   background: linear-gradient(90deg, #FF9800, #FFB74D);
 }
 .score-low {
+  background: linear-gradient(90deg, #FFB74D, #FFCC80);
+}
+.score-very-low {
   background: linear-gradient(90deg, #BDBDBD, #E0E0E0);
 }
 /* 卡片内容 */
