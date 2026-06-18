@@ -9,7 +9,6 @@ const CAT_TITLE_MAP = {
   grooming: '美容洗护',
   medical: '医疗健康',
   door: '上门服务',
-  extra: '商品增值',
 };
 
 /**

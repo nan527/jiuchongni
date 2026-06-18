@@ -5,8 +5,6 @@
     "van-tag": "/miniprogram_npm/@vant/weapp/tag/index",
     "van-button": "/miniprogram_npm/@vant/weapp/button/index",
     "van-popup": "/miniprogram_npm/@vant/weapp/popup/index",
-    "van-loading": "/miniprogram_npm/@vant/weapp/loading/index",
-    "van-divider": "/miniprogram_npm/@vant/weapp/divider/index",
-    "van-search": "/miniprogram_npm/@vant/weapp/search/index"
+    "van-loading": "/miniprogram_npm/@vant/weapp/loading/index"
   }
 }

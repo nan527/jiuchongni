@@ -1,190 +1,349 @@
-# 🐾 就宠你 — 宠物智能服务平台
+<div align="center">
 
-一款面向宠物主人和宠物服务机构的一站式微信小程序，提供**宠物寄养、领养、智能健康管理**等服务。
+<img src="static/pet/logo.png" width="120" height="120" alt="就宠你 Logo" style="border-radius: 20px;">
+
+<br/>
+<br/>
+
+```
+     ██╗ ██████╗ ███╗   ██╗
+     ██║██╔═══██╗████╗  ██║
+     ██║██║   ██║██╔██╗ ██║
+██   ██║██║   ██║██║╚██╗██║
+╚█████╔╝╚██████╔╝██║ ╚████║
+ ╚════╝  ╚═════╝ ╚═╝  ╚═══╝
+    就 宠 你 · JCN
+```
+
+# 🐾 就宠你
+
+### 宠物智能服务平台
+
+![WeChat Mini Program](https://img.shields.io/badge/WeChat%20Mini%20Program-07C160?style=for-the-badge&logo=wechat&logoColor=white)
+![Cloud Development](https://img.shields.io/badge/Cloud%20Development-4A90D9?style=for-the-badge&logoColor=white)
+![AI Powered](https://img.shields.io/badge/AI%20Powered-FF6B6B?style=for-the-badge&logo=openai&logoColor=white)
+![MIT License](https://img.shields.io/badge/License-MIT-yellow?style=for-the-badge)
+
+<p align="center">
+  一款面向宠物主人和宠物服务机构的一站式微信小程序<br/>
+  提供宠物寄养、美容洗护、医疗健康、上门服务等全场景服务
+</p>
+
+---
+
+**🏆 山西大学计算机与信息技术学院 · 2026 届制作团队**
+
+[快速开始](#-快速开始) · [核心功能](#-核心功能) · [技术架构](#-技术架构) · [项目结构](#-项目结构) · [文档](#-文档)
+
+</div>
+
+---
+
+## 📖 项目简介
+
+**就宠你** 是一个基于微信云开发的宠物服务生态平台，通过 **AI 智能匹配算法** 连接宠物主人与服务机构，实现服务需求的精准对接。平台支持三大角色体系，覆盖宠物服务全生命周期。
+
+### 🎯 设计理念
+
+- **智能化** — AI 驱动的需求理解与服务匹配
+- **一站式** — 寄养、美容、医疗、上门服务全覆盖
+- **多角色** — 宠物主人、服务机构、平台管理员协同
+- **云原生** — 微信云开发，零服务器运维
 
 ---
 
 ## ✨ 核心功能
 
-### 🏠 三大角色体系
-| 角色 | 功能定位 |
-|------|---------|
-| **宠物主人** | 发布寄养/领养需求、预约机构服务、管理宠物档案 |
-| **服务机构** | 发布服务、接单管理、笼位管理、收入统计 |
-| **平台管理员** | 审核机构入驻、管理订单、系统配置 |
+### 🤖 AI 智能匹配
 
-### 📱 主要模块
+> 自然语言输入，智能解析需求
 
-#### 1️⃣ 首页 — 智能服务广场
-- 🏡 **宠物寄养/送养** — 个人间寄养领养信息撮合
-- 🏥 **机构服务** — 寄养、美容、医疗等预约服务
-- 📍 基于位置的服务推荐
+```
+用户输入: "在太原寄养一天，100元左右，要有监控"
+    ↓
+AI 解析: { 地区: "太原", 服务: "寄养", 预算: 100, 关键词: "监控" }
+    ↓
+同义词扩展 + 语义匹配
+    ↓
+返回 TOP-N 推荐结果（100分制评分 + 四档颜色标识）
+```
 
-#### 2️⃣ 寄养领养中心 — 双向匹配
-- 📤 **我的发布** — 管理宠物寄养、送养信息
-- 📥 **我参与的** — 追踪领养/寄养申请状态
-- 🏪 **机构订单** — 寄养订单全生命周期管理
+### 🏥 宠物健康管理
 
-#### 3️⃣ 服务详情 — 一站式预约
-- 📋 服务信息展示与在线预约
-- 🐱 从宠物档案快速选择寄养宠物
-- 💰 价格透明，在线支付
+- 📊 健康状态可视化（体重、疫苗、驱虫）
+- 📈 体重趋势追踪
+- 💉 疫苗/驱虫时间线管理
+- 🚨 AI 健康风险预警
 
-#### 4️⃣ 宠物档案 — 数字化管理
-- 📝 宠物昵称、品种、年龄、性格、特殊需求
-- 🖼️ **25种预设头像**快速设置（金毛、布偶、柯基等）
-- 📷 自定义照片上传
-- 🏷️ 寄养状态标签（待寄养、寄养中、待取回）
+### 📋 订单全生命周期
 
-#### 5️⃣ 订单中心 — 全链路跟踪
-| 角色 | 订单类型 | 功能 |
-|------|---------|------|
-| 宠物主人 | 个人交易/机构服务 | 查看、确认、评价 |
-| 机构 | 寄养订单 | 接单、开始服务、确认取回 |
+```
+创建订单 → 支付 → 接单 → 服务中 → 完成 → 评价
+    ↓         ↓       ↓        ↓        ↓       ↓
+ 倒计时    待支付   待接单    进行中   待确认   评分
+```
 
-#### 6️⃣ 机构中心 — 专业运营
-- 📊 **笼位管理** — 实时容量监控，防止超售
-- 💰 **收入统计** — 每日营收、月统计
-- 🔔 **到期提醒** — 寄养到期倒计时，防止超期
+### 🏠 机构智能管理
+
+- 📦 笼位网格化管理，防止超售
+- 💰 收入统计看板
+- ⭐ 评价回复管理
+- 📝 帖子接单功能
 
 ---
 
-## 🏗️ 技术架构
+## 👥 三大角色体系
 
-### 技术栈
-| 层级 | 技术 |
-|------|------|
-| 前端框架 | 微信小程序原生 |
-| UI组件库 | Vant Weapp |
-| 样式方案 | WXSS + CSS变量 |
-| 后端服务 | 微信云开发（云函数 + 云数据库） |
-| 存储 | 云存储 |
-| 认证 | 微信登录 + 账号密码双模式 |
+<table>
+<tr>
+<td width="33%" align="center">
 
-### 项目结构
+### 🐕 宠物主人
+
+浏览机构/服务  
+在线预约下单  
+宠物档案管理  
+健康数据分析  
+智能服务匹配
+
+</td>
+<td width="33%" align="center">
+
+### 🏢 服务机构
+
+发布服务项目  
+接单/订单管理  
+笼位资源管理  
+收入数据统计  
+评价互动管理
+
+</td>
+<td width="33%" align="center">
+
+### 👨‍💼 平台管理员
+
+审核机构入驻  
+平台数据看板  
+API 接口配置  
+系统运维监控
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🛠️ 技术架构
+
+<div align="center">
+
 ```
-jcn/
-├── cloud/                    # 云函数
-│   ├── functions/            # 业务云函数
-│   └── triggers/             # 数据库触发器
-├── components/               # 自定义组件
-├── constants/                # 常量定义（角色、状态、配置）
-├── pages/                    # 页面目录
-│   ├── index/                # 首页
-│   ├── foster-center/        # 寄养领养中心
-│   ├── foster-detail/        # 寄养详情
-│   ├── service-detail/       # 服务详情页
-│   ├── pet/                  # 宠物档案
-│   ├── orders/               # 用户订单
-│   ├── agency/               # 机构首页
-│   ├── agency-orders/        # 机构订单管理
-│   ├── agency-revenue/       # 机构收入统计
-│   ├── login/                # 登录页
-│   └── my/                   # 个人中心
-├── services/                 # 服务层
-│   ├── authService.js        # 认证服务
-│   └── userService.js        # 用户服务
-├── static/                   # 静态资源
-│   ├── Avatar/pet/           # 宠物预设头像（25种）
-│   └── images/               # 图片资源
-├── app.js                    # 应用入口
-├── app.json                  # 全局配置
-└── app.wxss                  # 全局样式
+┌─────────────────────────────────────────────────────────────┐
+│                      微信小程序前端                          │
+│         WXML + WXSS + JavaScript + Vant Weapp               │
+├─────────────────────────────────────────────────────────────┤
+│                     业务逻辑层                               │
+│              Services + Utils + Constants                    │
+├─────────────────────────────────────────────────────────────┤
+│                   微信云开发后端                              │
+│        Cloud Functions + Cloud Database + Cloud Storage      │
+├─────────────────────────────────────────────────────────────┤
+│                    AI 服务层                                 │
+│           自然语言处理 + 智能匹配 + 健康分析                  │
+└─────────────────────────────────────────────────────────────┘
 ```
+
+</div>
+
+### 技术栈详情
+
+| 层级 | 技术选型 | 说明 |
+|:----:|:--------:|:-----|
+| 🎨 **前端** | 微信小程序原生 | WXML + WXSS + JavaScript |
+| 🎯 **UI 组件** | Vant Weapp ^1.11.7 | 有赞移动端组件库 |
+| 🎨 **样式** | Less | CSS 预处理器，支持变量、混入 |
+| ⚡ **后端** | 微信云开发 | Serverless 架构，零运维 |
+| 🔐 **认证** | 双模式登录 | 微信授权 + 账号密码 |
+| 🤖 **AI** | 自定义算法 | 语义理解 + 智能匹配引擎 |
+
+### 服务分类矩阵
+
+| 服务类型 | 图标 | 场景描述 |
+|:--------:|:----:|:---------|
+| 🏠 **宠物寄养** | `foster` | 日托 / 长托 / 隔离寄养 |
+| ✂️ **美容洗护** | `grooming` | 洗澡 / 造型 / SPA |
+| 🏥 **医疗健康** | `medical` | 体检 / 疫苗 / 治疗 |
+| 🚪 **上门服务** | `door` | 遛狗 / 喂食 / 上门洗护 |
 
 ---
 
 ## 🚀 快速开始
 
 ### 环境要求
-- 微信开发者工具最新版
-- Node.js >= 14
-- 微信基础库 >= 2.19.0
 
-### 安装运行
+| 依赖 | 版本要求 | 用途 |
+|:----:|:--------:|:-----|
+| 📱 微信开发者工具 | 最新版 | 小程序开发调试 |
+| 💻 Node.js | >= 14 | npm 依赖管理 |
+| 📦 微信基础库 | >= 3.15.1 | 运行环境 |
+
+### 安装步骤
 
 ```bash
-# 1. 克隆项目
+# Step 1️⃣ 克隆项目
+git clone <your-repo-url>
 cd jcn
 
-# 2. 安装依赖
+# Step 2️⃣ 安装依赖
 npm install
 
-# 3. 安装 Vant Weapp
-npm i @vant/weapp -S --production
-
-# 4. 微信开发者工具 → 构建 npm
+# Step 3️⃣ 构建 npm（在微信开发者工具中）
 # 工具栏 → 工具 → 构建 npm
 
-# 5. 创建云环境
-# 登录微信云开发控制台，创建环境并记录环境ID
+# Step 4️⃣ 配置云环境
+# 编辑 app.js，修改 env 为你的云环境 ID
 
-# 6. 配置云环境
-# 修改 app.js 中的 env 为你的云环境ID
+# Step 5️⃣ 部署云函数
+# 右键 cloudfunctions/ai_handler → 上传并部署：云端安装依赖
 ```
 
-### 数据库集合初始化
+### 数据库集合清单
 
 ```javascript
-// 需要创建的集合
-users          // 用户表
-pets           // 宠物档案
-services       // 机构服务
-orders         // 订单
-foster_applications  // 寄养领养申请
+// 核心业务集合
+users              // 👤 用户账号信息
+agency_profiles    // 🏢 机构档案
+pets               // 🐕 宠物档案
+user_orders        // 📋 订单记录
+agency_services    // 🛎️ 机构服务
+
+// 健康管理集合
+health_records     // 💊 健康记录
+health_risk_records // ⚠️ AI 风险记录
+
+// 系统配置集合
+api_configs        // 🔑 API 配置
+user_balances      // 💰 用户余额
+balance_logs       // 📝 余额变动日志
 ```
 
 ---
 
-## 🔐 认证体系
+## 📁 项目结构
 
-支持三种登录方式：
-
-| 方式 | 适用角色 | 说明 |
-|------|---------|------|
-| **微信一键登录** | 宠物主人 | 自动获取微信授权 |
-| **账号密码登录** | 机构/管理员 | 需管理员审核机构资质 |
-| **账号密码登录** | 宠物主人 | 可绑定手机号 |
-
----
-
-## 🎨 设计特色
-
-### 视觉设计
-- 🟠 **品牌色**：暖橙色 (#FF9800) — 温暖、活力、亲和力
-- 📐 **圆角设计**：大圆角卡片，友好现代
-- 🌊 **微动效**：按钮点击、卡片悬停反馈
-- 🎯 **状态标签**：不同业务状态对应专属颜色
-
-### 交互亮点
-- 宠物档案预设头像快速选择
-- 寄养订单状态全生命周期可视化
-- 机构笼位实时容量仪表盘
-- 订单倒计时提醒
-
----
-
-## 📸 界面预览
-
-> 建议在实际真机体验完整功能
-
-| 首页 | 寄养中心 | 宠物档案 |
-|------|---------|---------|
-| 服务广场 | 订单管理 | 头像选择 |
+```
+jcn/
+├── 📄 app.js                        # 应用入口
+├── 📄 app.json                      # 全局配置
+├── 📄 app.less                      # Less 变量定义
+│
+├── ☁️  cloudfunctions/               # 云函数目录
+│   └── ai_handler/                  #   └── 统一云函数入口 (20+ actions)
+│
+├── 🧩 components/                   # 自定义组件库
+├── 📚 constants/                    # 常量定义
+├── ⚙️  services/                     # 业务服务层
+├── 🔧 utils/                        # 工具函数集
+│
+├── 📱 pages/                        # 页面目录
+│   ├── 🏠 index/                    #   ├── 首页 (Tab)
+│   ├── 📋 orders/                   #   ├── 订单中心 (Tab)
+│   ├── 👤 my/                       #   ├── 个人中心 (Tab)
+│   ├── 🤖 smart-match/             #   ├── 智能匹配
+│   ├── 🏥 health/                   #   ├── 健康管理
+│   ├── 🏢 agency/                   #   ├── 机构详情
+│   ├── ⚙️  admin/                    #   └── 管理后台
+│   └── ...
+│
+├── 📦 packagePet/                   # 宠物档案子包（分包加载）
+├── 🖼️  static/                      # 静态资源
+├── 📝 docs/                         # 项目文档
+└── 📦 miniprogram_npm/              # npm 构建产物
+```
 
 ---
 
-## 📋 开发计划
+## 📚 文档
 
-- [x] 核心寄养领养功能
-- [x] 机构订单管理
-- [x] 宠物档案预设头像
-- [x] 笼位容量管理
-- [ ] AI 宠物健康分析（待接入）
-- [ ] 实时视频看宠（待接入）
-- [ ] 智能喂食提醒（待接入）
+<table>
+<tr>
+<td width="50%">
 
+### 📖 开发文档
+
+| 文档 | 描述 |
+|:-----|:-----|
+| [项目结构文档](docs/项目结构文档.md) | 架构、技术栈、数据库设计 |
+| [页面功能说明](docs/页面功能说明.md) | 全部页面功能详解 |
+| [智能匹配算法](docs/智能匹配算法文档.md) | AI 匹配引擎实现 |
+
+</td>
+<td width="50%">
+
+### 🎨 规范文档
+
+| 文档 | 描述 |
+|:-----|:-----|
+| [开发规范](docs/开发规范.md) | 代码编写标准 |
+| [设计规范](docs/设计规范.md) | UI/UX 设计指南 |
+| [任务执行文档](docs/任务执行文档.md) | 项目任务跟踪 |
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🌟 特性亮点
+
+| 特性 | 说明 |
+|:----:|:-----|
+| 🚀 **极致性能** | 分包加载 + 按需渲染，首屏秒开 |
+| 🔒 **安全可靠** | 微信云开发原生安全，数据加密传输 |
+| 🎯 **智能匹配** | NLP 需求解析 + 同义词扩展 + 语义评分 |
+| 📱 **原生体验** | 原生小程序开发，流畅丝滑 |
+| 🧩 **组件化** | 高复用组件库，开发效率提升 50% |
+| ☁️ **云原生** | Serverless 架构，自动弹性伸缩 |
+
+---
 
 ## 📄 开源协议
 
-本项目基于 MIT 协议开源。
+本项目基于 **MIT License** 开源。
+
+```
+MIT License
+
+Copyright (c) 2026 山西大学计算机与信息技术学院 · 就宠你开发团队
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
+
+---
+
+<div align="center">
+
+### 🐾 就宠你 — 让宠物服务更智能
+
+**山西大学计算机与信息技术学院 · 2026 届制作团队**
+
+![GitHub Stars](https://img.shields.io/github/stars/your-username/jcn?style=social)
+![GitHub Forks](https://img.shields.io/github/forks/your-username/jcn?style=social)
+
+</div>

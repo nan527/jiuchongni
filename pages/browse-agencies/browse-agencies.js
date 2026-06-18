@@ -57,7 +57,6 @@ const SERVICE_CATEGORY_LIST = [
   { key: 'grooming', label: '美容洗护' },
   { key: 'medical', label: '医疗健康' },
   { key: 'door', label: '上门服务' },
-  { key: 'extra', label: '商品与增值' },
 ];
 
 Page({
@@ -338,9 +337,6 @@ Page({
         '医疗健康': 'medical',
         '上门': 'door',
         '上门服务': 'door',
-        '商品': 'extra',
-        '增值': 'extra',
-        '商品与增值': 'extra',
       };
       for (const [key, cat] of Object.entries(categoryMap)) {
         if (kw.includes(key)) {
@@ -666,9 +662,6 @@ Page({
         '医疗健康': 'medical',
         '上门': 'door',
         '上门服务': 'door',
-        '商品': 'extra',
-        '增值': 'extra',
-        '商品与增值': 'extra',
       };
       for (const [key, cat] of Object.entries(categoryMap)) {
         if (kw.includes(key)) {

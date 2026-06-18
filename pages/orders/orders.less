@@ -161,48 +161,6 @@
   }
 }
 
-// 自定义标签栏
-.custom-tabs {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 16rpx 32rpx 20rpx;
-  gap: 20rpx;
-}
-
-.custom-tab {
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 14rpx 0;
-  border-radius: @radius-xl;
-  background: rgba(255, 255, 255, 0.15);
-  backdrop-filter: blur(8rpx);
-  transition: all 0.2s ease;
-
-  &:active {
-    transform: scale(0.96);
-  }
-}
-
-.custom-tab--active {
-  background: rgba(255, 255, 255, 0.35);
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-}
-
-.custom-tab__text {
-  font-size: 26rpx;
-  font-weight: 500;
-  color: rgba(255, 255, 255, 0.85);
-  transition: color 0.2s ease;
-}
-
-.custom-tab--active .custom-tab__text {
-  color: #fff;
-  font-weight: 700;
-}
-
 // 加载
 .loading-wrap {
   display: flex;
@@ -269,11 +227,6 @@
 .badge-agency {
   background: linear-gradient(145deg, #FFF3E0, #FFE8CC);
   color: #E65100;
-}
-
-.badge-express {
-  background: linear-gradient(145deg, #E0F7FA, #C8EEF3);
-  color: #0277BD;
 }
 
 .o-card__status {

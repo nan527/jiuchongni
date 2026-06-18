@@ -9,7 +9,6 @@ const CATEGORIES = [
   { key: 'grooming', title: '美容洗护', icon: 'diamond-o' },
   { key: 'medical',  title: '医疗健康', icon: 'medal-o' },
   { key: 'door',     title: '上门服务', icon: 'logistics' },
-  { key: 'extra',    title: '商品增值', icon: 'shop-o' },
 ];
 
 const TEMPLATES = {
@@ -41,12 +40,6 @@ const TEMPLATES = {
     { name: '上门遛狗、上门喂食', unit: '/次' },
     { name: '上门简单洗护', unit: '/次' },
     { name: '上门寄养临时照料', unit: '/天' },
-  ],
-  extra: [
-    { name: '宠物食品、零食、用品售卖', unit: '/次' },
-    { name: '宠物玩具、窝具、穿戴用品售卖', unit: '/次' },
-    { name: '宠物殡葬/洗护增值项目', unit: '/次' },
-    { name: '宠物行为指导、驯养咨询', unit: '/次' },
   ],
 };
 

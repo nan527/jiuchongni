@@ -75,33 +75,8 @@
       <text class="cage-panel__warn" wx:if="{{ cageInfo.totalCages > 0 && cageInfo.availableCages <= 0 }}">当前笼位已满，暂不可下单</text>
     </view>
 
-    <!-- 商品类：收货地址 -->
-    <block wx:if="{{ svc.category === 'extra' }}">
-      <view class="custom-field">
-        <view class="custom-field__label">
-          <text class="custom-field__required">*</text>
-          <text class="custom-field__label-text">收货人</text>
-        </view>
-        <input class="custom-field__input" placeholder="请输入收货人姓名" value="{{ receiverName }}" bindinput="onReceiverNameChange" placeholder-class="custom-field__placeholder" />
-      </view>
-      <view class="custom-field">
-        <view class="custom-field__label">
-          <text class="custom-field__required">*</text>
-          <text class="custom-field__label-text">收货电话</text>
-        </view>
-        <input class="custom-field__input" placeholder="请输入收货人手机号" value="{{ receiverPhone }}" bindinput="onReceiverPhoneChange" type="number" placeholder-class="custom-field__placeholder" />
-      </view>
-      <view class="custom-field custom-field--textarea">
-        <view class="custom-field__label">
-          <text class="custom-field__required">*</text>
-          <text class="custom-field__label-text">收货地址</text>
-        </view>
-        <textarea class="custom-field__textarea" placeholder="请输入详细收货地址" value="{{ receiverAddress }}" bindinput="onReceiverAddressChange" placeholder-class="custom-field__placeholder" auto-height maxlength="200" />
-      </view>
-    </block>
-
-    <!-- 非商品类：选择宠物 -->
-    <block wx:else>
+    <!-- 选择宠物 -->
+    <block>
       <view class="pet-empty-tip" wx:if="{{ myPets.length === 0 }}">
         <text class="pet-empty-tip__text">暂无宠物档案，请先添加宠物</text>
         <view class="pet-empty-tip__btn" bindtap="toPetArchive">

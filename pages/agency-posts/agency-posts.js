@@ -124,30 +124,37 @@ Page({
       const now = new Date();
       const checkinDate = post.startDate || `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-${String(now.getDate()).padStart(2, '0')}`;
 
-      // 1. 创建机构订单
-      await db.collection('user_orders').add({
+      // 1. 创建机构订单（通过云函数，绕过安全规则）
+      const orderResult = await wx.cloud.callFunction({
+        name: 'ai_handler',
         data: {
-          ownerId: post.ownerId,
-          orderType: 'agency',
-          category: type,
-          serviceName: type === 'foster' ? '机构寄养接单' : '机构领养接单',
+          action: 'create_agency_order',
           agencyProfileId: this._agencyProfileId,
-          agencyName: this._agencyUserInfo.nickname || '机构',
-          petId: post.petId || '',
-          petName: post.petName,
-          petInfo: {
-            species: post.breed || '',
-            age: post.age || '',
-            photo: (post.images && post.images[0]) || '',
+          orderData: {
+            ownerId: post.ownerId,
+            orderType: 'agency',
+            category: type,
+            serviceName: type === 'foster' ? '机构寄养接单' : '机构领养接单',
+            agencyName: this._agencyUserInfo.nickname || '机构',
+            petId: post.petId || '',
+            petName: post.petName,
+            petInfo: {
+              species: post.breed || '',
+              age: post.age || '',
+              photo: (post.images && post.images[0]) || '',
+            },
+            images: post.images || [],
+            phone: (this._agencyUserInfo.phone || '') + '',
+            checkinDate: checkinDate,
+            leaveTimeMs: post.endDate ? new Date(post.endDate).getTime() : Date.now() + 7 * 24 * 60 * 60 * 1000,
           },
-          images: post.images || [],
-          phone: (this._agencyUserInfo.phone || '') + '',
-          checkinDate: checkinDate,
-          leaveTimeMs: post.endDate ? new Date(post.endDate).getTime() : Date.now() + 7 * 24 * 60 * 60 * 1000,
-          orderStatus: 'confirmed',
-          createTime: db.serverDate(),
         },
       });
+
+      const { success: orderSuccess, msg: orderMsg } = orderResult.result || {};
+      if (!orderSuccess) {
+        throw new Error(orderMsg || '创建订单失败');
+      }
 
       // 2. 更新帖子状态
       const collection = type === 'foster' ? 'fosters' : 'adoptions';

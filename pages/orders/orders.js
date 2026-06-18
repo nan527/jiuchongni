@@ -21,17 +21,6 @@ const STATUS_FILTER = [
   { key: 'cancelled', label: '已取消' },
 ];
 
-const EXPRESS_STATUS_FILTER = [
-  { key: 'all', label: '全部' },
-  { key: 'unpaid', label: '待支付' },
-  { key: 'pending_ship', label: '待发货' },
-  { key: 'shipped', label: '已发货' },
-  { key: 'to_pickup', label: '待取件' },
-  { key: 'to_review', label: '待评价' },
-  { key: 'completed', label: '已完成' },
-  { key: 'cancelled', label: '已取消' },
-];
-
 const STATUS_CONFIG = {
   unpaid:      { label: '待付款',   color: '#EF6C00', bg: '#FFF8E1' },
   pending:     { label: '待接单',   color: '#1565C0', bg: '#E3F2FD' },
@@ -43,31 +32,15 @@ const STATUS_CONFIG = {
   cancelled:   { label: '已取消',   color: '#999',    bg: '#F5F5F5' },
 };
 
-const EXPRESS_STATUS_CONFIG = {
-  unpaid:       { label: '待支付', color: '#EF6C00', bg: '#FFF8E1' },
-  pending_ship: { label: '待发货', color: '#1565C0', bg: '#E3F2FD' },
-  shipped:      { label: '已发货', color: '#0277BD', bg: '#E0F7FA' },
-  to_pickup:    { label: '待取件', color: '#E65100', bg: '#FFF3E0' },
-  completed:    { label: '已完成', color: '#66BB6A', bg: '#E8F5E9' },
-  cancelled:    { label: '已取消', color: '#999',    bg: '#F5F5F5' },
-};
-
 const CAT_TEXT = {
   foster: '宠物寄养',
   grooming: '美容洗护',
   medical: '医疗健康',
   door: '上门服务',
-  extra: '商品增值',
 };
 
 Page({
   data: {
-    tabList: [
-      { key: 'all', label: '全部' },
-      { key: 'agency', label: '机构服务' },
-      { key: 'express', label: '快递服务' },
-    ],
-    activeTab: 0,
     statusFilter: STATUS_FILTER,
     activeStatus: 'all',
     loading: true,
@@ -90,15 +63,9 @@ Page({
     const statusBarHeight = getStatusBarHeight();
     const menuBtn = wx.getMenuButtonBoundingClientRect();
     const navBarHeight = statusBarHeight + (menuBtn.top - statusBarHeight) * 2 + menuBtn.height;
-    const headerHeight = navBarHeight + 80;
+    const headerHeight = navBarHeight;
     this.setData({ statusBarHeight, navBarHeight, headerHeight });
 
-    if (options.tab !== undefined) {
-      const tabIndex = parseInt(options.tab, 10);
-      if (!isNaN(tabIndex) && tabIndex >= 0 && tabIndex < STATUS_FILTER.length) {
-        this.setData({ activeTab: tabIndex });
-      }
-    }
     if (options.status) {
       const validStatuses = STATUS_FILTER.map(f => f.key);
       if (validStatuses.includes(options.status)) {
@@ -130,13 +97,6 @@ Page({
     this.loadOrders();
   },
 
-  onTabChange(e) {
-    const idx = e.currentTarget.dataset.index;
-    const statusFilter = idx === 2 ? EXPRESS_STATUS_FILTER : STATUS_FILTER;
-    this.setData({ activeTab: idx, activeStatus: 'all', statusFilter });
-    this.applyFilter();
-  },
-
   onStatusFilter(e) {
     const key = e.currentTarget.dataset.key;
     this.setData({ activeStatus: key });
@@ -144,11 +104,8 @@ Page({
   },
 
   applyFilter() {
-    const { allOrders, activeTab, activeStatus } = this.data;
+    const { allOrders, activeStatus } = this.data;
     let list = allOrders;
-
-    if (activeTab === 1) list = list.filter(o => o.orderType === 'agency');
-    else if (activeTab === 2) list = list.filter(o => o.orderType === 'express');
 
     if (activeStatus !== 'all') {
       if (activeStatus === 'to_review') {
@@ -181,8 +138,7 @@ Page({
         8000
       );
       list = (res.data || []).filter(item => item.ownerId === userId).map(item => {
-        const configMap = item.orderType === 'express' ? EXPRESS_STATUS_CONFIG : STATUS_CONFIG;
-        const config = configMap[item.orderStatus] || {};
+        const config = STATUS_CONFIG[item.orderStatus] || {};
         return {
           ...item,
           statusConfig: config,
@@ -337,16 +293,15 @@ Page({
     }
   },
 
-  // 确认完成 / 确认取件
+  // 确认完成
   onConfirmComplete(e) {
     const id = e.currentTarget.dataset.id;
     const order = this.data.allOrders.find(o => o._id === id);
     if (!order) return;
-    const isPickup = order.orderStatus === 'to_pickup';
     const isFoster = order.category === 'foster';
     wx.showModal({
-      title: isPickup ? '确认取件' : (isFoster ? '确认取回' : '确认完成'),
-      content: isPickup ? '确认已取到快递？' : (isFoster ? '确认已取回宠物？' : '确认机构已完成该服务？'),
+      title: isFoster ? '确认取回' : '确认完成',
+      content: isFoster ? '确认已取回宠物？' : '确认机构已完成该服务？',
       confirmColor: '#FF9800',
       success: async (res) => {
         if (!res.confirm) return;

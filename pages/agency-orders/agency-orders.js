@@ -256,68 +256,36 @@ Page({
         if (!res.confirm) return;
         wx.showLoading({ title: '处理中...' });
         try {
-          const db = wx.cloud.database();
-          const targetOrder = this.data.allOrders.find(o => o._id === id);
-
-          if (status === 'confirmed') {
-            if (targetOrder && targetOrder.category === 'foster') {
-              const [profileRes, activeRes] = await Promise.all([
-                db.collection('agency_profiles').doc(this._agencyProfileId).get(),
-                db.collection('user_orders').where({
-                  orderType: 'agency',
-                  category: 'foster',
-                  agencyProfileId: this._agencyProfileId,
-                  orderStatus: db.command.in(['confirmed', 'in_progress', 'to_confirm']),
-                }).get(),
-              ]);
-              const total = Number((profileRes.data || {}).totalCages) || 0;
-              const occupied = (activeRes.data || []).filter(o => !isLeaveExpired(o.leaveTimeMs)).length;
-              if (total <= 0) {
-                throw new Error('CAGE_NOT_CONFIGURED');
-              }
-              if (occupied >= total) {
-                throw new Error('CAGE_FULL');
-              }
-            }
-          }
-
-          await db.collection('user_orders').doc(id).update({
+          const result = await wx.cloud.callFunction({
+            name: 'ai_handler',
             data: {
-              orderStatus: status,
-              updateTime: db.serverDate(),
+              action: 'update_order_status',
+              orderId: id,
+              status: status,
+              agencyProfileId: this._agencyProfileId,
             },
           });
 
-          if (targetOrder && targetOrder.category === 'foster' && targetOrder.petId) {
-            const nextPetStatus = this._mapFosterPetStatusByOrderStatus(status);
-            try {
-              // 校验宠物归属：宠物必须属于下单用户
-              const petRes = await db.collection('pets').doc(targetOrder.petId).get();
-              if (petRes.data && petRes.data.ownerId === targetOrder.ownerId) {
-                await db.collection('pets').doc(targetOrder.petId).update({
-                  data: {
-                    petStatus: nextPetStatus,
-                    updateTime: db.serverDate(),
-                  },
-                });
-              } else {
-                console.warn('[AgencyOrders] pet ownership mismatch, skip pet status update');
-              }
-            } catch (petErr) {
-              console.warn('[AgencyOrders] sync foster pet status failed', petErr);
+          const { success, msg, code } = result.result || {};
+          wx.hideLoading();
+
+          if (!success) {
+            if (code === 'CAGE_NOT_CONFIGURED') {
+              wx.showToast({ title: '请先在机构资料中填写笼位总数', icon: 'none' });
+            } else if (code === 'CAGE_FULL') {
+              wx.showToast({ title: '当前笼位不足，无法接单', icon: 'none' });
+            } else {
+              wx.showToast({ title: msg || '操作失败', icon: 'none' });
             }
+            return;
           }
 
-          wx.hideLoading();
           wx.showToast({ title: '操作成功', icon: 'success' });
           await this.loadOrders();
         } catch (e) {
           wx.hideLoading();
           console.error('[AgencyOrders] updateStatus', e);
-          let msg = '操作失败';
-          if (e && e.message === 'CAGE_NOT_CONFIGURED') msg = '请先在机构资料中填写笼位总数';
-          if (e && e.message === 'CAGE_FULL') msg = '当前笼位不足，无法接单';
-          wx.showToast({ title: msg, icon: 'none' });
+          wx.showToast({ title: '操作失败', icon: 'none' });
         }
       },
     });

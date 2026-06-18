@@ -7,7 +7,6 @@ const CATEGORY_META = [
   { key: 'grooming', title: '美容洗护',     icon: 'diamond-o' },
   { key: 'medical',  title: '医疗健康',     icon: 'medal-o' },
   { key: 'door',     title: '上门服务',     icon: 'logistics' },
-  { key: 'extra',    title: '商品与增值',   icon: 'shop-o' },
 ];
 
 Page({

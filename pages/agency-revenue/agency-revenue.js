@@ -7,7 +7,6 @@ const CAT_LABEL = {
   grooming: '美容洗护',
   medical: '医疗健康',
   door: '上门服务',
-  extra: '商品增值',
 };
 
 const CAT_COLORS = ['#FF9800', '#4CAF50', '#2196F3', '#9C27B0', '#F44336', '#00BCD4', '#795548'];

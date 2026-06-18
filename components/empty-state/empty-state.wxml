@@ -1,7 +1,0 @@
-<view class="empty-state">
-  <van-icon name="{{icon}}" size="120rpx" color="#ccc" />
-  <text class="empty-state__text">{{text}}</text>
-  <van-button wx:if="{{button}}" type="primary" size="small" round bindtap="onAction">
-    {{button}}
-  </van-button>
-</view>

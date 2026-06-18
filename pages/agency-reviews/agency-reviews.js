@@ -7,7 +7,6 @@ const CAT_LABEL = {
   grooming: '美容洗护',
   medical: '医疗健康',
   door: '上门服务',
-  extra: '商品增值',
 };
 
 Page({
@@ -69,6 +68,7 @@ Page({
       wx.showToast({ title: '请先登录机构', icon: 'none' });
       return;
     }
+    this._agencyProfileId = userInfo.agencyProfileId;
     wx.showLoading({ title: '加载中...' });
     await this._load(userInfo.agencyProfileId);
     wx.hideLoading();
@@ -258,10 +258,20 @@ Page({
     this.setData({ replySaving: true });
 
     try {
-      const db = wx.cloud.database();
-      await db.collection('user_orders').doc(this.data.replyOrderId).update({
-        data: { 'review.reply': content },
+      const result = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: {
+          action: 'update_order_reply',
+          orderId: this.data.replyOrderId,
+          reply: content,
+          agencyProfileId: this._agencyProfileId,
+        },
       });
+
+      const { success, msg } = result.result || {};
+      if (!success) {
+        throw new Error(msg || '回复失败');
+      }
 
       // 更新本地数据
       const order = this._allOrders.find(o => o._id === this.data.replyOrderId);

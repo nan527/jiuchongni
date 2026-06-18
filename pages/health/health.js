@@ -24,7 +24,7 @@ const RISK_RECOMMENDATIONS = {
   weight: { text: '体重变化异常，建议预约体检服务', category: 'medical', icon: 'medal-o' },
   vaccine: { text: '疫苗即将过期，建议尽快预约接种', category: 'medical', icon: 'shield-o' },
   deworming: { text: '驱虫周期已到，建议预约驱虫服务', category: 'medical', icon: 'good-job-o' },
-  diet: { text: '饮食可能不均衡，建议咨询营养师', category: 'extra', icon: 'smile-o' },
+  diet: { text: '饮食可能不均衡，建议咨询营养师', category: 'medical', icon: 'smile-o' },
   default: { text: '建议咨询专业宠物医生', category: 'medical', icon: 'shop-o' },
 };
 

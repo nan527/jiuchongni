@@ -8,7 +8,6 @@ const CATEGORY_LIST = [
   { key: 'grooming', label: '美容洗护' },
   { key: 'medical', label: '医疗健康' },
   { key: 'door', label: '上门服务' },
-  { key: 'extra', label: '商品与增值' },
 ];
 
 const PRICE_RANGES = [

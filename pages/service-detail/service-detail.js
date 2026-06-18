@@ -15,7 +15,6 @@ const CAT_LABEL = {
   grooming: '美容洗护',
   medical: '医疗健康',
   door: '上门服务',
-  extra: '商品增值',
 };
 
 Page({
@@ -343,17 +342,8 @@ Page({
 
   async onSubmitOrder() {
     const { selectedPetId, petName, phone, svc } = this.data;
-    const isExtra = svc && svc.category === 'extra';
 
-    if (isExtra) {
-      // 商品类：校验收货地址
-      if (!this.data.receiverName.trim()) return wx.showToast({ title: '请输入收货人姓名', icon: 'none' });
-      if (!this.data.receiverPhone.trim()) return wx.showToast({ title: '请输入收货人电话', icon: 'none' });
-      if (!this.data.receiverAddress.trim()) return wx.showToast({ title: '请输入收货地址', icon: 'none' });
-    } else {
-      // 服务类：校验宠物选择
-      if (!selectedPetId) return wx.showToast({ title: '请先选择宠物', icon: 'none' });
-    }
+    if (!selectedPetId) return wx.showToast({ title: '请先选择宠物', icon: 'none' });
     if (!phone.trim()) return wx.showToast({ title: '请输入联系电话', icon: 'none' });
 
     const userInfo = await authService.checkLogin();
@@ -391,7 +381,7 @@ Page({
       const selectedPet = this.data.myPets.find(p => p._id === selectedPetId) || {};
 
       const payDeadline = new Date(Date.now() + 15 * 60 * 1000);
-      const orderType = s.category === 'extra' ? 'express' : 'agency';
+      const orderType = 'agency';
 
       const orderRes = await db.collection('user_orders').add({
         data: {
@@ -405,22 +395,14 @@ Page({
           price: s.price,
           unit: s.unit,
           images: this._rawImages || [],
-          ...(isExtra ? {
-            // 商品类：收货地址
-            receiverName: this.data.receiverName.trim(),
-            receiverPhone: this.data.receiverPhone.trim(),
-            receiverAddress: this.data.receiverAddress.trim(),
-          } : {
-            // 服务类：宠物信息
-            petId: selectedPetId,
-            petName: petName.trim(),
-            petInfo: {
-              species: selectedPet.species || '',
-              age: selectedPet.age || '',
-              gender: selectedPet.gender || '',
-              photo: selectedPet.photo || '',
-            },
-          }),
+          petId: selectedPetId,
+          petName: petName.trim(),
+          petInfo: {
+            species: selectedPet.species || '',
+            age: selectedPet.age || '',
+            gender: selectedPet.gender || '',
+            photo: selectedPet.photo || '',
+          },
           phone: phone.trim(),
           remark: this.data.remark,
           checkinDate,

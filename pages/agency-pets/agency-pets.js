@@ -159,8 +159,14 @@ Page({
             o.cageNumber = available[idx];
             usedNumbers.add(o.cageNumber);
             orderMap[o.cageNumber] = o;
-            db.collection('user_orders').doc(o._id).update({
-              data: { cageNumber: o.cageNumber },
+            wx.cloud.callFunction({
+              name: 'ai_handler',
+              data: {
+                action: 'update_order_cage',
+                orderId: o._id,
+                cageNumber: o.cageNumber,
+                agencyProfileId: this._agencyProfileId,
+              },
             }).catch(() => {});
           }
         });
@@ -307,10 +313,20 @@ Page({
   async _doMove(orderId, toCage) {
     wx.showLoading({ title: '移动中...' });
     try {
-      const db = wx.cloud.database();
-      await db.collection('user_orders').doc(orderId).update({
-        data: { cageNumber: toCage },
+      const result = await wx.cloud.callFunction({
+        name: 'ai_handler',
+        data: {
+          action: 'update_order_cage',
+          orderId: orderId,
+          cageNumber: toCage,
+          agencyProfileId: this._agencyProfileId,
+        },
       });
+
+      const { success, msg } = result.result || {};
+      if (!success) {
+        throw new Error(msg || '移动失败');
+      }
 
       wx.hideLoading();
       wx.showToast({ title: '移动成功', icon: 'success' });

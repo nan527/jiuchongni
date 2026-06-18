@@ -72,6 +72,14 @@ exports.main = async (event, context) => {
       return await updateModelPrices(event);
     case 'cleanup_duplicate_configs':
       return await cleanupDuplicateConfigs();
+    case 'update_order_status':
+      return await updateOrderStatus(event);
+    case 'update_order_cage':
+      return await updateOrderCage(event);
+    case 'update_order_reply':
+      return await updateOrderReply(event);
+    case 'create_agency_order':
+      return await createAgencyOrder(event);
     default:
       return { success: false, msg: '未知操作: ' + action };
   }
@@ -1531,7 +1539,7 @@ async function smartMatchParse(event) {
 - 只输出JSON，不要输出任何其他文字
 - keywords：5-8个关键词
 - preferences：隐含偏好（胆小→安静，有监控→安全）
-- serviceCategory：foster/grooming/medical/door/extra/null
+- serviceCategory：foster/grooming/medical/door/null
 - urgency：normal或urgent
 - location：城市/省份名或null`;
 
@@ -1608,9 +1616,6 @@ function fallbackSmartMatch(userText, petInfo) {
   } else if (/上门|到家|送上门/.test(text)) {
     serviceCategory = 'door';
     keywords.push('上门服务');
-  } else if (/狗粮|猫粮|零食|吃的|用品|玩具/.test(text)) {
-    serviceCategory = 'extra';
-    keywords.push('商品');
   }
 
   // 额外关键词：洗护、美容等相关词（即使主分类已确定也要提取）
@@ -2057,5 +2062,169 @@ async function cleanupDuplicateConfigs() {
   } catch (err) {
     console.error('[cleanupDuplicateConfigs]', err.message);
     return { success: false, msg: err.message || '清理失败' };
+  }
+}
+
+// 机构端更新订单状态（云函数有管理员权限，绕过客户端安全规则）
+async function updateOrderStatus(event) {
+  const { orderId, status, agencyProfileId } = event;
+  if (!orderId || !status || !agencyProfileId) {
+    return { success: false, msg: '参数不完整' };
+  }
+
+  const db = cloud.database();
+  const _ = db.command;
+
+  try {
+    // 校验订单确实属于该机构
+    const orderRes = await db.collection('user_orders').doc(orderId).get();
+    const order = orderRes.data;
+    if (!order || order.agencyProfileId !== agencyProfileId) {
+      return { success: false, msg: '无权操作此订单' };
+    }
+
+    // 寄养接单前校验笼位
+    if (status === 'confirmed' && order.category === 'foster') {
+      const [profileRes, activeRes] = await Promise.all([
+        db.collection('agency_profiles').doc(agencyProfileId).get(),
+        db.collection('user_orders').where({
+          orderType: 'agency',
+          category: 'foster',
+          agencyProfileId: agencyProfileId,
+          orderStatus: _.in(['confirmed', 'in_progress', 'to_confirm']),
+        }).get(),
+      ]);
+      const total = Number((profileRes.data || {}).totalCages) || 0;
+      const now = Date.now();
+      const occupied = (activeRes.data || []).filter(o => !o.leaveTimeMs || o.leaveTimeMs > now).length;
+      if (total <= 0) {
+        return { success: false, msg: '请先在机构资料中填写笼位总数', code: 'CAGE_NOT_CONFIGURED' };
+      }
+      if (occupied >= total) {
+        return { success: false, msg: '当前笼位不足，无法接单', code: 'CAGE_FULL' };
+      }
+    }
+
+    // 更新订单状态
+    await db.collection('user_orders').doc(orderId).update({
+      data: {
+        orderStatus: status,
+        updateTime: db.serverDate(),
+      },
+    });
+
+    // 寄养订单：同步更新宠物状态
+    if (order.category === 'foster' && order.petId) {
+      const FOSTER_PET_STATUS = {
+        confirmed: 'agency_foster',
+        in_progress: 'agency_foster',
+        to_confirm: 'agency_foster',
+        completed: '',
+        cancelled: '',
+      };
+      const nextPetStatus = FOSTER_PET_STATUS[status];
+      if (nextPetStatus !== undefined) {
+        try {
+          const petRes = await db.collection('pets').doc(order.petId).get();
+          if (petRes.data && petRes.data.ownerId === order.ownerId) {
+            await db.collection('pets').doc(order.petId).update({
+              data: { petStatus: nextPetStatus, updateTime: db.serverDate() },
+            });
+          }
+        } catch (petErr) {
+          console.warn('[updateOrderStatus] sync pet status failed:', petErr.message);
+        }
+      }
+    }
+
+    return { success: true };
+  } catch (err) {
+    console.error('[updateOrderStatus]', err.message);
+    return { success: false, msg: err.message || '操作失败' };
+  }
+}
+
+// 机构端更新订单笼位号
+async function updateOrderCage(event) {
+  const { orderId, cageNumber, agencyProfileId } = event;
+  if (!orderId || !agencyProfileId) {
+    return { success: false, msg: '参数不完整' };
+  }
+
+  const db = cloud.database();
+  try {
+    // 校验订单归属
+    const orderRes = await db.collection('user_orders').doc(orderId).get();
+    const order = orderRes.data;
+    if (!order || order.agencyProfileId !== agencyProfileId) {
+      return { success: false, msg: '无权操作此订单' };
+    }
+
+    await db.collection('user_orders').doc(orderId).update({
+      data: { cageNumber: cageNumber || '', updateTime: db.serverDate() },
+    });
+
+    return { success: true };
+  } catch (err) {
+    console.error('[updateOrderCage]', err.message);
+    return { success: false, msg: err.message || '操作失败' };
+  }
+}
+
+// 机构端回复评价
+async function updateOrderReply(event) {
+  const { orderId, reply, agencyProfileId } = event;
+  if (!orderId || !agencyProfileId) {
+    return { success: false, msg: '参数不完整' };
+  }
+
+  const db = cloud.database();
+  try {
+    const orderRes = await db.collection('user_orders').doc(orderId).get();
+    const order = orderRes.data;
+    if (!order || order.agencyProfileId !== agencyProfileId) {
+      return { success: false, msg: '无权操作此订单' };
+    }
+
+    await db.collection('user_orders').doc(orderId).update({
+      data: { 'review.reply': reply || '', updateTime: db.serverDate() },
+    });
+
+    return { success: true };
+  } catch (err) {
+    console.error('[updateOrderReply]', err.message);
+    return { success: false, msg: err.message || '操作失败' };
+  }
+}
+
+// 机构从帖子接单（创建订单）
+async function createAgencyOrder(event) {
+  const { orderData, agencyProfileId } = event;
+  if (!orderData || !agencyProfileId) {
+    return { success: false, msg: '参数不完整' };
+  }
+
+  const db = cloud.database();
+  try {
+    // 校验机构档案存在
+    const profileRes = await db.collection('agency_profiles').doc(agencyProfileId).get();
+    if (!profileRes.data) {
+      return { success: false, msg: '机构档案不存在' };
+    }
+
+    const res = await db.collection('user_orders').add({
+      data: {
+        ...orderData,
+        agencyProfileId: agencyProfileId,
+        orderStatus: 'confirmed',
+        createTime: db.serverDate(),
+        updateTime: db.serverDate(),
+      },
+    });
+
+    return { success: true, orderId: res._id };
+  } catch (err) {
+    console.error('[createAgencyOrder]', err.message);
+    return { success: false, msg: err.message || '操作失败' };
   }
 }

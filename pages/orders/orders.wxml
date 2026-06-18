@@ -10,17 +10,6 @@
       <text class="nav-bar__title">订单</text>
       <view class="nav-bar__right"></view>
     </view>
-    <view class="custom-tabs">
-      <view
-        class="custom-tab {{activeTab === index ? 'custom-tab--active' : ''}}"
-        wx:for="{{tabList}}"
-        wx:key="key"
-        data-index="{{index}}"
-        bindtap="onTabChange"
-      >
-        <text class="custom-tab__text">{{item.label}}</text>
-      </view>
-    </view>
     <view class="header-bottom-arc"></view>
   </view>
 
@@ -49,8 +38,8 @@
 
       <!-- 卡片头部 -->
       <view class="o-card__header neu-card__header">
-        <view class="o-card__type-badge {{item.orderType === 'express' ? 'badge-express' : 'badge-agency'}} neu-badge">
-          {{item.orderType === 'express' ? '快递服务' : '机构服务'}}
+        <view class="o-card__type-badge badge-agency neu-badge">
+          机构服务
         </view>
         <view class="o-card__status neu-status" style="background:{{item.statusConfig.bg}};color:{{item.statusConfig.color}};">
           {{item.statusConfig.label}}
@@ -86,10 +75,10 @@
       </view>
 
       <!-- 操作按钮 -->
-      <view class="o-card__actions neu-actions" wx:if="{{item.orderStatus === 'unpaid' || item.orderStatus === 'to_confirm' || item.orderStatus === 'to_pickup' || (item.orderStatus === 'completed' && !item.review)}}">
+      <view class="o-card__actions neu-actions" wx:if="{{item.orderStatus === 'unpaid' || item.orderStatus === 'to_confirm' || (item.orderStatus === 'completed' && !item.review)}}">
         <view class="neu-btn neu-btn--primary" wx:if="{{item.orderStatus === 'unpaid' && !item.countdownExpired}}" data-id="{{item._id}}" catchtap="onPayOrder">立即付款</view>
-        <view class="neu-btn neu-btn--primary" wx:if="{{item.orderStatus === 'to_confirm' || item.orderStatus === 'to_pickup'}}" data-id="{{item._id}}" data-category="{{item.category}}" catchtap="onConfirmComplete">
-          {{item.orderStatus === 'to_pickup' ? '确认取件' : (item.category === 'foster' ? '确认取回' : '确认完成')}}
+        <view class="neu-btn neu-btn--primary" wx:if="{{item.orderStatus === 'to_confirm'}}" data-id="{{item._id}}" data-category="{{item.category}}" catchtap="onConfirmComplete">
+          {{item.category === 'foster' ? '确认取回' : '确认完成'}}
         </view>
         <view class="neu-btn neu-btn--warm" wx:if="{{item.orderStatus === 'completed' && !item.review}}" data-id="{{item._id}}" catchtap="openReview">评价服务</view>
         <view class="neu-btn neu-btn--secondary" data-id="{{item._id}}" catchtap="onViewDetail">查看详情</view>
